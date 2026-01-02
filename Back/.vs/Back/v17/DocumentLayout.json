@@ -1,9 +1,13 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Tesis\\Proyecto-farmacia\\Back\\",
+  "WorkspaceRootPath": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F69175F0-41FA-4B34-B66D-BCFA034A445B}|Back.csproj|c:\\tesis\\proyecto-farmacia\\back\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{F69175F0-41FA-4B34-B66D-BCFA034A445B}|Back.csproj|d:\\jeremias\\programacion\\repo\\proyecto-farmacia\\back\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F69175F0-41FA-4B34-B66D-BCFA034A445B}|Back.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F69175F0-41FA-4B34-B66D-BCFA034A445B}|Back.csproj|d:\\jeremias\\programacion\\repo\\proyecto-farmacia\\back\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F69175F0-41FA-4B34-B66D-BCFA034A445B}|Back.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -14,17 +18,38 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
+              "ToolTip": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "Data\\AppDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAD8AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-02T21:42:29.246Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Tesis\\Proyecto-farmacia\\Back\\Program.cs",
+              "DocumentMoniker": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Tesis\\Proyecto-farmacia\\Back\\Program.cs",
+              "ToolTip": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAB0AAAAjAAAAAAAAAA==",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAiwB0AAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-01-02T21:27:35.916Z",
               "EditorCaption": ""
