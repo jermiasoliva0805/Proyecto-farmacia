@@ -5042,23 +5042,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\JEREMIAS\\.nuget\\packages\\": {},
+    "C:\\Users\\agust\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj",
+      "projectUniqueName": "C:\\Tesis\\Proyecto-farmacia\\Back\\Back.csproj",
       "projectName": "Back",
-      "projectPath": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj",
-      "packagesPath": "C:\\Users\\JEREMIAS\\.nuget\\packages\\",
-      "outputPath": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\obj\\",
+      "projectPath": "C:\\Tesis\\Proyecto-farmacia\\Back\\Back.csproj",
+      "packagesPath": "C:\\Users\\agust\\.nuget\\packages\\",
+      "outputPath": "C:\\Tesis\\Proyecto-farmacia\\Back\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\JEREMIAS\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\agust\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -5066,7 +5066,6 @@
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -5159,7 +5158,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
       }
     }
   },
