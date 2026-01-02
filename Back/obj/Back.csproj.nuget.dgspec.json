@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Usuario\\Desktop\\3° AÑO\\Programación aplicada\\Proyecto-farmacia\\Back\\Back.csproj": {}
+    "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Usuario\\Desktop\\3° AÑO\\Programación aplicada\\Proyecto-farmacia\\Back\\Back.csproj": {
+    "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\3° AÑO\\Programación aplicada\\Proyecto-farmacia\\Back\\Back.csproj",
+        "projectUniqueName": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj",
         "projectName": "Back",
-        "projectPath": "C:\\Users\\Usuario\\Desktop\\3° AÑO\\Programación aplicada\\Proyecto-farmacia\\Back\\Back.csproj",
-        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Usuario\\Desktop\\3° AÑO\\Programación aplicada\\Proyecto-farmacia\\Back\\obj\\",
+        "projectPath": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\Back.csproj",
+        "packagesPath": "C:\\Users\\JEREMIAS\\.nuget\\packages\\",
+        "outputPath": "D:\\JEREMIAS\\programacion\\Repo\\Proyecto-farmacia\\Back\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\JEREMIAS\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -118,7 +118,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

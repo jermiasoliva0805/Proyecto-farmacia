@@ -1,0 +1,14 @@
+﻿version: '3.8'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_farmacia
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=FarmaciaPaz2026!
+    volumes:
+      - sql_data:/var/opt/mssql
+volumes:
+  sql_data:
