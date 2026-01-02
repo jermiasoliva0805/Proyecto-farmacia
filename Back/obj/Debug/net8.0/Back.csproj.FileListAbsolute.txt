@@ -161,6 +161,3 @@ C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.csproj.CoreCompileInputs.c
 C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.MvcApplicationPartsAssemblyInfo.cs
 C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.MvcApplicationPartsAssemblyInfo.cache
 C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.sourcelink.json
-C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.dll
-C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\refint\Back.dll
-C:\Tesis\Proyecto-farmacia\Back\obj\Debug\net8.0\Back.pdb
