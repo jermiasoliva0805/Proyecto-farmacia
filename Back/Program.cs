@@ -57,6 +57,7 @@ namespace Back
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ILocalidadService, LocalidadService>();
 
             // Servicios de Florencia (Pedidos y Flujo Operativo)
             builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();

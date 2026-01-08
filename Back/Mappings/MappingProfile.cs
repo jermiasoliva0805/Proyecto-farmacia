@@ -8,6 +8,12 @@ namespace Back.Mappings
     {
         public MappingProfile()
         {
+            // --- Mapeos de Localidades (NUEVO) ---
+            // Este es vital para que el combo del frontend funcione
+            CreateMap<Localidad, LocalityDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IDLocalidad))
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Ciudad));
+
             // --- Mapeos de Creación (RF17) ---
             CreateMap<CreateOrderDTO, Pedido>();
             CreateMap<OrderDetailDTO, DetalleDePedido>();
@@ -26,10 +32,9 @@ namespace Back.Mappings
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
                 .ForMember(dest => dest.IDEstadoDePedido, opt => opt.MapFrom(src => src.IDNuevoEstado))
                 .ForMember(dest => dest.IDUsuario, opt => opt.MapFrom(src => src.IDUsuario))
-                // Se establece la hora actual al crear el registro de historial
                 .ForMember(dest => dest.fecha_hora_inicio, opt => opt.MapFrom(src => DateTime.Now));
 
-            // --- Mapeos para el Tracking del Pedido (Vista del Cliente/Admin) ---
+            // --- Mapeos para el Tracking del Pedido ---
             CreateMap<Pedido, OrderTrackingDTO>()
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
                 .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
@@ -40,8 +45,7 @@ namespace Back.Mappings
             CreateMap<HistorialDeEstados, TrackingHistoryItemDTO>()
                 .ForMember(dest => dest.NombreEstado, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
                 .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => src.fecha_hora_inicio))
-                .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src => src.Usuario.Nombre + " " + src.Usuario.Apellido))
-                // El motivo de cancelación suele estar en el estado o en el registro de historial según la DB
+                .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src => src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}" : "Sistema"))
                 .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src => src.EstadoDePedido.motivo_cancelacion))
                 .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones));
         }
