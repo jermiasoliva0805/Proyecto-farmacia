@@ -1,60 +1,57 @@
-import axios from 'axios';
-import { api } from './api';
-import { LoginDTO, AuthResponse, UserDTO } from '../types/auth.types';
-
-const API_URL = 'http://localhost:5000/api/auth';
+import api from './api';
+import { LoginDTO, AuthResponse } from '../types/auth.types';
 
 export const authService = {
+  async login(credentials: LoginDTO): Promise<AuthResponse> {
+    // ESTO MOSTRARÁ EL JSON EXACTO EN LA CONSOLA
+    console.log("--- DATOS QUE ESTÁS ENVIANDO ---");
+    console.table(credentials); 
     
-    async login(credentials: LoginDTO): Promise<AuthResponse> {
-        try {
-            const response = await api.post<AuthResponse>('/auth/login', credentials);
-            return response.data;
-        } catch (error) {
-            console.error('Error en login:', error);
-            throw error;
-        }
-    },
+    try {
+      // Forzamos el objeto para que coincida exactamente con lo que Swagger espera
+      const payload = {
+        usuario: credentials.usuario.trim(),
+        password: credentials.password.trim()
+      };
 
-    async generateToken(user: UserDTO): Promise<string | null> {
-        try {
-            const response = await axios.post<{ token: string }>(`${API_URL}/token`, user);
-            return response.data.token;
-        } catch (error) {
-            console. error('Error generando token:', error);
-            return null;
-        }
-    },
+      console.log("JSON final enviado al servidor:", JSON.stringify(payload));
 
-    saveAuth(token: string, user:  any): void {
-        localStorage. setItem('farmacia_token', token);
-        localStorage.setItem('farmacia_user', JSON. stringify(user));
-    },
+      // Importante: Verifica que la URL base en api.ts sea https://localhost:7075/api
+      const response = await api.post<AuthResponse>('/Auth/login', payload);
 
-    getStoredAuth(): { token: string | null; user: any | null } {
-        const token = localStorage.getItem('farmacia_token');
-        const userStr = localStorage.getItem('farmacia_user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        return { token, user };
-    },
+      if (response.data && response.data.token) {
+        localStorage.setItem('farmacia_token', response.data.token);
+        localStorage.setItem('farmacia_user', JSON.stringify(response.data.user));
+      }
 
-    clearAuth(): void {
-        localStorage.removeItem('farmacia_token');
-        localStorage.removeItem('farmacia_user');
-    },
+      return response.data;
+    } catch (error: any) {
+      console.error("--- ERROR EN LA PETICIÓN ---");
+      if (error.response) {
+        // El servidor respondió con 400, 401, 500, etc.
+        console.error("Código de error:", error.response.status);
+        console.error("Respuesta del servidor:", error.response.data);
+      } else if (error.request) {
+        // La petición se hizo pero no hubo respuesta (CORS o Servidor apagado)
+        console.error("No se recibió respuesta del servidor. Revisa si el Backend está corriendo en https://localhost:7075");
+      } else {
+        console.error("Error de configuración:", error.message);
+      }
+      throw error;
+    }
+  },
 
-    isAuthenticated(): boolean {
-        const { token } = this.getStoredAuth();
-        return !!token;
-    },
+  getStoredAuth() {
+    const token = localStorage.getItem('farmacia_token');
+    const user = localStorage.getItem('farmacia_user');
+    return {
+      token,
+      user: user ? JSON.parse(user) : null
+    };
+  },
 
-    async logout(): Promise<void> {
-        try {
-            await api.post('/auth/logout');
-        } catch (error) {
-            console. error('Error en logout:', error);
-        } finally {
-            this.clearAuth();
-        }
-    },
+  clearAuth() {
+    localStorage.removeItem('farmacia_token');
+    localStorage.removeItem('farmacia_user');
+  }
 };

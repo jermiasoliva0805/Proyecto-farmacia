@@ -115,6 +115,7 @@ namespace Back
 
             // Habilitar CORS si es necesario para el Frontend
             app.UseCors(x => x
+
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader());

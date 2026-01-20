@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { authService } from '../service/authService'; // 👈 Importamos el servicio corregido
 import { UserDTO } from '../types/auth.types';
 
 interface AuthContextType {
@@ -17,50 +17,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ✅ Al montar, revisamos si hay token guardado
+  // ✅ Al montar, usamos el servicio para recuperar la sesión
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const { token, user: userData } = authService.getStoredAuth();
 
     if (token && userData) {
-      setUser(JSON.parse(userData));
+      setUser(userData);
       setIsAuthenticated(true);
     }
     setIsLoading(false);
   }, []);
 
-  // ✅ Función de login
+  // ✅ Función de login corregida
   const login = async (usuario: string, password: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('/api/auth/login', {
-        usuario,   // 👈 coincide con LoginDTO del back
-        password   // 👈 coincide con LoginDTO del back
-      });
+      // 👈 Usamos el servicio que ya tiene la URL de https://localhost:7075 y /Auth/login
+      const data = await authService.login({ usuario, password });
 
-      const { token, user } = response.data;
-
-      // Guardamos en localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Configuramos axios para enviar el token en cada request
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      setUser(user);
+      setUser(data.user);
       setIsAuthenticated(true);
     } catch (error: any) {
-      throw error.response?.data?.message || 'Error al iniciar sesión';
+      // Manejo de errores más limpio
+      const errorMsg = error.response?.data?.message || 'Error al iniciar sesión';
+      throw errorMsg;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ Función de logout
+  // ✅ Función de logout usando el servicio
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
+    authService.clearAuth();
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -72,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Hook para usar el contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
