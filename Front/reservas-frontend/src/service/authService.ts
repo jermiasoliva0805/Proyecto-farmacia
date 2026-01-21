@@ -1,57 +1,49 @@
-import api from './api';
-import { LoginDTO, AuthResponse } from '../types/auth.types';
+import { api } from './api';
+import { LoginDTO, AuthResponse, UserDTO } from '../types/auth.types';
 
 export const authService = {
-  async login(credentials: LoginDTO): Promise<AuthResponse> {
-    // ESTO MOSTRARÁ EL JSON EXACTO EN LA CONSOLA
-    console.log("--- DATOS QUE ESTÁS ENVIANDO ---");
-    console.table(credentials); 
     
-    try {
-      // Forzamos el objeto para que coincida exactamente con lo que Swagger espera
-      const payload = {
-        usuario: credentials.usuario.trim(),
-        password: credentials.password.trim()
-      };
+    async login(credentials: LoginDTO): Promise<AuthResponse> {
+        try {
+            // CAMBIO CLAVE: '/Auth/login' con A mayúscula para coincidir con el controlador .NET
+            const response = await api.post<AuthResponse>('/Auth/login', credentials);
+            
+            // IMPORTANTE: Si la respuesta es exitosa, guardamos los datos
+            if (response.data && response.data.token) {
+                this.saveAuth(response.data.token, response.data.user);
+            }
+            
+            return response.data;
+        } catch (error: any) {
+            console.error('Error en login:', error);
+            const message = error.response?.data?.message || 'Error de conexión';
+            throw new Error(message);
+        }
+    },
 
-      console.log("JSON final enviado al servidor:", JSON.stringify(payload));
+    saveAuth(token: string, user: UserDTO): void {
+        localStorage.setItem('farmacia_token', token);
+        localStorage.setItem('farmacia_user', JSON.stringify(user));
+    },
 
-      // Importante: Verifica que la URL base en api.ts sea https://localhost:7075/api
-      const response = await api.post<AuthResponse>('/Auth/login', payload);
+    getStoredAuth(): { token: string | null; user: UserDTO | null } {
+        const token = localStorage.getItem('farmacia_token');
+        const userStr = localStorage.getItem('farmacia_user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        return { token, user };
+    },
 
-      if (response.data && response.data.token) {
-        localStorage.setItem('farmacia_token', response.data.token);
-        localStorage.setItem('farmacia_user', JSON.stringify(response.data.user));
-      }
+    clearAuth(): void {
+        localStorage.removeItem('farmacia_token');
+        localStorage.removeItem('farmacia_user');
+    },
 
-      return response.data;
-    } catch (error: any) {
-      console.error("--- ERROR EN LA PETICIÓN ---");
-      if (error.response) {
-        // El servidor respondió con 400, 401, 500, etc.
-        console.error("Código de error:", error.response.status);
-        console.error("Respuesta del servidor:", error.response.data);
-      } else if (error.request) {
-        // La petición se hizo pero no hubo respuesta (CORS o Servidor apagado)
-        console.error("No se recibió respuesta del servidor. Revisa si el Backend está corriendo en https://localhost:7075");
-      } else {
-        console.error("Error de configuración:", error.message);
-      }
-      throw error;
+    isAuthenticated(): boolean {
+        return !!localStorage.getItem('farmacia_token');
+    },
+
+    async logout(): Promise<void> {
+        this.clearAuth();
+        window.location.href = '/login';
     }
-  },
-
-  getStoredAuth() {
-    const token = localStorage.getItem('farmacia_token');
-    const user = localStorage.getItem('farmacia_user');
-    return {
-      token,
-      user: user ? JSON.parse(user) : null
-    };
-  },
-
-  clearAuth() {
-    localStorage.removeItem('farmacia_token');
-    localStorage.removeItem('farmacia_user');
-  }
 };
