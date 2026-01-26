@@ -1,7 +1,6 @@
 import { api } from './api';
 import {
     OrderSummaryDTO,
-    OrderFilterDTO,
     AssignOperatorDTO,
     AssignDeliveryDTO,
     ChangeOrderStatusDTO,
@@ -10,29 +9,22 @@ import {
 export const pedidosService = {
     // --- NUEVOS MÉTODOS FILTRADOS ---
 
-    /**
-     * Trae SOLO pedidos en estado "Sin preparar" (ID 1)
-     * Úsalo en la pantalla de Asignar Operario
-     */
     async getPendientesOperario(): Promise<OrderSummaryDTO[]> {
         const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-operario');
         return response.data;
     },
 
-    /**
-     * Trae SOLO pedidos en estado "Preparado" (ID 2)
-     * Úsalo en la pantalla de Asignar Cadete
-     */
     async getPendientesCadete(): Promise<OrderSummaryDTO[]> {
         const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-cadete');
         return response.data;
     },
 
-    // --- MÉTODOS EXISTENTES ---
+    // --- MÉTODOS EXISTENTES CORREGIDOS ---
 
     async getFilteredOrders(filters: any): Promise<OrderSummaryDTO[]> {
         const cleanFilters: any = {};
         
+        // Mapeo exacto de los nombres de los botones a IDs de la base de datos
         const estadoMap: { [key: string]: number } = {
             'Sin preparar': 1,
             'Preparar pedido': 2,
@@ -45,15 +37,28 @@ export const pedidosService = {
             'Cancelado': 9
         };
 
-        if (filters.search) cleanFilters.search = filters.search;
-        
-        if (filters.estado && filters.estado !== 'Todos') {
-            cleanFilters.idEstado = estadoMap[filters.estado];
+        // 1. Filtro de búsqueda (ID o Nombre)
+        if (filters.search) {
+            cleanFilters.search = filters.search;
         }
         
+        // 2. Filtro de Estado (Si es 'Todos' no se envía el parámetro para que traiga todos)
+        if (filters.estado && filters.estado !== 'Todos') {
+            const idEstado = estadoMap[filters.estado];
+            if (idEstado) {
+                cleanFilters.idEstado = idEstado;
+            }
+        }
+        
+        // 3. Filtros de Usuario (Operario o Cadete)
         if (filters.idOperario) cleanFilters.idOperario = filters.idOperario;
         if (filters.idCadete) cleanFilters.idCadete = filters.idCadete;
-        if (filters.fecha) cleanFilters.fecha = filters.fecha;
+        
+        // 4. Filtros de Fecha
+        if (filters.fechaDesde) cleanFilters.fechaDesde = filters.fechaDesde;
+        if (filters.fechaHasta) cleanFilters.fechaHasta = filters.fechaHasta;
+
+        // 5. Filtro de Usuario logueado (para vistas de Operario/Cadete)
         if (filters.idUsuario) cleanFilters.idUsuario = filters.idUsuario;
 
         const response = await api.get<OrderSummaryDTO[]>('/filtrarpedidos/reporte', {
@@ -84,6 +89,7 @@ export const pedidosService = {
 
     async getPedidosByRol(rol: string, userId: number, otrosFiltros: any = {}): Promise<OrderSummaryDTO[]> {
         let filters = { ...otrosFiltros };
+        // Si el usuario no es admin, forzamos que solo vea lo suyo
         if (rol === 'Operario' || rol === 'Cadete') {
             filters.idUsuario = userId;
         }

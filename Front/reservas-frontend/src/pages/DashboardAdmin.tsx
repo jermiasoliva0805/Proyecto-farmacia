@@ -1,228 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/layout/DashboardLayout.tsx';
-import { Card } from '../components/common/Card.tsx';
-import { Badge } from '@components/common/Badge.tsx';
-import { Button } from '@components/common/Button';
-import { AsignarOperarioModal } from '@components/pedidos/AsignarOperarioModal';
-import { DetallePedidoModal } from '@components/pedidos/DetallePedidoModal';
-import { OrderFilters } from '@components/orders/OrderFilters';
+import React, { useState, useEffect, useCallback } from 'react';
 import { pedidosService } from '../service/PedidosService';
-import { OrderSummaryDTO } from '../types/pedido.types';
-import { useAuth } from '@context/AuthContext';
-import { 
-    Package, 
-    AlertTriangle, 
-    CheckCircle, 
-    XCircle,
-    Users,
-    Truck,
-    Eye,
-    Plus
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { OrderSummaryDTO } from '@/types/pedido.types';
+// Importa tus componentes de UI (ajusta las rutas según tu proyecto)
+import OrderFilters from '@/components/orders/OrderFilters'; 
 
 export const DashboardAdmin: React.FC = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [pedidos, setPedidos] = useState<OrderSummaryDTO[]>([]);
+    const [orders, setOrders] = useState<OrderSummaryDTO[]>([]);
     const [loading, setLoading] = useState(true);
-    
-    const [selectedPedido, setSelectedPedido] = useState<OrderSummaryDTO | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState<OrderSummaryDTO | null>(null);
-    const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const [stats, setStats] = useState({ activos: 0, demorados: 0, entregados: 0, cancelados: 0 });
+    // Estados para los filtros (se sincronizan con OrderFilters)
+    const [activeTab, setActiveTab] = useState('Todos');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dateRange, setDateRange] = useState({
+        from: new Date().toISOString().split('T')[0],
+        to: new Date().toISOString().split('T')[0]
+    });
 
-    // Carga inicial sin filtros
-    useEffect(() => { 
-        loadDashboardData(); 
-    }, []);
-
-    const loadDashboardData = async (filtros = {}) => {
+    // Función para cargar pedidos usando el servicio filtrado
+    const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
-            // Llamada al servicio con los filtros mapeados (search, idEstado, idOperario, etc)
-            const data = await pedidosService.getFilteredOrders(filtros);
-            setPedidos(data);
+            const filters = {
+                estado: activeTab === 'Todos' ? '' : activeTab,
+                search: searchTerm,
+                fechaDesde: dateRange.from,
+                fechaHasta: dateRange.to
+            };
             
-            // Actualizar estadísticas basadas en los datos filtrados
-            setStats({
-                activos: data.filter(p => !['Entregado', 'Cancelado'].includes(p.estadoNombre)).length,
-                demorados: data.filter(p => p.estaDemorado).length,
-                entregados: data.filter(p => p.estadoNombre === 'Entregado').length,
-                cancelados: data.filter(p => p.estadoNombre === 'Cancelado').length,
-            });
-        } catch (error) { 
-            console.error("Error cargando pedidos:", error); 
-        } finally { 
-            setLoading(false); 
+            const data = await pedidosService.getFilteredOrders(filters);
+            setOrders(data);
+            setError(null);
+        } catch (err) {
+            setError('No se pudieron cargar los pedidos');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [activeTab, searchTerm, dateRange]);
+
+    // Ejecutar carga cuando cambien los filtros
+    useEffect(() => {
+        loadOrders();
+    }, [loadOrders]);
 
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Bienvenido, {user?.nombreCompleto}</h1>
-                        <p className="text-gray-600 mt-1">Panel de Administración - {user?.nombreSucursal}</p>
-                    </div>
-                    <Button onClick={() => navigate('/pedidos/nuevo')} className="flex items-center gap-2">
-                        <Plus size={20} /> Nuevo Pedido
-                    </Button>
-                </div>
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <header className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Panel de Control - Admin</h1>
+                <p className="text-gray-600">Gestión global de pedidos y logística</p>
+            </header>
 
-                {/* Estadísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <Card>
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm text-gray-600">Activos</p><p className="text-2xl font-bold">{stats.activos}</p></div>
-                            <Package className="text-blue-600"/>
-                        </div>
-                    </Card>
-                    <Card>
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm text-gray-600">Demorados</p><p className="text-2xl font-bold">{stats.demorados}</p></div>
-                            <AlertTriangle className="text-yellow-600"/>
-                        </div>
-                    </Card>
-                    <Card>
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm text-gray-600">Entregados</p><p className="text-2xl font-bold">{stats.entregados}</p></div>
-                            <CheckCircle className="text-green-600"/>
-                        </div>
-                    </Card>
-                    <Card>
-                        <div className="flex items-center justify-between">
-                            <div><p className="text-sm text-gray-600">Cancelados</p><p className="text-2xl font-bold">{stats.cancelados}</p></div>
-                            <XCircle className="text-red-600"/>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* COMPONENTE DE FILTROS - Conecta con la función de carga */}
+            {/* Componente de Filtros que dispara los cambios de estado */}
+            <div className="mb-6">
                 <OrderFilters 
-                    userRole="Administrador" 
-                    onFilterChange={(filtros) => loadDashboardData(filtros)} 
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    dateRange={dateRange}
+                    onDateChange={setDateRange}
                 />
-
-                {loading ? (
-                    <div className="flex items-center justify-center h-32">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                ) : (
-                    <>
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            {/* Columna Izquierda: Sin Preparar */}
-                            <Card>
-                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Users className="w-5 h-5" /> Pendientes de Operario</h2>
-                                <div className="space-y-3">
-                                    {pedidos.filter(p => p.estadoNombre === 'Sin preparar').length > 0 ? (
-                                        pedidos.filter(p => p.estadoNombre === 'Sin preparar').map((pedido) => (
-                                            <div key={pedido.idPedido} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                <div><p className="font-medium">#{pedido.idPedido}</p><p className="text-sm text-gray-500">{pedido.clienteNombre}</p></div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Eye className="w-5 h-5"/></button>
-                                                    <Button size="sm" onClick={() => { setSelectedPedido(pedido); setModalOpen(true); }}>Asignar</Button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-gray-500 text-sm italic">No hay pedidos pendientes de asignar operario.</p>
-                                    )}
-                                </div>
-                            </Card>
-                            
-                            {/* Columna Derecha: Listos para Despachar */}
-                            <Card>
-                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Truck className="w-5 h-5" /> Listos para Cadete</h2>
-                                <div className="space-y-3">
-                                    {pedidos.filter(p => p.estadoNombre === 'Listo para despachar').length > 0 ? (
-                                        pedidos.filter(p => p.estadoNombre === 'Listo para despachar').map((pedido) => (
-                                            <div key={pedido.idPedido} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                <div><p className="font-medium">#{pedido.idPedido}</p><p className="text-sm text-gray-500">{pedido.clienteNombre}</p></div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} className="p-2 text-gray-400 hover:text-blue-600 transition-colors"><Eye className="w-5 h-5"/></button>
-                                                    <Button size="sm" variant="success">Asignar Cadete</Button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-gray-500 text-sm italic">No hay pedidos listos para cadete.</p>
-                                    )}
-                                </div>
-                            </Card>
-                        </div>
-
-                        {/* Tabla General de Pedidos */}
-                        <Card>
-                            <h2 className="text-xl font-semibold mb-4">Todos los Pedidos</h2>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead className="bg-gray-50 text-sm">
-                                        <tr>
-                                            <th className="p-3 font-semibold text-gray-600">ID</th>
-                                            <th className="p-3 font-semibold text-gray-600">Cliente</th>
-                                            <th className="p-3 font-semibold text-gray-600">Operario Asig.</th>
-                                            <th className="p-3 font-semibold text-gray-600">Estado</th>
-                                            <th className="p-3 text-right font-semibold text-gray-600">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pedidos.length > 0 ? (
-                                            pedidos.map((pedido) => (
-                                                <tr key={pedido.idPedido} className="border-t hover:bg-gray-50 transition-colors">
-                                                    <td className="p-3">#{pedido.idPedido}</td>
-                                                    <td className="p-3 font-medium text-gray-800">{pedido.clienteNombre}</td>
-                                                    <td className="p-3 text-sm text-gray-500">{pedido.operarioNombre || 'No asignado'}</td>
-                                                    <td className="p-3">
-                                                        <Badge variant={pedido.estaDemorado ? 'warning' : 'info'}>
-                                                            {pedido.estadoNombre}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="p-3 text-right">
-                                                        <button 
-                                                            onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
-                                                            className="text-blue-600 font-bold text-sm hover:underline"
-                                                        >
-                                                            Ver detalles
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={5} className="p-8 text-center text-gray-500">
-                                                    No se encontraron pedidos con los filtros aplicados.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
-                    </>
-                )}
             </div>
 
-            {/* Modales */}
-            {selectedPedido && (
-                <AsignarOperarioModal 
-                    isOpen={modalOpen} 
-                    onClose={() => setModalOpen(false)} 
-                    pedido={selectedPedido} 
-                    onSuccess={() => loadDashboardData()} 
-                />
-            )}
-            
-            {selectedPedidoDetalle && (
-                <DetallePedidoModal 
-                    isOpen={modalDetalleOpen} 
-                    onClose={() => { setModalDetalleOpen(false); setSelectedPedidoDetalle(null); }} 
-                    pedido={selectedPedidoDetalle} 
-                />
-            )}
-        </DashboardLayout>
+            {/* Tabla de Resultados */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                {loading ? (
+                    <div className="p-10 text-center">Cargando pedidos...</div>
+                ) : error ? (
+                    <div className="p-10 text-center text-red-500">{error}</div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {orders.map((order) => (
+                                <tr key={order.idPedido} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-blue-600">#{order.idPedido}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">{order.clienteNombre}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                            {order.estadoNombre}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap font-bold">
+                                        ${order.total.toLocaleString()}
+                                    </td>
+                                </tr>
+                            ))}
+                            {orders.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-10 text-center text-gray-400">
+                                        No se encontraron pedidos con estos filtros.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </div>
     );
 };
