@@ -1,38 +1,19 @@
 import { api } from './api';
 import {
     OrderSummaryDTO,
-    OrderFilterDTO,
     AssignOperatorDTO,
     AssignDeliveryDTO,
     ChangeOrderStatusDTO,
 } from '@/types/pedido.types';
 
 export const pedidosService = {
-    // --- NUEVOS MÉTODOS FILTRADOS ---
-
     /**
-     * Trae SOLO pedidos en estado "Sin preparar" (ID 1)
-     * Úsalo en la pantalla de Asignar Operario
+     * Obtiene los pedidos filtrados desde el controlador de C#
      */
-    async getPendientesOperario(): Promise<OrderSummaryDTO[]> {
-        const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-operario');
-        return response.data;
-    },
-
-    /**
-     * Trae SOLO pedidos en estado "Preparado" (ID 2)
-     * Úsalo en la pantalla de Asignar Cadete
-     */
-    async getPendientesCadete(): Promise<OrderSummaryDTO[]> {
-        const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-cadete');
-        return response.data;
-    },
-
-    // --- MÉTODOS EXISTENTES ---
-
     async getFilteredOrders(filters: any): Promise<OrderSummaryDTO[]> {
-        const cleanFilters: any = {};
+        const params: any = {};
         
+        // 1. Mapeo de nombres de estados a IDs (Deben coincidir con tu DB)
         const estadoMap: { [key: string]: number } = {
             'Sin preparar': 1,
             'Preparar pedido': 2,
@@ -45,19 +26,28 @@ export const pedidosService = {
             'Cancelado': 9
         };
 
-        if (filters.search) cleanFilters.search = filters.search;
-        
-        if (filters.estado && filters.estado !== 'Todos') {
-            cleanFilters.idEstado = estadoMap[filters.estado];
+        // 2. Construcción de parámetros para el OrderFilterDTO de C#
+        if (filters.search) {
+            params.Search = filters.search;
         }
         
-        if (filters.idOperario) cleanFilters.idOperario = filters.idOperario;
-        if (filters.idCadete) cleanFilters.idCadete = filters.idCadete;
-        if (filters.fecha) cleanFilters.fecha = filters.fecha;
-        if (filters.idUsuario) cleanFilters.idUsuario = filters.idUsuario;
+        if (filters.estado && filters.estado !== 'Todos') {
+            params.IDEstadoDePedido = estadoMap[filters.estado];
+        }
+        
+        // Si hay un ID de usuario (operario o cadete)
+        const idUsuario = filters.idOperario || filters.idCadete || filters.idUsuario;
+        if (idUsuario) {
+            params.IDUsuario = idUsuario;
+        }
 
-        const response = await api.get<OrderSummaryDTO[]>('/filtrarpedidos/reporte', {
-            params: cleanFilters,
+        if (filters.fechaDesde) params.FechaDesde = filters.fechaDesde;
+        if (filters.fechaHasta) params.FechaHasta = filters.fechaHasta;
+
+        // 3. Llamada a la API
+        // Nota: Asegúrate de que la ruta coincida con el [Route] de tu Controller
+        const response = await api.get<OrderSummaryDTO[]>('/FiltrarPedidos/reporte', {
+            params: params,
         });
 
         return response.data;
@@ -82,11 +72,13 @@ export const pedidosService = {
         await api.put(`/orders/${data.idPedido}/estado`, payload);
     },
 
-    async getPedidosByRol(rol: string, userId: number, otrosFiltros: any = {}): Promise<OrderSummaryDTO[]> {
-        let filters = { ...otrosFiltros };
-        if (rol === 'Operario' || rol === 'Cadete') {
-            filters.idUsuario = userId;
-        }
-        return this.getFilteredOrders(filters);
+    async getPendientesOperario(): Promise<OrderSummaryDTO[]> {
+        const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-operario');
+        return response.data;
     },
+
+    async getPendientesCadete(): Promise<OrderSummaryDTO[]> {
+        const response = await api.get<OrderSummaryDTO[]>('/orders/pendientes-cadete');
+        return response.data;
+    }
 };
