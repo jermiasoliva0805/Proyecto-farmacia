@@ -10,5 +10,9 @@ namespace Back.Services.Interfaces
 
         // Método general de cambio de estado (Cadete/Admin)
         Task<bool> CambiarEstadoAsync(ChangeOrderStatusDTO changeStatusDto);
+
+        // CORREGIDO: Ahora acepta el userId para el historial de estados
+        Task<bool> CancelarPedidoAsync(CancelarPedidoDTO dto);
+        //Task<bool> CancelarPedidoAsync(CancelarPedidoDTO dto, int userId);
     }
 }

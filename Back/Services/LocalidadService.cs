@@ -18,5 +18,12 @@ namespace Back.Services
             // Usamos tu repositorio genérico para traer todas las localidades
             return await _localidadRepository.GetAllAsync();
         }
+
+        // Agregamos la obtención por ID para completar la gestión individual
+        public async Task<Localidad> GetLocalidadByIdAsync(int id)
+        {
+            return await _localidadRepository.GetByIdAsync(id);
+        }
     }
+
 }

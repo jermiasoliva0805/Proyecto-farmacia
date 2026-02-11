@@ -17,5 +17,11 @@ namespace Back.Services
         {
             return await _clientRepository.GetAllAsync();
         }
+
+        //  para obtener los detalles de un cliente específico
+        public async Task<Cliente> GetClientByIdAsync(int id)
+        {
+            return await _clientRepository.GetByIdAsync(id);
+        }
     }
 }

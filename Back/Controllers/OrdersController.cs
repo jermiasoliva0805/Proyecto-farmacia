@@ -15,8 +15,8 @@ namespace Back.Controllers
         private readonly IPedidoRepository _pedidoRepository;
 
         public OrdersController(
-            IOrderStatusService statusService, 
-            ITrackingService trackingService, 
+            IOrderStatusService statusService,
+            ITrackingService trackingService,
             IPedidoRepository pedidoRepository)
         {
             _statusService = statusService;
@@ -24,9 +24,9 @@ namespace Back.Controllers
             _pedidoRepository = pedidoRepository;
         }
 
-        // --- NUEVO ENDPOINT DE REPORTES FILTRADOS ---
-        // Este es el que llama tu frontend como /api/Orders/reporte
-        [Authorize] // Permitir a cualquier usuario autenticado (Admin, Operario, Cadete)
+        // --- SECCIÓN DE REPORTES ---
+
+        [Authorize]
         [HttpGet("reporte")]
         public async Task<IActionResult> GetReporte([FromQuery] OrderFilterDTO filters)
         {
@@ -40,7 +40,7 @@ namespace Back.Controllers
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
         {
-            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 1 }); 
+            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 1 });
             return Ok(pedidos);
         }
 
@@ -48,7 +48,7 @@ namespace Back.Controllers
         [HttpGet("pendientes-cadete")]
         public async Task<IActionResult> GetPendientesCadete()
         {
-            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 4 }); 
+            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 4 });
             return Ok(pedidos);
         }
 
@@ -62,7 +62,7 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Datos de asignación inválidos." });
 
             var resultado = await _statusService.AsignarOperarioAsync(dto);
-            
+
             if (!resultado)
                 return BadRequest(new { message = "No se pudo asignar el operario. Verifique el estado del pedido." });
 
@@ -85,7 +85,7 @@ namespace Back.Controllers
 
         // --- SECCIÓN OPERATIVA: CAMBIOS DE ESTADO ---
 
-        [Authorize] // Permitir a Admin, Operario y Cadete cambiar estados
+        [Authorize]
         [HttpPut("{id}/estado")]
         public async Task<IActionResult> CambiarEstado(int id, [FromBody] ChangeOrderStatusDTO changeStatusDto)
         {
@@ -99,9 +99,25 @@ namespace Back.Controllers
             if (!resultado)
                 return BadRequest(new { message = "Cambio de estado rechazado por lógica de negocio." });
 
-            // Devolver el pedido actualizado para refrescar UI sin refetch
             var pedidoActualizado = await _pedidoRepository.GetByIdAsync(id);
             return Ok(new { message = "Estado actualizado.", pedido = pedidoActualizado });
+        }
+
+        // --- SECCIÓN CANCELACIÓN: RF16 ---
+
+        [Authorize]
+        [HttpPost("cancelar")]
+        public async Task<IActionResult> CancelarPedido([FromBody] CancelarPedidoDTO dto)
+        {
+            if (dto == null || dto.PedidoId <= 0 || dto.MotivoCancelacionId <= 0)
+                return BadRequest(new { message = "Datos de cancelación inválidos. Se requiere el ID del pedido y el motivo." });
+
+            var resultado = await _statusService.CancelarPedidoAsync(dto);
+
+            if (!resultado)
+                return BadRequest(new { message = "No se pudo cancelar el pedido. Verifique si el pedido ya fue entregado, cancelado previamente o no existe." });
+
+            return Ok(new { message = "El pedido ha sido cancelado exitosamente." });
         }
 
         // --- SECCIÓN CONSULTAS: TRAZABILIDAD ---

@@ -78,7 +78,8 @@ namespace Back.Repositories
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
                     ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin Asignar",
                     FechaEntregaEstimada = p.FechaEntregaEstimada,
-                    FechaEntregaReal = p.FechaEntregaReal
+                    FechaEntregaReal = p.FechaEntregaReal,
+                    IntentosEntregaFallida = p.IntentosEntregaFallida
                 })
                 .ToListAsync();
         }
@@ -110,10 +111,8 @@ namespace Back.Repositories
 
                 if (pedido == null) return false;
 
-                // Usa Set<EstadoDePedido>() para acceder a la tabla de estados sin necesitar DbSet explícito
                 var estados = _context.Set<EstadoDePedido>();
 
-                // Resolver IDs por nombre para evitar desalineación
                 var idEntregado = await estados
                     .Where(e => e.NombreEstado == "Entregado")
                     .Select(e => e.IDEstadoDePedido)
@@ -129,17 +128,15 @@ namespace Back.Repositories
                     .Select(e => e.IDEstadoDePedido)
                     .FirstOrDefaultAsync();
 
-                // Si ya está final, no permitir cambios
+                // Si ya está finalizado, no permitir cambios
                 if (pedido.IDEstadoDePedido == idEntregado || pedido.IDEstadoDePedido == idCancelado)
                     return false;
 
                 if (datos.IDNuevoEstado == idEntregaFallida)
                 {
-                    // Conteo null-safe de intentos previos de "Entrega fallida"
-                    var fallasPrevias = pedido.HistorialDeEstados?.Count(h => h.IDEstadoDePedido == idEntregaFallida) ?? 0;
-                    var siguienteIntento = fallasPrevias + 1;
+                    pedido.IntentosEntregaFallida++;
 
-                    if (siguienteIntento >= MaxIntentosFallidos)
+                    if (pedido.IntentosEntregaFallida >= MaxIntentosFallidos)
                     {
                         pedido.IDEstadoDePedido = idCancelado;
                         pedido.EstadoActual = "Cancelado";
@@ -150,7 +147,7 @@ namespace Back.Repositories
                     {
                         pedido.IDEstadoDePedido = idEntregaFallida;
                         pedido.EstadoActual = "Entrega fallida";
-                        datos.Observaciones ??= $"Intento de entrega fallido #{siguienteIntento}.";
+                        datos.Observaciones ??= $"Intento de entrega fallido #{pedido.IntentosEntregaFallida}.";
                     }
                 }
                 else if (datos.IDNuevoEstado == idEntregado)
@@ -162,7 +159,6 @@ namespace Back.Repositories
                 }
                 else
                 {
-                    // Otros estados: asignar y resolver nombre de estado en línea
                     pedido.IDEstadoDePedido = datos.IDNuevoEstado;
                     pedido.EstadoActual = await estados
                         .Where(e => e.IDEstadoDePedido == datos.IDNuevoEstado)
@@ -170,10 +166,8 @@ namespace Back.Repositories
                         .FirstOrDefaultAsync() ?? pedido.EstadoActual;
                 }
 
-                // Actualizar responsable del cambio
                 pedido.IDUsuario = datos.IDUsuario;
 
-                // Registrar historial del nuevo estado
                 pedido.HistorialDeEstados ??= new List<HistorialDeEstados>();
                 pedido.HistorialDeEstados.Add(new HistorialDeEstados
                 {
@@ -189,7 +183,6 @@ namespace Back.Repositories
             }
             catch
             {
-                // Si algo falla, devuelve false para que el controlador responda 400 con mensaje de negocio
                 return false;
             }
         }

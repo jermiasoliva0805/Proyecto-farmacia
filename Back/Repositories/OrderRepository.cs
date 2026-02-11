@@ -1,6 +1,6 @@
 ﻿using Back.Data;
 using Back.Models;
-using Back.DTOs; // Asegúrate de importar tus DTOs
+using Back.DTOs;
 using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,18 +10,17 @@ namespace Back.Repositories
     {
         public OrderRepository(AppDbContext context) : base(context) { }
 
-        // MÉTODO CORREGIDO: Ahora devuelve OrderSummaryDTO y hace el mapeo
         public async Task<IEnumerable<OrderSummaryDTO>> GetOrdersByStatusAsync(int statusId)
         {
             return await _context.Pedidos
-                .Include(p => p.Cliente) // Necesario para ClienteNombre
+                .Include(p => p.Cliente)
                 .Where(p => p.IDEstadoDePedido == statusId)
                 .Select(p => new OrderSummaryDTO
                 {
                     IDPedido = p.IDPedido,
                     Fecha = p.Fecha,
                     Total = p.Total,
-                    IDEstadoDePedido = p.IDEstadoDePedido, // CLAVE: Aquí pasamos el ID al DTO
+                    IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoActual,
                     ClienteNombre = p.Cliente != null ? p.Cliente.Nombre : "Consumidor Final",
                     ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin asignar"
@@ -49,11 +48,19 @@ namespace Back.Repositories
                 await transaction.CommitAsync();
                 return pedido.IDPedido;
             }
-            catch (Exception)
+            catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        // Incluye Cliente para poder acceder al mail
+        public async Task<Pedido> GetByIdWithClienteAsync(int id)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .FirstOrDefaultAsync(p => p.IDPedido == id);
         }
 
         public async Task<Pedido> GetOrderWithDetailsAsync(int id)
