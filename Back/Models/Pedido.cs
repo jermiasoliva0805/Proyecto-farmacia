@@ -23,6 +23,9 @@ namespace Back.Models
         public int IDUsuario { get; set; }
         public int IDSucursal { get; set; }
 
+        // Nuevo: contador de intentos de entrega fallida
+        public int IntentosEntregaFallida { get; set; } = 0;
+
         // Propiedades de Navegación (Relaciones)
         public Cliente Cliente { get; set; } = null!;
         public EstadoDePedido EstadoDePedido { get; set; } = null!;
@@ -33,4 +36,3 @@ namespace Back.Models
         public ICollection<HistorialDeEstados> HistorialDeEstados { get; set; } = new List<HistorialDeEstados>();
     }
 }
- 

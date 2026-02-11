@@ -1,4 +1,5 @@
 ﻿using Back.DTOs;
+using Back.Models;
 
 namespace Back.Repositories.Interfaces
 {
@@ -10,5 +11,7 @@ namespace Back.Repositories.Interfaces
         Task<IEnumerable<OrderSummaryDTO>> GetFilteredOrdersAsync(OrderFilterDTO filters);
 
         Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO datos);
+        Task<Pedido?> GetByIdAsync(int idPedido);
+        Task UpdateAsync(Pedido pedido);
     }
 }

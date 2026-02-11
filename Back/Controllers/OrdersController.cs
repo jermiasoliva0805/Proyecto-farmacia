@@ -12,12 +12,12 @@ namespace Back.Controllers
     {
         private readonly IOrderStatusService _statusService;
         private readonly ITrackingService _trackingService;
-        private readonly IPedidoRepository _pedidoRepository; // Cambiado a IPedidoRepository para usar los filtros
+        private readonly IPedidoRepository _pedidoRepository;
 
         public OrdersController(
             IOrderStatusService statusService, 
             ITrackingService trackingService, 
-            IPedidoRepository pedidoRepository) // Inyectamos el repositorio que tiene GetFilteredOrdersAsync
+            IPedidoRepository pedidoRepository)
         {
             _statusService = statusService;
             _trackingService = trackingService;
@@ -40,7 +40,6 @@ namespace Back.Controllers
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
         {
-            // Nota: Si GetOrdersByStatusAsync no está en IPedidoRepository, asegúrate de que la interfaz lo tenga
             var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 1 }); 
             return Ok(pedidos);
         }
@@ -100,7 +99,9 @@ namespace Back.Controllers
             if (!resultado)
                 return BadRequest(new { message = "Cambio de estado rechazado por lógica de negocio." });
 
-            return Ok(new { message = "Estado actualizado." });
+            // Devolver el pedido actualizado para refrescar UI sin refetch
+            var pedidoActualizado = await _pedidoRepository.GetByIdAsync(id);
+            return Ok(new { message = "Estado actualizado.", pedido = pedidoActualizado });
         }
 
         // --- SECCIÓN CONSULTAS: TRAZABILIDAD ---

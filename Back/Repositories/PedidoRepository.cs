@@ -1,18 +1,19 @@
 ﻿using Back.Data;
 using Back.DTOs;
 using Back.Models;
+using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Back.Repositories.Interfaces;
 
 namespace Back.Repositories
 {
     public class PedidoRepository : IPedidoRepository
     {
         private readonly AppDbContext _context;
+        private const int MaxIntentosFallidos = 3;
 
         public PedidoRepository(AppDbContext context)
         {
@@ -21,7 +22,6 @@ namespace Back.Repositories
 
         public async Task<IEnumerable<OrderSummaryDTO>> GetFilteredOrdersAsync(OrderFilterDTO filters)
         {
-            // Iniciamos la base de la consulta con todas las relaciones necesarias
             var query = _context.Pedidos
                 .Include(p => p.Cliente)
                 .Include(p => p.EstadoDePedido)
@@ -29,7 +29,6 @@ namespace Back.Repositories
                 .AsNoTracking()
                 .AsQueryable();
 
-            // 1. Filtrado por Búsqueda (ID o Nombre/Apellido de Cliente)
             if (!string.IsNullOrWhiteSpace(filters.Search))
             {
                 string term = filters.Search.ToLower();
@@ -40,25 +39,21 @@ namespace Back.Repositories
                 );
             }
 
-            // 2. Filtrado por Estado
             if (filters.IDEstadoDePedido.HasValue && filters.IDEstadoDePedido.Value > 0)
             {
                 query = query.Where(p => p.IDEstadoDePedido == filters.IDEstadoDePedido.Value);
             }
 
-            // 3. Filtrado por Usuario (Responsable: Operario o Cadete)
             if (filters.IDUsuario.HasValue && filters.IDUsuario.Value > 0)
             {
                 query = query.Where(p => p.IDUsuario == filters.IDUsuario.Value);
             }
 
-            // 4. Filtrado por Cliente específico
             if (filters.IDCliente.HasValue && filters.IDCliente.Value > 0)
             {
                 query = query.Where(p => p.IDCliente == filters.IDCliente.Value);
             }
 
-            // 5. Filtrado por rango de fechas
             if (filters.FechaDesde.HasValue)
             {
                 var desde = filters.FechaDesde.Value.Date;
@@ -71,8 +66,6 @@ namespace Back.Repositories
                 query = query.Where(p => p.Fecha.Date <= hasta);
             }
 
-            // 6. Proyección y ejecución de la consulta
-            // NOTA: No incluimos 'EstaDemorado' aquí porque el DTO lo calcula automáticamente
             return await query
                 .OrderByDescending(p => p.Fecha)
                 .Select(p => new OrderSummaryDTO
@@ -80,7 +73,7 @@ namespace Back.Repositories
                     IDPedido = p.IDPedido,
                     Fecha = p.Fecha,
                     Total = p.Total,
-                    IDEstadoDePedido = p.IDEstadoDePedido, 
+                    IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
                     ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin Asignar",
@@ -90,26 +83,113 @@ namespace Back.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Pedido?> GetByIdAsync(int idPedido)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.EstadoDePedido)
+                .Include(p => p.Usuario)
+                .Include(p => p.Detalles)
+                .Include(p => p.HistorialDeEstados)
+                .FirstOrDefaultAsync(p => p.IDPedido == idPedido);
+        }
+
+        public async Task UpdateAsync(Pedido pedido)
+        {
+            _context.Pedidos.Update(pedido);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO datos)
         {
-            var pedido = await _context.Pedidos.FindAsync(datos.IDPedido);
-            if (pedido == null) return false;
-
-            pedido.IDEstadoDePedido = datos.IDNuevoEstado;
-            pedido.IDUsuario = datos.IDUsuario;
-
-            if (datos.IDNuevoEstado == 7)
-            {
-                pedido.FechaEntregaReal = DateTime.Now;
-            }
-
             try
             {
+                var pedido = await _context.Pedidos
+                    .Include(p => p.HistorialDeEstados)
+                    .FirstOrDefaultAsync(p => p.IDPedido == datos.IDPedido);
+
+                if (pedido == null) return false;
+
+                // Usa Set<EstadoDePedido>() para acceder a la tabla de estados sin necesitar DbSet explícito
+                var estados = _context.Set<EstadoDePedido>();
+
+                // Resolver IDs por nombre para evitar desalineación
+                var idEntregado = await estados
+                    .Where(e => e.NombreEstado == "Entregado")
+                    .Select(e => e.IDEstadoDePedido)
+                    .FirstOrDefaultAsync();
+
+                var idEntregaFallida = await estados
+                    .Where(e => e.NombreEstado == "Entrega fallida")
+                    .Select(e => e.IDEstadoDePedido)
+                    .FirstOrDefaultAsync();
+
+                var idCancelado = await estados
+                    .Where(e => e.NombreEstado == "Cancelado")
+                    .Select(e => e.IDEstadoDePedido)
+                    .FirstOrDefaultAsync();
+
+                // Si ya está final, no permitir cambios
+                if (pedido.IDEstadoDePedido == idEntregado || pedido.IDEstadoDePedido == idCancelado)
+                    return false;
+
+                if (datos.IDNuevoEstado == idEntregaFallida)
+                {
+                    // Conteo null-safe de intentos previos de "Entrega fallida"
+                    var fallasPrevias = pedido.HistorialDeEstados?.Count(h => h.IDEstadoDePedido == idEntregaFallida) ?? 0;
+                    var siguienteIntento = fallasPrevias + 1;
+
+                    if (siguienteIntento >= MaxIntentosFallidos)
+                    {
+                        pedido.IDEstadoDePedido = idCancelado;
+                        pedido.EstadoActual = "Cancelado";
+                        datos.Observaciones ??= "Cancelado automáticamente: superó el máximo de intentos de entrega (3).";
+                        datos.MotivoCancelacion ??= "Superó el máximo de intentos de entrega (3).";
+                    }
+                    else
+                    {
+                        pedido.IDEstadoDePedido = idEntregaFallida;
+                        pedido.EstadoActual = "Entrega fallida";
+                        datos.Observaciones ??= $"Intento de entrega fallido #{siguienteIntento}.";
+                    }
+                }
+                else if (datos.IDNuevoEstado == idEntregado)
+                {
+                    pedido.IDEstadoDePedido = idEntregado;
+                    pedido.EstadoActual = "Entregado";
+                    pedido.FechaEntregaReal = DateTime.Now;
+                    datos.Observaciones ??= "Pedido entregado exitosamente.";
+                }
+                else
+                {
+                    // Otros estados: asignar y resolver nombre de estado en línea
+                    pedido.IDEstadoDePedido = datos.IDNuevoEstado;
+                    pedido.EstadoActual = await estados
+                        .Where(e => e.IDEstadoDePedido == datos.IDNuevoEstado)
+                        .Select(e => e.NombreEstado)
+                        .FirstOrDefaultAsync() ?? pedido.EstadoActual;
+                }
+
+                // Actualizar responsable del cambio
+                pedido.IDUsuario = datos.IDUsuario;
+
+                // Registrar historial del nuevo estado
+                pedido.HistorialDeEstados ??= new List<HistorialDeEstados>();
+                pedido.HistorialDeEstados.Add(new HistorialDeEstados
+                {
+                    IDPedido = pedido.IDPedido,
+                    IDEstadoDePedido = pedido.IDEstadoDePedido,
+                    fecha_hora_inicio = DateTime.Now,
+                    IDUsuario = datos.IDUsuario,
+                    Observaciones = datos.Observaciones
+                });
+
                 await _context.SaveChangesAsync();
                 return true;
             }
             catch
             {
+                // Si algo falla, devuelve false para que el controlador responda 400 con mensaje de negocio
                 return false;
             }
         }
