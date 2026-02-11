@@ -102,6 +102,8 @@ namespace Back
             builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();
             builder.Services.AddScoped<ITrackingService, TrackingService>();
             builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+            builder.Services.AddTransient<EmailSender>();
 
             // --- NUEVOS SERVICIOS (Meda F.) ---
             builder.Services.AddScoped<IHistoryService, HistoryService>();
