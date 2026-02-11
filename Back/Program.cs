@@ -102,8 +102,11 @@ namespace Back
             builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();
             builder.Services.AddScoped<ITrackingService, TrackingService>();
             builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+
+            // Registro de SMTP y servicios de email (ANTES de Build y sin duplicados)
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-            builder.Services.AddTransient<EmailSender>();
+            builder.Services.AddSingleton<EmailTemplateService>();  // generador de HTML para correos
+            builder.Services.AddTransient<EmailSender>();           // depende de EmailTemplateService
 
             // --- NUEVOS SERVICIOS (Meda F.) ---
             builder.Services.AddScoped<IHistoryService, HistoryService>();

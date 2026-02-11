@@ -29,12 +29,13 @@ namespace Back.Services
         // 1. ASIGNAR OPERARIO (ADMIN) - Pasa de Sin preparar (1) a Preparar pedido (2)
         public async Task<bool> AsignarOperarioAsync(AssignOperatorDTO dto)
         {
-            var pedido = await _orderRepository.GetByIdAsync(dto.PedidoId);
+            // Trae Cliente para poder enviar correo
+            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
             if (pedido == null || pedido.IDEstadoDePedido != 1) return false;
 
             pedido.IDEstadoDePedido = 2; // Preparar pedido
-            pedido.IDUsuario = dto.OperarioId; 
+            pedido.IDUsuario = dto.OperarioId;
 
             var historial = new HistorialDeEstados
             {
@@ -45,18 +46,53 @@ namespace Back.Services
                 Observaciones = "Admin asignó operario para la preparación del pedido."
             };
 
-            return await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial);
+
+            // Notificación por email
+            if (resultado)
+            {
+                var destinatario = pedido.Cliente?.Mail;
+                var nombreCliente = pedido.Cliente != null
+                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    : "Cliente";
+                var estadoDescripcion = ObtenerDescripcionEstado(2);
+
+                if (!string.IsNullOrWhiteSpace(destinatario))
+                {
+                    try
+                    {
+                        await _emailSender.EnviarCorreoCambioEstadoHtml(
+                            destinatario,
+                            nombreCliente,
+                            estadoDescripcion,
+                            pedido.IDPedido,
+                            2,                                  // Preparar pedido
+                            "Farmacia General Paz",
+                            "contacto@farmaciageneralpaz.com",
+                            "FGP"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error enviando mail (Preparar pedido): {ex.Message}");
+                    }
+                }
+            }
+
+            return resultado;
         }
 
         // 2. ASIGNAR CADETE (ADMIN) - Pasa de Listo para despachar (4) a En camino (6)
         public async Task<bool> AsignarCadeteAsync(AssignDeliveryDTO dto)
         {
-            var pedido = await _orderRepository.GetByIdAsync(dto.PedidoId);
+            // Trae Cliente para poder enviar correo
+            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
+            // El pedido debe estar en 4 (Listo para despachar) para pasar a 6 (En camino)
             if (pedido == null || pedido.IDEstadoDePedido != 4) return false;
 
             pedido.IDEstadoDePedido = 6; // En camino
-            pedido.IDUsuario = dto.CadeteId; 
+            pedido.IDUsuario = dto.CadeteId;
 
             var historial = new HistorialDeEstados
             {
@@ -67,7 +103,40 @@ namespace Back.Services
                 Observaciones = "Admin asignó cadete. Pedido en camino al domicilio."
             };
 
-            return await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial);
+
+            // Notificación por email
+            if (resultado)
+            {
+                var destinatario = pedido.Cliente?.Mail;
+                var nombreCliente = pedido.Cliente != null
+                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    : "Cliente";
+                var estadoDescripcion = ObtenerDescripcionEstado(6);
+
+                if (!string.IsNullOrWhiteSpace(destinatario))
+                {
+                    try
+                    {
+                        await _emailSender.EnviarCorreoCambioEstadoHtml(
+                            destinatario,
+                            nombreCliente,
+                            estadoDescripcion,
+                            pedido.IDPedido,
+                            6,                                  // En camino
+                            "Farmacia General Paz",
+                            "contacto@farmaciageneralpaz.com",
+                            "FGP"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error enviando mail (En camino): {ex.Message}");
+                    }
+                }
+            }
+
+            return resultado;
         }
 
         // 3. CAMBIO DE ESTADO FINAL (CADETE) - Entregado (7) o Entrega fallida (8)
@@ -94,8 +163,8 @@ namespace Back.Services
                 IDEstadoDePedido = changeStatusDto.IDNuevoEstado,
                 IDUsuario = changeStatusDto.IDUsuario,
                 fecha_hora_inicio = DateTime.Now,
-                Observaciones = changeStatusDto.IDNuevoEstado == 8 
-                                ? changeStatusDto.MotivoCancelacion 
+                Observaciones = changeStatusDto.IDNuevoEstado == 8
+                                ? changeStatusDto.MotivoCancelacion
                                 : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete.")
             };
 
@@ -114,11 +183,18 @@ namespace Back.Services
                 {
                     try
                     {
-                        await _emailSender.EnviarCorreoCambioEstado(
+                        // Para Entrega Fallida (8) puedes pasar intentoEntrega si lo manejas; aquí va null por defecto
+                        await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
                             estadoDescripcion,
-                            pedido.IDPedido
+                            pedido.IDPedido,
+                            changeStatusDto.IDNuevoEstado,
+                            "Farmacia General Paz",
+                            "contacto@farmaciageneralpaz.com",
+                            "FGP",
+                            intentoEntrega: null, // coloca el intento real si tienes esa lógica
+                            intentosMax: 3
                         );
                     }
                     catch (Exception ex)
@@ -139,8 +215,9 @@ namespace Back.Services
         // 4. CANCELAR PEDIDO (ADMIN/OPERARIO) - Pasa a Cancelado (10)
         public async Task<bool> CancelarPedidoAsync(CancelarPedidoDTO dto, int userId)
         {
-            var pedido = await _orderRepository.GetByIdAsync(dto.PedidoId);
+            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
+            // No se puede cancelar si ya está entregado (7) o ya cancelado (10)
             if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 10)
                 return false;
 
@@ -150,17 +227,51 @@ namespace Back.Services
             {
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 10,
-                IDUsuario = userId,
+                IDUsuario = userId, // El ID del Admin/Operario que cancela
                 fecha_hora_inicio = DateTime.Now,
+                // Registramos el ID del motivo y la justificación en las observaciones
                 Observaciones = $"Cancelación (Motivo ID: {dto.MotivoCancelacionId}). Justificación: {dto.Justificacion ?? "Sin justificación adicional."}"
             };
 
-            return await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial);
+
+            // Notificación por email
+            if (resultado)
+            {
+                var destinatario = pedido.Cliente?.Mail;
+                var nombreCliente = pedido.Cliente != null
+                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    : "Cliente";
+                var estadoDescripcion = ObtenerDescripcionEstado(10);
+
+                if (!string.IsNullOrWhiteSpace(destinatario))
+                {
+                    try
+                    {
+                        await _emailSender.EnviarCorreoCambioEstadoHtml(
+                            destinatario,
+                            nombreCliente,
+                            estadoDescripcion,
+                            pedido.IDPedido,
+                            10,                                 // Cancelado
+                            "Farmacia General Paz",
+                            "contacto@farmaciageneralpaz.com",
+                            "FGP"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error enviando mail (Cancelado): {ex.Message}");
+                    }
+                }
+            }
+
+            return resultado;
         }
 
         public async Task<bool> CancelarPedidoAsync(CancelarPedidoDTO dto)
         {
-            var pedido = await _orderRepository.GetByIdAsync(dto.PedidoId);
+            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
             if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 10)
                 return false;
@@ -173,12 +284,45 @@ namespace Back.Services
             {
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 10,
-                IDUsuario = pedido.IDUsuario,
+                IDUsuario = pedido.IDUsuario, // Usuario responsable registrado
                 fecha_hora_inicio = DateTime.Now,
                 Observaciones = $"Cancelación. Motivo ID: {dto.MotivoCancelacionId}. Justificación: {dto.Justificacion ?? "Sin detalle."}"
             };
 
-            return await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial);
+
+            // Notificación por email
+            if (resultado)
+            {
+                var destinatario = pedido.Cliente?.Mail;
+                var nombreCliente = pedido.Cliente != null
+                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    : "Cliente";
+                var estadoDescripcion = ObtenerDescripcionEstado(10);
+
+                if (!string.IsNullOrWhiteSpace(destinatario))
+                {
+                    try
+                    {
+                        await _emailSender.EnviarCorreoCambioEstadoHtml(
+                            destinatario,
+                            nombreCliente,
+                            estadoDescripcion,
+                            pedido.IDPedido,
+                            10,                                 // Cancelado
+                            "Farmacia General Paz",
+                            "contacto@farmaciageneralpaz.com",
+                            "FGP"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error enviando mail (Cancelado - sin userId): {ex.Message}");
+                    }
+                }
+            }
+
+            return resultado;
         }
 
         // Utilidad: Descripción legible del estado

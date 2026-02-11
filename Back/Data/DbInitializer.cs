@@ -34,7 +34,6 @@ namespace Back.Data
                 new EstadoDePedido { NombreEstado = "En camino", motivo_cancelacion = "N/A" },         // ID 6
                 new EstadoDePedido { NombreEstado = "Entregado", motivo_cancelacion = "N/A" },         // ID 7
                 new EstadoDePedido { NombreEstado = "Entrega fallida", motivo_cancelacion = "N/A" },
-                new EstadoDePedido { NombreEstado = "Devolución", motivo_cancelacion = "N/A" },
                 new EstadoDePedido { NombreEstado = "Cancelado", motivo_cancelacion = "Stock" }
             );
             context.SaveChanges();
