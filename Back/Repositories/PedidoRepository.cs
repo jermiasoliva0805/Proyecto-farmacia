@@ -72,7 +72,6 @@ namespace Back.Repositories
             }
 
             // 6. Proyección y ejecución de la consulta
-            // NOTA: No incluimos 'EstaDemorado' aquí porque el DTO lo calcula automáticamente
             return await query
                 .OrderByDescending(p => p.Fecha)
                 .Select(p => new OrderSummaryDTO
@@ -80,7 +79,7 @@ namespace Back.Repositories
                     IDPedido = p.IDPedido,
                     Fecha = p.Fecha,
                     Total = p.Total,
-                    IDEstadoDePedido = p.IDEstadoDePedido, 
+                    IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
                     ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin Asignar",
@@ -92,23 +91,90 @@ namespace Back.Repositories
 
         public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO datos)
         {
-            var pedido = await _context.Pedidos.FindAsync(datos.IDPedido);
-            if (pedido == null) return false;
-
-            pedido.IDEstadoDePedido = datos.IDNuevoEstado;
-            pedido.IDUsuario = datos.IDUsuario;
-
-            if (datos.IDNuevoEstado == 7)
-            {
-                pedido.FechaEntregaReal = DateTime.Now;
-            }
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
+                var pedido = await _context.Pedidos.FindAsync(datos.IDPedido);
+                if (pedido == null) return false;
+
+                var ahora = DateTime.Now;
+
+                // 1. "Cerrar" el estado anterior en el historial
+                // Buscamos el registro del historial que todavía no tiene fecha de fin para este pedido
+                var historialAnterior = await _context.HistorialesDeEstados
+                    .Where(h => h.IDPedido == datos.IDPedido && h.fecha_hora_fin == null)
+                    .FirstOrDefaultAsync();
+
+                if (historialAnterior != null)
+                {
+                    historialAnterior.fecha_hora_fin = ahora;
+                }
+
+                // 2. Actualizar el pedido principal
+                pedido.IDEstadoDePedido = datos.IDNuevoEstado;
+                pedido.IDUsuario = datos.IDUsuario;
+
+                if (datos.IDNuevoEstado == 7)
+                {
+                    pedido.FechaEntregaReal = ahora;
+                }
+
+                // Lógica de cancelación
+                if (!string.IsNullOrEmpty(datos.MotivoCancelacion))
+                {
+                    if (int.TryParse(datos.MotivoCancelacion, out int idMotivo))
+                    {
+                        pedido.MotivoCancelacionId = idMotivo;
+                    }
+                    pedido.JustificacionCancelacion = datos.MotivoCancelacion;
+                }
+                else
+                {
+                    pedido.MotivoCancelacionId = null;
+                    pedido.JustificacionCancelacion = null;
+                }
+
+                // 3. Crear el nuevo registro de historial (el nuevo estado actual)
+                var nuevoHistorial = new HistorialDeEstados
+                {
+                    IDPedido = datos.IDPedido,
+                    IDEstadoDePedido = datos.IDNuevoEstado,
+                    IDUsuario = datos.IDUsuario,
+                    fecha_hora_inicio = ahora,
+                    fecha_hora_fin = null, // Queda abierto porque es el actual
+                    Observaciones = datos.Observaciones ?? "Cambio de estado"
+                };
+
+                _context.HistorialesDeEstados.Add(nuevoHistorial);
+
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
                 return true;
             }
-            catch
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        }
+        public async Task<Pedido> GetByIdAsync(int id)
+        {
+            return await _context.Pedidos
+                .Include(p => p.EstadoDePedido)
+                .Include(p => p.Cliente)
+                .FirstOrDefaultAsync(p => p.IDPedido == id);
+        }
+
+        public async Task<bool> UpdateAsync(Pedido pedido)
+        {
+            _context.Entry(pedido).State = EntityState.Modified;
+            try
+            {
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception)
             {
                 return false;
             }

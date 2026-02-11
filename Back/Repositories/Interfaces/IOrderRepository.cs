@@ -1,5 +1,5 @@
 ﻿using Back.Models;
-using Back.DTOs; // Asegúrate de agregar este using para ver el DTO
+using Back.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,14 +7,13 @@ namespace Back.Repositories.Interfaces
 {
     public interface IOrderRepository : IGenericRepository<Pedido>
     {
-        // RF17: Crear el pedido con sus detalles
         Task<int> CreateOrderAsync(Pedido pedido);
-
-        // Para ver el pedido con sus productos (Hoja de preparación)
         Task<Pedido> GetOrderWithDetailsAsync(int id);
 
-        // MODIFICADO: Cambiamos Task<IEnumerable<Pedido>> por Task<IEnumerable<OrderSummaryDTO>>
-        // Esto es vital para que el mapeo que hicimos en el Repository funcione
+        // Lista de pedidos por estado (resumidos)
         Task<IEnumerable<OrderSummaryDTO>> GetOrdersByStatusAsync(int statusId);
+
+        // NUEVO: trae el pedido incluyendo el Cliente (para obtener el mail)
+        Task<Pedido> GetByIdWithClienteAsync(int id);
     }
 }

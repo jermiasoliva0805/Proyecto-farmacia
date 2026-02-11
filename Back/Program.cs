@@ -12,7 +12,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json;
-
+using Microsoft.OpenApi.Models;
+using Back.Interfaces; // Asegúrate de tener este using para tus interfaces de Repositorio
 
 namespace Back
 {
@@ -21,52 +22,76 @@ namespace Back
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            
-            // Busca donde dice builder.Services.AddControllers() y cámbialo por esto:
+
+            // 1. Configuración de Controladores y JSON
             builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // 1. Mantenemos camelCase (minúsculas) para que el Login y el resto del Front no se rompan
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        
-        // 2. IMPORTANTE: Esto permite que si el Front manda "idPedido" o "IDPedido", .NET lo entienda igual
-        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    });
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                });
 
-            // --- CONFIGURACI�N DE SERVICIOS ---
-
-            builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
 
-            // Configuraci�n de Base de Datos
+            // 2. Configuración de Swagger con Seguridad JWT
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "API Farmacia", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: 'Bearer 12345abcdef'",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
+
+            // 3. Configuración de Base de Datos
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // AutoMapper
+            // 4. AutoMapper
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
 
-            // FluentValidation
+            // --- FLUENT VALIDATION ---
             builder.Services.AddFluentValidationAutoValidation();
-            builder.Services.AddValidatorsFromAssemblyContaining<LoginValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
 
-            // --- CAPA DE REPOSITORIOS ---
+            // 5. Inyección de Dependencias (Repositorios)
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAuthRepository, AuthRepository>();
             builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
-
-            // Repositorios de Florencia (RF2, RF6)
             builder.Services.AddScoped<IOrderStatusRepository, OrderStatusRepository>();
             builder.Services.AddScoped<ITrackingRepository, TrackingRepository>();
-
-            // Repositorios Base
-            builder.Services.AddScoped<IClientRepository, ClientRepository>(); // Asegurado con interfaz
-            builder.Services.AddScoped<IProductRepository, ProductRepository>(); // Asegurado con interfaz
+            builder.Services.AddScoped<IClientRepository, ClientRepository>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
 
-            // --- CAPA DE SERVICIOS ---
+            // --- NUEVOS REPOSITORIOS (Meda F.) ---
+            builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
+            builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+            builder.Services.AddScoped<ICancellationRepository, CancellationRepository>();
+
+            // 6. Inyección de Dependencias (Servicios)
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IProductService, ProductService>();
@@ -74,12 +99,21 @@ namespace Back
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILocalidadService, LocalidadService>();
             builder.Services.AddScoped<IPedidoService, PedidoService>();
-
-            // Servicios de Florencia (Pedidos y Flujo Operativo)
             builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();
             builder.Services.AddScoped<ITrackingService, TrackingService>();
+            builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
-            // --- CONFIGURACI�N DE SEGURIDAD JWT ---
+            // Registro de SMTP y servicios de email (ANTES de Build y sin duplicados)
+            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+            builder.Services.AddSingleton<EmailTemplateService>();  // generador de HTML para correos
+            builder.Services.AddTransient<EmailSender>();           // depende de EmailTemplateService
+
+            // --- NUEVOS SERVICIOS (Meda F.) ---
+            builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+            builder.Services.AddScoped<ICancellationService, CancellationService>();
+
+            // 7. Configuración de Seguridad JWT
             var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options => {
@@ -94,7 +128,7 @@ namespace Back
 
             var app = builder.Build();
 
-            // --- INICIALIZACI�N DE DATOS (SEEDING) ---
+            // 8. Inicialización de Datos (Seeding)
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -102,29 +136,26 @@ namespace Back
                 {
                     var context = services.GetRequiredService<AppDbContext>();
 
-                    // ESTO BORRAR� TODA LA BASE DE DATOS Y LA CREAR� DE CERO
-                    // �salo solo en desarrollo para limpiar las llaves for�neas rebeldes
-                    context.Database.EnsureDeleted();
-                    context.Database.EnsureCreated();
+                    // ATENCIÓN: Esto borra y recrea la BD.
+                    // context.Database.EnsureDeleted();
+                    // context.Database.EnsureCreated();
 
                     DbInitializer.Initialize(context);
                 }
                 catch (Exception ex)
                 {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Ocurri� un error al sembrar la base de datos.");
+                    logger.LogError(ex, "Ocurrió un error al sembrar la base de datos.");
                 }
             }
 
-            // --- PIPELINE DE SOLICITUDES HTTP ---
-
+            // 9. Pipeline de Solicitudes HTTP
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            // Habilitar CORS si es necesario para el Frontend
             app.UseCors(x => x
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
@@ -132,7 +163,6 @@ namespace Back
 
             app.UseHttpsRedirection();
 
-            // IMPORTANTE: Authentication debe ir SIEMPRE antes de Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -140,6 +170,5 @@ namespace Back
 
             app.Run();
         }
-        
     }
 }

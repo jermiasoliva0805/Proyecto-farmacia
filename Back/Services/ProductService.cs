@@ -17,5 +17,14 @@ namespace Back.Services
         {
             return await _productRepository.GetAllAsync();
         }
+        /// <summary>
+        /// Obtiene un producto específico por su ID.
+        /// Se utiliza para validar stock y obtener el precio unitario real 
+        /// al momento de crear o editar un pedido.
+        /// </summary>
+        public async Task<Producto> GetProductByIdAsync(int id)
+        {
+            return await _productRepository.GetByIdAsync(id);
+        }
     }
 }

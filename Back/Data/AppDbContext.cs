@@ -20,6 +20,7 @@ namespace Back.Data
         public DbSet<EstadoDePedido> EstadosDePedidos { get; set; }
         public DbSet<IntentoDeEntrega> IntentosDeEntregas { get; set; }
         public DbSet<HistorialDeEstados> HistorialesDeEstados { get; set; }
+        public DbSet<MotivoCancelacion> MotivosCancelacion { get; set; }
 
         // 2. La Configuración 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
