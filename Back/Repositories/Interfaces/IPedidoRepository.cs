@@ -10,15 +10,16 @@ namespace Back.Repositories.Interfaces
     /// </summary>
     public interface IPedidoRepository
     {
+        // Consultas filtradas para reportes y administración
         Task<IEnumerable<OrderSummaryDTO>> GetFilteredOrdersAsync(OrderFilterDTO filters);
 
         // Obtenemos el objeto completo para validaciones complejas en el Service
-        Task<Pedido> GetByIdAsync(int id);
+        Task<Pedido?> GetByIdAsync(int idPedido);
 
         // Este método ahora debe ser capaz de procesar la cancelación (Motivo)
         Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO datos);
 
-        // Método genérico para guardar cambios en el objeto Pedido
-        Task<bool> UpdateAsync(Pedido pedido);
+        // Actualización genérica de un pedido
+        Task UpdateAsync(Pedido pedido);
     }
 }

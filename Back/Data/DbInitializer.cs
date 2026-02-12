@@ -1,8 +1,6 @@
-﻿﻿using Back.Data;
-using Back.Models;
+﻿﻿using Back.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Back.Data
@@ -15,7 +13,7 @@ namespace Back.Data
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
 
-            // 1. MOTIVOS DE CANCELACIÓN (Nuevos requerimientos)
+            // 1. MOTIVOS DE CANCELACIÓN
             context.MotivosCancelacion.AddRange(
                 new MotivoCancelacion { Nombre = "Arrepentimiento" },
                 new MotivoCancelacion { Nombre = "Falta de stock" },
@@ -24,28 +22,28 @@ namespace Back.Data
             );
             context.SaveChanges();
 
-            // 1. ESTADOS
+            // 2. ESTADOS DE PEDIDO
             context.EstadosDePedidos.AddRange(
-                new EstadoDePedido { NombreEstado = "Sin preparar", motivo_cancelacion = "N/A" },      // ID 1
-                new EstadoDePedido { NombreEstado = "Preparar pedido", motivo_cancelacion = "N/A" },   // ID 2
-                new EstadoDePedido { NombreEstado = "Demorado", motivo_cancelacion = "N/A" },          // ID 3
-                new EstadoDePedido { NombreEstado = "Listo para despachar", motivo_cancelacion = "N/A" }, // ID 4
-                new EstadoDePedido { NombreEstado = "Despachando", motivo_cancelacion = "N/A" },       // ID 5
-                new EstadoDePedido { NombreEstado = "En camino", motivo_cancelacion = "N/A" },         // ID 6
-                new EstadoDePedido { NombreEstado = "Entregado", motivo_cancelacion = "N/A" },         // ID 7
+                new EstadoDePedido { NombreEstado = "Sin preparar", motivo_cancelacion = "N/A" },      
+                new EstadoDePedido { NombreEstado = "Preparar pedido", motivo_cancelacion = "N/A" },   
+                new EstadoDePedido { NombreEstado = "Demorado", motivo_cancelacion = "N/A" },          
+                new EstadoDePedido { NombreEstado = "Listo para despachar", motivo_cancelacion = "N/A" }, 
+                new EstadoDePedido { NombreEstado = "Despachando", motivo_cancelacion = "N/A" },       
+                new EstadoDePedido { NombreEstado = "En camino", motivo_cancelacion = "N/A" },         
+                new EstadoDePedido { NombreEstado = "Entregado", motivo_cancelacion = "N/A" },         
                 new EstadoDePedido { NombreEstado = "Entrega fallida", motivo_cancelacion = "N/A" },
-                new EstadoDePedido { NombreEstado = "Cancelado", motivo_cancelacion = "Stock" }
+                new EstadoDePedido { NombreEstado = "Cancelado", motivo_cancelacion = "Arrepentimiento" }
             );
             context.SaveChanges();
 
-            // 2. LOCALIDADES Y BARRIOS 
+            // 3. LOCALIDADES Y BARRIOS 
             var cordoba = new Localidad { Ciudad = "Córdoba", Provincia = "Córdoba", CodigoPostal = "5000" };
             context.Localidades.Add(cordoba);
             context.SaveChanges();
             context.Barrios.Add(new Barrio { Nombre = "Nueva Córdoba", IDLocalidad = cordoba.IDLocalidad });
             context.SaveChanges();
 
-            // 3. SUCURSALES Y PRODUCTOS 
+            // 4. SUCURSALES Y PRODUCTOS 
             context.Sucursales.Add(new Sucursal { NombreSucursal = "Farmacia Centro", Dirección = "Av. Colon 123", Teléfono = "3514445566" });
             context.SaveChanges();
 
@@ -55,7 +53,7 @@ namespace Back.Data
             );
             context.SaveChanges();
 
-            // 4. USUARIOS
+            // 5. USUARIOS
             var suc = context.Sucursales.First();
             context.Usuarios.AddRange(
                 new Usuario { Nombre = "Admin", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail = "a@a.com" },
@@ -64,7 +62,7 @@ namespace Back.Data
             );
             context.SaveChanges();
 
-            // 5. CLIENTES (con mail correcto)
+            // 6. CLIENTES
             context.Clientes.Add(new Cliente
             {
                 Nombre = "Juan",
@@ -96,14 +94,14 @@ namespace Back.Data
             };
             context.Pedidos.Add(p1);
 
-            // NUEVO PEDIDO 3: LISTO PARA DESPACHAR (Para que lo vea el Cadete)
+            // PEDIDO 3: LISTO PARA DESPACHAR
             var p3 = new Pedido {
                 Fecha = DateTime.Now.AddHours(-3), 
                 Total = 4500, 
                 EstadoActual = "Listo para despachar",
                 IDCliente = cliente.IDCliente, 
-                IDEstadoDePedido = stListo.IDEstadoDePedido, // ID 4
-                IDUsuario = operario.IDUsuario, // Lo preparó Pepe
+                IDEstadoDePedido = stListo.IDEstadoDePedido,
+                IDUsuario = operario.IDUsuario,
                 IDSucursal = suc.IDSucursal, 
                 IDLocalidad = loc.IDLocalidad,
                 DireccionEntrega = "Chacabuco 123",
@@ -116,7 +114,7 @@ namespace Back.Data
             // Detalles
             context.DetallesDePedidos.Add(new DetalleDePedido { IDPedido = p3.IDPedido, IDProducto = prod.IDProducto, Cantidad = 3, PrecioUnitario = prod.PrecioProducto });
             
-            // Historial para que aparezca en trazabilidad
+            // Historial
             context.HistorialesDeEstados.Add(new HistorialDeEstados {
                 IDPedido = p3.IDPedido, IDEstadoDePedido = stListo.IDEstadoDePedido,
                 IDUsuario = operario.IDUsuario, fecha_hora_inicio = DateTime.Now.AddMinutes(-20),

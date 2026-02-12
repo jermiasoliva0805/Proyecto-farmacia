@@ -27,7 +27,10 @@ namespace Back.Models
         public int IDUsuario { get; set; }
         public int IDSucursal { get; set; }
 
-        // Propiedades de Navegación
+        // Nuevo: contador de intentos de entrega fallida
+        public int IntentosEntregaFallida { get; set; } = 0;
+
+        // Propiedades de Navegación (Relaciones)
         public Cliente Cliente { get; set; } = null!;
         public EstadoDePedido EstadoDePedido { get; set; } = null!;
         public Usuario Usuario { get; set; } = null!;

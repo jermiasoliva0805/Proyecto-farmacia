@@ -112,7 +112,10 @@ export const DashboardCadete: React.FC = () => {
                             ) : (
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {pedidosEnCamino.map((pedido) => (
-                                        <div key={pedido.idPedido} className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:-translate-y-1 ${pedido.estaDemorado ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-100 hover:shadow-md'}`}>
+                                        <div
+                                            key={pedido.idPedido}
+                                            className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:-translate-y-1 ${pedido.estaDemorado ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-100'}`}
+                                        >
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm`}>
@@ -131,10 +134,20 @@ export const DashboardCadete: React.FC = () => {
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3">
-                                                <Button variant="primary" size="sm" onClick={() => handleConfirmarEntrega(pedido)} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => handleConfirmarEntrega(pedido)}
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                                >
                                                     <Navigation className="w-3 h-3 mr-2" /> Entregar
                                                 </Button>
-                                                <Button variant="secondary" size="sm" onClick={() => handleVerDetalle(pedido)} className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleVerDetalle(pedido)}
+                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg"
+                                                >
                                                     <Eye className="w-3 h-3 mr-2" /> Ver
                                                 </Button>
                                             </div>
@@ -160,22 +173,38 @@ export const DashboardCadete: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {pedidos.filter(p => p.estadoNombre !== 'En camino').map((pedido) => (
-                                            <tr key={pedido.idPedido} className="hover:bg-gray-50">
-                                                <td className="p-4 font-medium text-gray-700">#{pedido.idPedido}</td>
-                                                <td className="p-4 text-sm">{pedido.clienteNombre}</td>
-                                                <td className="p-4">
-                                                    <Badge variant={pedido.estadoNombre === 'Entregado' ? 'success' : 'info'}>
-                                                        {pedido.estadoNombre}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button onClick={() => handleVerDetalle(pedido)} className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:underline">
-                                                        Detalles
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {pedidos
+                                            .filter(p => p.estadoNombre !== 'En camino')
+                                            .map((pedido) => (
+                                                <tr key={pedido.idPedido} className="hover:bg-gray-50">
+                                                    <td className="p-4 font-medium text-gray-700">#{pedido.idPedido}</td>
+                                                    <td className="p-4 text-sm">{pedido.clienteNombre}</td>
+                                                    <td className="p-4">
+                                                        <Badge
+                                                            variant={pedido.estadoNombre === 'Entregado' ? 'success' : 'info'}
+                                                            className="w-full justify-center py-1"
+                                                        >
+                                                            {pedido.estadoNombre}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="p-4 text-right flex gap-2 justify-end">
+                                                        <button
+                                                            onClick={() => handleVerDetalle(pedido)}
+                                                            className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:underline"
+                                                        >
+                                                            Detalles
+                                                        </button>
+                                                        <Button
+                                                            variant="primary"
+                                                            size="sm"
+                                                            onClick={() => handleConfirmarEntrega(pedido)}
+                                                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs px-3 py-1"
+                                                        >
+                                                            Reintentar Entrega
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -185,11 +214,20 @@ export const DashboardCadete: React.FC = () => {
             </div>
 
             {selectedPedido && (
-                <ConfirmarEntregaModal isOpen={modalOpen} onClose={() => setModalOpen(false)} pedido={selectedPedido} onSuccess={loadPedidos} />
+                <ConfirmarEntregaModal
+                    isOpen={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    pedido={selectedPedido}
+                    onSuccess={loadPedidos}
+                />
             )}
             
             {selectedPedidoDetalle && (
-                <DetallePedidoModal isOpen={modalDetalleOpen} onClose={() => setModalDetalleOpen(false)} pedido={selectedPedidoDetalle} />
+                <DetallePedidoModal
+                    isOpen={modalDetalleOpen}
+                    onClose={() => setModalDetalleOpen(false)}
+                    pedido={selectedPedidoDetalle}
+                />
             )}
         </DashboardLayout>
     );
