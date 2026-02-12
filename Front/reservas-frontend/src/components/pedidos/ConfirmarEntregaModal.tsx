@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Modal } from '@components/common/Modal';
 import { Button } from '@components/common/Button';
 import { Alert } from '@components/common/Alert';
-import { Input } from '@components/common/Input';
 import { pedidosService } from '../../service/PedidosService';
 import { OrderSummaryDTO } from '../../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
@@ -40,13 +39,12 @@ export const ConfirmarEntregaModal: React.FC<ConfirmarEntregaModalProps> = ({
 
         try {
             // RF2 - Cambiar estado del pedido (Cadete)
-            
             await pedidosService.cambiarEstado({
-        idPedido: pedido.idPedido,
-        idNuevoEstado: tipoResultado === 'entregado' ? 7 : 8, 
-        idUsuario: user!.id,
-        observaciones: observaciones, // Este texto viajará como Observaciones y MotivoCancelacion
-        });
+                idPedido: pedido.idPedido,
+                idNuevoEstado: tipoResultado === 'entregado' ? 7 : 8, // ✅ IDs numéricos
+                idUsuario: user!.id,
+                observaciones: observaciones,
+            });
 
             onSuccess();
             onClose();
@@ -112,7 +110,7 @@ export const ConfirmarEntregaModal: React.FC<ConfirmarEntregaModalProps> = ({
                             <XCircle className={`w-8 h-8 mx-auto mb-2 ${
                                 tipoResultado === 'no-entregado' ? 'text-white' : 'text-red-600'
                             }`} />
-                            <span className="font-medium">No Entregado</span>
+                            <span className="font-medium">Entrega fallida</span>
                         </button>
                     </div>
                 </div>

@@ -40,31 +40,19 @@ namespace Back.Repositories
             }
 
             if (filters.IDEstadoDePedido.HasValue && filters.IDEstadoDePedido.Value > 0)
-            {
                 query = query.Where(p => p.IDEstadoDePedido == filters.IDEstadoDePedido.Value);
-            }
 
             if (filters.IDUsuario.HasValue && filters.IDUsuario.Value > 0)
-            {
                 query = query.Where(p => p.IDUsuario == filters.IDUsuario.Value);
-            }
 
             if (filters.IDCliente.HasValue && filters.IDCliente.Value > 0)
-            {
                 query = query.Where(p => p.IDCliente == filters.IDCliente.Value);
-            }
 
             if (filters.FechaDesde.HasValue)
-            {
-                var desde = filters.FechaDesde.Value.Date;
-                query = query.Where(p => p.Fecha.Date >= desde);
-            }
+                query = query.Where(p => p.Fecha.Date >= filters.FechaDesde.Value.Date);
 
             if (filters.FechaHasta.HasValue)
-            {
-                var hasta = filters.FechaHasta.Value.Date;
-                query = query.Where(p => p.Fecha.Date <= hasta);
-            }
+                query = query.Where(p => p.Fecha.Date <= filters.FechaHasta.Value.Date);
 
             return await query
                 .OrderByDescending(p => p.Fecha)
@@ -113,23 +101,20 @@ namespace Back.Repositories
 
                 var estados = _context.Set<EstadoDePedido>();
 
-                var idEntregado = await estados
-                    .Where(e => e.NombreEstado == "Entregado")
-                    .Select(e => e.IDEstadoDePedido)
-                    .FirstOrDefaultAsync();
+                var idEntregado = await estados.Where(e => e.NombreEstado == "Entregado")
+                                               .Select(e => e.IDEstadoDePedido)
+                                               .FirstOrDefaultAsync();
 
-                var idEntregaFallida = await estados
-                    .Where(e => e.NombreEstado == "Entrega fallida")
-                    .Select(e => e.IDEstadoDePedido)
-                    .FirstOrDefaultAsync();
+                var idEntregaFallida = await estados.Where(e => e.NombreEstado == "Entrega fallida")
+                                                    .Select(e => e.IDEstadoDePedido)
+                                                    .FirstOrDefaultAsync();
 
-                var idCancelado = await estados
-                    .Where(e => e.NombreEstado == "Cancelado")
-                    .Select(e => e.IDEstadoDePedido)
-                    .FirstOrDefaultAsync();
+                var idCancelado = await estados.Where(e => e.NombreEstado == "Cancelado")
+                                               .Select(e => e.IDEstadoDePedido)
+                                               .FirstOrDefaultAsync();
 
-                // Si ya está finalizado, no permitir cambios
-                if (pedido.IDEstadoDePedido == idEntregado || pedido.IDEstadoDePedido == idCancelado)
+                // ✅ Solo bloquear si ya está cancelado
+                if (pedido.IDEstadoDePedido == idCancelado)
                     return false;
 
                 if (datos.IDNuevoEstado == idEntregaFallida)

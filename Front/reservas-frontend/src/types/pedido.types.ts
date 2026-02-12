@@ -38,15 +38,15 @@ export interface AssignDeliveryDTO {
 
 export interface ChangeOrderStatusDTO {
     idPedido: number;
-    idNuevoEstado: number;
+    idNuevoEstado: number;   // ✅ ahora es number, consistente con el back
     idUsuario: number;
     observaciones?: string;
     motivoCancelacion?: string;
 }
 
 export interface OrderFilterDTO {
-    estado?: boolean;      // <--- Agregado el ?
-    search?: any;          // <--- Agregado el ?
+    estado?: string;          // ✅ corregido: debe ser string, no boolean
+    search?: string;          // ✅ corregido: debe ser string, no any
     idEstadoDePedido?: number;
     idUsuario?: number;
     idCliente?: number;

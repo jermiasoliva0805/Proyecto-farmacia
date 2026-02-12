@@ -325,16 +325,14 @@ namespace Back.Migrations
                     b.Property<int>("IDUsuario")
                         .HasColumnType("int");
 
-
                     b.Property<int>("IntentosEntregaFallida")
-                    .HasColumnType("int");
+                        .HasColumnType("int");
 
                     b.Property<string>("JustificacionCancelacion")
-                    .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("MotivoCancelacionId")
-                    .HasColumnType("int");
-
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Total")
                         .HasPrecision(18, 2)

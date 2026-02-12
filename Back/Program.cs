@@ -12,8 +12,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization; // IMPORTANTE para ReferenceHandler
 using Microsoft.OpenApi.Models;
-using Back.Interfaces; // Asegúrate de tener este using para tus interfaces de Repositorio
+using Back.Interfaces;
 
 namespace Back
 {
@@ -29,6 +30,8 @@ namespace Back
                 {
                     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // 🔑 evita ciclos
+                    options.JsonSerializerOptions.WriteIndented = true; // opcional, para legibilidad
                 });
 
             builder.Services.AddEndpointsApiExplorer();
@@ -86,7 +89,7 @@ namespace Back
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
 
-            // --- NUEVOS REPOSITORIOS (Meda F.) ---
+            // --- NUEVOS REPOSITORIOS ---
             builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
             builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
             builder.Services.AddScoped<ICancellationRepository, CancellationRepository>();
@@ -103,12 +106,10 @@ namespace Back
             builder.Services.AddScoped<ITrackingService, TrackingService>();
             builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
-            // Registro de SMTP y servicios de email (ANTES de Build y sin duplicados)
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-            builder.Services.AddSingleton<EmailTemplateService>();  // generador de HTML para correos
-            builder.Services.AddTransient<EmailSender>();           // depende de EmailTemplateService
+            builder.Services.AddSingleton<EmailTemplateService>();
+            builder.Services.AddTransient<EmailSender>();
 
-            // --- NUEVOS SERVICIOS (Meda F.) ---
             builder.Services.AddScoped<IHistoryService, HistoryService>();
             builder.Services.AddScoped<IDeliveryService, DeliveryService>();
             builder.Services.AddScoped<ICancellationService, CancellationService>();
@@ -135,11 +136,6 @@ namespace Back
                 try
                 {
                     var context = services.GetRequiredService<AppDbContext>();
-
-                    // ATENCIÓN: Esto borra y recrea la BD.
-                    // context.Database.EnsureDeleted();
-                    // context.Database.EnsureCreated();
-
                     DbInitializer.Initialize(context);
                 }
                 catch (Exception ex)

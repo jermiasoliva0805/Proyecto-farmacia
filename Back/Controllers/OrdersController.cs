@@ -3,6 +3,7 @@ using Back.Services.Interfaces;
 using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace Back.Controllers
 {
@@ -25,7 +26,6 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN DE REPORTES ---
-
         [Authorize]
         [HttpGet("reporte")]
         public async Task<IActionResult> GetReporte([FromQuery] OrderFilterDTO filters)
@@ -35,7 +35,6 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN ADMINISTRADOR: CONSULTAS FILTRADAS ---
-
         [Authorize(Roles = "Administrador")]
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
@@ -53,7 +52,6 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN ADMINISTRADOR: ASIGNACIÓN DE RESPONSABLES ---
-
         [Authorize(Roles = "Administrador")]
         [HttpPatch("asignar-operario")]
         public async Task<IActionResult> AsignarOperario([FromBody] AssignOperatorDTO dto)
@@ -84,27 +82,27 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN OPERATIVA: CAMBIOS DE ESTADO ---
-
         [Authorize]
         [HttpPut("{id}/estado")]
         public async Task<IActionResult> CambiarEstado(int id, [FromBody] ChangeOrderStatusDTO changeStatusDto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
             if (id != changeStatusDto.IDPedido)
                 return BadRequest(new { message = "El ID del pedido no coincide." });
 
-            var resultado = await _statusService.CambiarEstadoAsync(changeStatusDto);
+            // Usamos directamente el repositorio para aplicar la lógica de intentos fallidos
+            var resultado = await _pedidoRepository.ActualizarEstadoPedidoAsync(changeStatusDto);
 
             if (!resultado)
                 return BadRequest(new { message = "Cambio de estado rechazado por lógica de negocio." });
 
             var pedidoActualizado = await _pedidoRepository.GetByIdAsync(id);
-            return Ok(new { message = "Estado actualizado.", pedido = pedidoActualizado });
+            return Ok(new { message = "Estado actualizado correctamente.", pedido = pedidoActualizado });
         }
 
         // --- SECCIÓN CANCELACIÓN: RF16 ---
-
         [Authorize]
         [HttpPost("cancelar")]
         public async Task<IActionResult> CancelarPedido([FromBody] CancelarPedidoDTO dto)
@@ -121,7 +119,6 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN CONSULTAS: TRAZABILIDAD ---
-
         [HttpGet("{id}/seguimiento")]
         public async Task<ActionResult<OrderTrackingDTO>> GetSeguimiento(int id)
         {

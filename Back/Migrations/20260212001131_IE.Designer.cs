@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Back.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260211231142_IntentoFallido")]
-    partial class IntentoFallido
+    [Migration("20260212001131_IE")]
+    partial class IE
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -254,6 +254,26 @@ namespace Back.Migrations
                     b.ToTable("Localidades");
                 });
 
+            modelBuilder.Entity("Back.Models.MotivoCancelacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MotivosCancelacion");
+                });
+
             modelBuilder.Entity("Back.Models.Pedido", b =>
                 {
                     b.Property<int>("IDPedido")
@@ -263,6 +283,10 @@ namespace Back.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IDPedido"));
 
                     b.Property<string>("DireccionEntrega")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -307,6 +331,12 @@ namespace Back.Migrations
                     b.Property<int>("IntentosEntregaFallida")
                         .HasColumnType("int");
 
+                    b.Property<string>("JustificacionCancelacion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MotivoCancelacionId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -320,6 +350,8 @@ namespace Back.Migrations
                     b.HasIndex("IDSucursal");
 
                     b.HasIndex("IDUsuario");
+
+                    b.HasIndex("MotivoCancelacionId");
 
                     b.ToTable("Pedidos");
                 });
@@ -544,9 +576,15 @@ namespace Back.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("Back.Models.MotivoCancelacion", "MotivoCancelacion")
+                        .WithMany()
+                        .HasForeignKey("MotivoCancelacionId");
+
                     b.Navigation("Cliente");
 
                     b.Navigation("EstadoDePedido");
+
+                    b.Navigation("MotivoCancelacion");
 
                     b.Navigation("Sucursal");
 
