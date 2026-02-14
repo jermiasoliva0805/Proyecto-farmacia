@@ -10,10 +10,13 @@ export interface OrderSummaryDTO {
     fechaEntregaEstimada: string;
     estaDemorado: boolean;
     fechaEntregaReal?: string;
+    // ✅ Agregado para vincular los productos del catálogo
+    detalles?: OrderDetailDTO[]; 
 }
 
 export interface OrderDetailDTO {
     idProducto: number;
+    nombreProducto?: string; // ✅ Para mostrar "Oneblade", "Dadatina", etc.
     cantidad: number;
     precioUnitario: number;
 }
@@ -38,15 +41,15 @@ export interface AssignDeliveryDTO {
 
 export interface ChangeOrderStatusDTO {
     idPedido: number;
-    idNuevoEstado: number;   // ✅ ahora es number, consistente con el back
+    idNuevoEstado: number;
     idUsuario: number;
     observaciones?: string;
     motivoCancelacion?: string;
 }
 
 export interface OrderFilterDTO {
-    estado?: string;          // ✅ corregido: debe ser string, no boolean
-    search?: string;          // ✅ corregido: debe ser string, no any
+    estado?: string;
+    search?: string;
     idEstadoDePedido?: number;
     idUsuario?: number;
     idCliente?: number;

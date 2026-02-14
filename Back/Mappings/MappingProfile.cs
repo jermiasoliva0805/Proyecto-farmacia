@@ -13,6 +13,26 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IDLocalidad))
                 .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Ciudad));
 
+            // --- Mapeos de Clientes (para combos del frontend) ---
+            CreateMap<Cliente, ClientDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IDCliente))
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
+                .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Apellido))
+                .ForMember(dest => dest.DNI, opt => opt.MapFrom(src => src.DNI))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Mail))
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono))
+                .ForMember(dest => dest.IDLocalidad, opt => opt.MapFrom(src => src.IDLocalidad))
+                .ForMember(dest => dest.NombreLocalidad, opt => opt.MapFrom(src => src.Localidad != null ? src.Localidad.Ciudad : "Sin localidad"));
+
+            // --- Mapeos de Productos (CSV a DTO) ---
+            CreateMap<Producto, ProductDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IDProducto))
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.NombreProducto))
+                .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.Descripcion))
+                .ForMember(dest => dest.Precio, opt => opt.MapFrom(src => src.PrecioProducto))
+                .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.CantidadProducto))
+                .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Categoria));
+
             // --- Mapeos de Creación de Pedidos ---
             CreateMap<CreateOrderDTO, Pedido>();
             CreateMap<OrderDetailDTO, DetalleDePedido>();
