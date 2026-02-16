@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Collections.Generic;
 
 namespace Back.Data
 {
@@ -49,11 +48,11 @@ namespace Back.Data
             context.Sucursales.Add(suc);
             context.SaveChanges();
 
-            // 4.1 PRODUCTOS (Cargados desde tu Catálogo de Perfumería)
-            var prod1 = new Producto { IDProducto = 1, NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m };
-            var prod2 = new Producto { IDProducto = 2, NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, Boos", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m };
-            var prod582 = new Producto { IDProducto = 582, NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m };
-            var prod584 = new Producto { IDProducto = 584, NombreProducto = "Planchita Pelo Bellissima", Descripcion = "Ceramic Long Plates", Categoria = "Electro", CantidadProducto = 20, PrecioProducto = 75199m };
+            // 4.1 PRODUCTOS (sin ID explícito)
+            var prod1 = new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m };
+            var prod2 = new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, Boos", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m };
+            var prod582 = new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m };
+            var prod584 = new Producto { NombreProducto = "Planchita Pelo Bellissima", Descripcion = "Ceramic Long Plates", Categoria = "Electro", CantidadProducto = 20, PrecioProducto = 75199m };
 
             context.Productos.AddRange(prod1, prod2, prod582, prod584);
             context.SaveChanges();
@@ -109,6 +108,15 @@ namespace Back.Data
                 PrecioUnitario = prod1.PrecioProducto 
             });
 
+            // Historial para el pedido 1
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p1.IDPedido,
+                IDEstadoDePedido = stSinPreparar.IDEstadoDePedido,
+                IDUsuario = admin.IDUsuario,
+                fecha_hora_inicio = DateTime.Now,
+                Observaciones = "Pedido creado en estado inicial"
+            });
+
             // PEDIDO 2: LISTO PARA DESPACHAR (Con Oneblade y Boos)
             var p2 = new Pedido {
                 Fecha = DateTime.Now.AddHours(-3), 
@@ -145,3 +153,4 @@ namespace Back.Data
         }
     }
 }
+
