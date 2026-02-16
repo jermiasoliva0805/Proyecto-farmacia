@@ -86,7 +86,7 @@ namespace Back.Controllers
         [HttpPut("{id}/estado")]
         public async Task<IActionResult> CambiarEstado(int id, [FromBody] ChangeOrderStatusDTO changeStatusDto)
         {
-            if (!ModelState.IsValid) 
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (id != changeStatusDto.IDPedido)
@@ -126,5 +126,56 @@ namespace Back.Controllers
             if (seguimiento == null) return NotFound();
             return Ok(seguimiento);
         }
+
+        [Authorize]
+        [HttpGet("{id}/print-data")]
+        public async Task<IActionResult> GetPrintData(int id)
+        {
+            var order = await _pedidoRepository.GetByIdAsync(id);
+            if (order == null) return NotFound(new { message = "Pedido no encontrado." });
+
+
+            var dto = new OrderPrintDTO
+            {
+                IDPedido = order.IDPedido,
+                Fecha = order.Fecha,
+                FormaDePago = order.FormaDePago ?? "A convenir",
+                Total = order.Total,
+                ClienteDireccion = order.DireccionEntrega,
+                MetodoEnvio = (order.IDSucursal > 0) ? "Punto de retiro" : "Envío a domicilio",
+                PuntoRetiro = order.Sucursal != null ? order.Sucursal.Dirección : "N/A"
+            };
+
+
+            if (order.Cliente != null)
+            {
+                dto.ClienteNombre = $"{order.Cliente.Nombre} {order.Cliente.Apellido}";
+                dto.ClienteDNI = order.Cliente.DNI ?? "N/A";
+                dto.ClienteTelefono = order.Cliente.Telefono ?? "N/A";
+                dto.ClienteEmail = order.Cliente.Mail ?? "N/A";
+
+
+                var barrio = order.Cliente.Barrio?.Nombre ?? "N/A";
+                var localidad = order.Cliente.Localidad?.Ciudad ?? "N/A";
+                dto.ClienteLocalidadBarrio = $"{barrio}, {localidad}";
+            }
+
+
+            if (order.Detalles != null)
+            {
+                dto.Productos = order.Detalles.Select(d => new OrderDetailItemDTO
+                {
+                    Cantidad = d.Cantidad,
+                    ProductoNombre = d.Producto != null ? d.Producto.NombreProducto : "Producto " + d.IDProducto,
+                    SKU = d.IDProducto.ToString(),
+                    PrecioUnitario = d.Producto != null ? d.Producto.PrecioProducto : 0
+                }).ToList();
+            }
+
+
+            return Ok(dto);
+        }
+
     }
 }
+

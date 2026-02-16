@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Back.Services.Interfaces;
+using Back.DTOs;
 
 namespace Back.Controllers
 {
@@ -19,7 +20,7 @@ namespace Back.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // Usamos el nombre exacto de tu Service: GetAllProductsAsync
+            // Devuelve ProductDTO mapeados desde los productos cargados del CSV
             var productos = await _productService.GetAllProductsAsync();
             return Ok(productos);
         }

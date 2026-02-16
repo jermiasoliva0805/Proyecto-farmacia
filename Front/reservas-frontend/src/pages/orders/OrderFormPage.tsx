@@ -1,13 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, User, Package, Save, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useNavigate } from 'react-router-dom';
 import { pedidosService } from '@/service/PedidosService';
+import { catalogoService } from '@/service/catalogoService';
+import { ClientDTO, ProductDTO } from '@/types/common.types';
 
 const OrderFormPage: React.FC = () => {
     const navigate = useNavigate();
     const [clienteId, setClienteId] = useState<string>('');
     const [items, setItems] = useState([{ tempId: Date.now(), productId: '', quantity: 1 }]);
+    const [clientes, setClientes] = useState<ClientDTO[]>([]);
+    const [productos, setProductos] = useState<ProductDTO[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>('');
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            const [clientesData, productosData] = await Promise.all([
+                catalogoService.getClientes().catch(err => {
+                    console.error('Error al cargar clientes:', err);
+                    return [];
+                }),
+                catalogoService.getProductos().catch(err => {
+                    console.error('Error al cargar productos:', err);
+                    return [];
+                })
+            ]);
+            
+            setClientes(clientesData || []);
+            setProductos(productosData || []);
+            
+            if (!clientesData?.length) {
+                setError('No hay clientes disponibles');
+            }
+            if (!productosData?.length) {
+                setError(prev => prev ? prev + ' | No hay productos disponibles' : 'No hay productos disponibles');
+            }
+        } catch (error) {
+            console.error('Error al cargar datos:', error);
+            setError('Error al cargar datos del servidor');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const addProduct = () => {
         setItems([...items, { tempId: Date.now(), productId: '', quantity: 1 }]);
@@ -73,15 +115,24 @@ const OrderFormPage: React.FC = () => {
                         <Plus size={20} /> Datos del Pedido
                     </div>
 
+                    {error && (
+                        <div className="px-6 py-3 bg-red-50 border-l-4 border-red-500 text-red-700">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="p-6 space-y-8">
                         {/* Selección de Cliente */}
                         <div className="max-w-md">
                             <SearchableSelect 
                                 label="Cliente / Paciente" 
-                                options={[]} // Aquí cargarás tus clientes
-                                onSelect={(opt: any) => setClienteId(String(opt.value))} 
+                                options={clientes.map(c => ({
+                                    id: c.id,
+                                    label: `${c.nombre || 'Sin nombre'} ${c.apellido || ''}`.trim()
+                                }))}
+                                onSelect={(opt: any) => setClienteId(String(opt.id))} 
                                 icon={User} 
-                                placeholder="Seleccione un cliente..." 
+                                placeholder={loading ? "Cargando clientes..." : clientes.length === 0 ? "No hay clientes" : "Seleccione un cliente..."} 
                             />
                         </div>
 
@@ -96,10 +147,13 @@ const OrderFormPage: React.FC = () => {
                                     <div className="flex-1">
                                         <SearchableSelect 
                                             label={`Producto #${index + 1}`}
-                                            options={[]} // Aquí cargarás tus productos
-                                            onSelect={(opt: any) => updateProductInList(index, String(opt.value))}
+                                            options={productos.map(p => ({
+                                                id: p.id,
+                                                label: `${p.nombre || 'Sin nombre'} - $${(p.precio || 0).toFixed(2)} (Stock: ${p.stock || 0})`
+                                            }))}
+                                            onSelect={(opt: any) => updateProductInList(index, String(opt.id))}
                                             icon={ShoppingCart}
-                                            placeholder="Buscar producto..."
+                                            placeholder={loading ? "Cargando productos..." : productos.length === 0 ? "No hay productos" : "Buscar producto..."}
                                         />
                                     </div>
                                     <div className="w-24">
