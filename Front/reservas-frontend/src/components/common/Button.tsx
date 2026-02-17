@@ -2,7 +2,8 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'danger' | 'success';
+    // 1. Agregamos 'outline' a la unión de tipos del variant
+    variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
     children: React.ReactNode;
@@ -24,6 +25,8 @@ export const Button: React.FC<ButtonProps> = ({
         secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
         danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
         success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+        // 2. Definimos las clases de Tailwind para el estilo outline
+        outline: 'border-2 border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-gray-400',
     };
 
     const sizeClasses = {
