@@ -5,7 +5,7 @@ import { Alert } from '@components/common/Alert';
 import { pedidosService } from '../../service/PedidosService';
 import { OrderSummaryDTO } from '../../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface ConfirmarEntregaModalProps {
     isOpen: boolean;
@@ -28,28 +28,35 @@ export const ConfirmarEntregaModal: React.FC<ConfirmarEntregaModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-
+        
         if (!tipoResultado) {
-            setError('Por favor seleccione el resultado de la entrega');
+            setError('Por favor seleccione un resultado');
+            return;
+        }
+
+        if (tipoResultado === 'no-entregado' && !observaciones.trim()) {
+            setError('Las observaciones son obligatorias para entregas fallidas');
             return;
         }
 
         setLoading(true);
+        setError('');
+
+        // Determinamos el ID del estado: 7 para entregado, 8 para fallido 
+        const nuevoEstadoId = tipoResultado === 'entregado' ? 7 : 8;
 
         try {
-            // RF2 - Cambiar estado del pedido (Cadete)
             await pedidosService.cambiarEstado({
                 idPedido: pedido.idPedido,
-                idNuevoEstado: tipoResultado === 'entregado' ? 7 : 8, // ✅ IDs numéricos
+                idNuevoEstado: nuevoEstadoId,
                 idUsuario: user!.id,
                 observaciones: observaciones,
             });
-
-            onSuccess();
-            onClose();
+            
+            onSuccess(); 
+            resetAndClose();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Error al confirmar la entrega');
+            setError(err.response?.data?.message || 'Error al actualizar el estado');
         } finally {
             setLoading(false);
         }
@@ -74,6 +81,27 @@ export const ConfirmarEntregaModal: React.FC<ConfirmarEntregaModalProps> = ({
                         <p><span className="font-medium">ID:</span> #{pedido.idPedido}</p>
                         <p><span className="font-medium">Cliente:</span> {pedido.clienteNombre}</p>
                         <p><span className="font-medium">Total:</span> ${pedido.total.toFixed(2)}</p>
+                        
+                        {/* Indicador de Intentos Fallidos */}
+                        <div className="mt-3 pt-2 border-t border-blue-200">
+                            <p className="text-xs font-bold uppercase mb-1">Intentos realizados: {pedido.intentosEntregaFallida} / 3</p>
+                            <div className="flex gap-1">
+                                {[1, 2, 3].map((i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`h-2 w-full rounded-full ${
+                                            i <= pedido.intentosEntregaFallida ? 'bg-red-500' : 'bg-blue-200'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            {pedido.intentosEntregaFallida === 2 && (
+                                <div className="flex items-center gap-1 mt-2 text-red-600 animate-pulse">
+                                    <AlertTriangle size={14} />
+                                    <p className="text-xs font-bold">Último intento: Si falla, se cancelará el pedido.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -144,14 +172,20 @@ export const ConfirmarEntregaModal: React.FC<ConfirmarEntregaModalProps> = ({
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        type="submit"
-                        variant={tipoResultado === 'entregado' ? 'success' : 'danger'}
-                        isLoading={loading}
-                        disabled={!tipoResultado}
-                    >
-                        Confirmar {tipoResultado === 'entregado' ? 'Entrega' : 'Fallo en Entrega'}
-                    </Button>
+                <Button
+    type="submit"
+    variant={tipoResultado === 'entregado' ? 'success' : 'danger'}
+    isLoading={loading}
+    // Agregamos la lógica de bloqueo aquí:
+    disabled={
+        !tipoResultado || 
+        pedido.idEstadoDePedido === 7 || // 7 = Entregado
+        pedido.idEstadoDePedido === 9 || // 9 = Cancelado
+        (tipoResultado === 'no-entregado' && pedido.intentosEntregaFallida >= 3)
+    }
+>
+    Confirmar {tipoResultado === 'entregado' ? 'Entrega' : 'Fallo en Entrega'}
+</Button>
                 </div>
             </form>
         </Modal>

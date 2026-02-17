@@ -194,14 +194,23 @@ export const DashboardCadete: React.FC = () => {
                                                         >
                                                             Detalles
                                                         </button>
-                                                        <Button
-                                                            variant="primary"
-                                                            size="sm"
-                                                            onClick={() => handleConfirmarEntrega(pedido)}
-                                                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs px-3 py-1"
-                                                        >
-                                                            Reintentar Entrega
-                                                        </Button>
+                                                      <Button
+  size="sm"
+  onClick={() => handleConfirmarEntrega(pedido)}
+  // 1. Agregamos el bloqueo lógico
+  disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
+  // 2. Cambiamos el color dinámicamente: si está bloqueado, usamos gris
+  className={`rounded-lg text-xs px-3 py-1 ${
+    (pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
+      ? "bg-gray-400 cursor-not-allowed" 
+      : "bg-green-600 hover:bg-green-700 text-white"
+  }`}
+>
+  {/* 3. Cambiamos el texto según el estado */}
+  {pedido.idEstadoDePedido === 7 ? 'Entregado' : 
+   pedido.idEstadoDePedido === 9 ? 'Cancelado' : 
+   'Gestionar Entrega'}
+</Button>
                                                     </td>
                                                 </tr>
                                             ))}
