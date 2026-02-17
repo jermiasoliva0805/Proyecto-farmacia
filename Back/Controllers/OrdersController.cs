@@ -4,6 +4,7 @@ using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System.Linq; // Asegurate de tener este using para el Select de abajo
 
 namespace Back.Controllers
 {
@@ -26,12 +27,22 @@ namespace Back.Controllers
         }
 
         // --- SECCIÓN DE REPORTES ---
+        
         [Authorize]
         [HttpGet("reporte")]
         public async Task<IActionResult> GetReporte([FromQuery] OrderFilterDTO filters)
         {
             var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(filters);
             return Ok(pedidos);
+        }
+
+        // AGREGADO PARA ACTIVIDAD DE HOY: RF6.4 - Tiempo promedio de armado
+        [Authorize(Roles = "Administrador")]
+        [HttpGet("reporte-tiempos-operarios")]
+        public async Task<IActionResult> GetReporteTiempos()
+        {
+            var resultado = await _pedidoRepository.GetTiempoPromedioArmadoAsync();
+            return Ok(resultado);
         }
 
         // --- SECCIÓN ADMINISTRADOR: CONSULTAS FILTRADAS ---
@@ -92,7 +103,6 @@ namespace Back.Controllers
             if (id != changeStatusDto.IDPedido)
                 return BadRequest(new { message = "El ID del pedido no coincide." });
 
-            // Usamos directamente el repositorio para aplicar la lógica de intentos fallidos
             var resultado = await _pedidoRepository.ActualizarEstadoPedidoAsync(changeStatusDto);
 
             if (!resultado)
@@ -134,7 +144,6 @@ namespace Back.Controllers
             var order = await _pedidoRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Pedido no encontrado." });
 
-
             var dto = new OrderPrintDTO
             {
                 IDPedido = order.IDPedido,
@@ -146,7 +155,6 @@ namespace Back.Controllers
                 PuntoRetiro = order.Sucursal != null ? order.Sucursal.Dirección : "N/A"
             };
 
-
             if (order.Cliente != null)
             {
                 dto.ClienteNombre = $"{order.Cliente.Nombre} {order.Cliente.Apellido}";
@@ -154,12 +162,10 @@ namespace Back.Controllers
                 dto.ClienteTelefono = order.Cliente.Telefono ?? "N/A";
                 dto.ClienteEmail = order.Cliente.Mail ?? "N/A";
 
-
                 var barrio = order.Cliente.Barrio?.Nombre ?? "N/A";
                 var localidad = order.Cliente.Localidad?.Ciudad ?? "N/A";
                 dto.ClienteLocalidadBarrio = $"{barrio}, {localidad}";
             }
-
 
             if (order.Detalles != null)
             {
@@ -172,10 +178,8 @@ namespace Back.Controllers
                 }).ToList();
             }
 
-
             return Ok(dto);
         }
-
     }
 }
 

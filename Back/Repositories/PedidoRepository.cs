@@ -86,5 +86,45 @@ namespace Back.Repositories
             }
             catch { return false; }
         }
+
+        // --- MÉTODO PARA EL REPORTE RF6.4 ---
+        public async Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync()
+        {
+            // Buscamos los estados 2 (Inicio) y 4 (Fin) en el historial
+            var historiales = await _context.HistorialDeEstados
+                .Include(h => h.Usuario)
+                .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
+                .ToListAsync();
+
+            // Calculamos la diferencia por cada pedido
+            var tiemposPorPedido = historiales
+                .GroupBy(h => h.IDPedido)
+                .Select(grupo => {
+                    var inicio = grupo.FirstOrDefault(h => h.IDEstadoDePedido == 2);
+                    var fin = grupo.FirstOrDefault(h => h.IDEstadoDePedido == 4);
+
+                    if (inicio != null && fin != null)
+                    {
+                        return new {
+                            Nombre = inicio.Usuario != null ? inicio.Usuario.Nombre : "Operario Desconocido",
+                            Minutos = (fin.fecha_hora_inicio - inicio.fecha_hora_inicio).TotalMinutes
+                        };
+                    }
+                    return null;
+                })
+                .Where(x => x != null)
+                .ToList();
+
+            // Agrupamos por Operario para el promedio final
+            return tiemposPorPedido
+                .GroupBy(x => x!.Nombre)
+                .Select(g => new ReporteOperarioDTO
+                {
+                    NombreOperario = g.Key,
+                    TotalPedidosArmados = g.Count(),
+                    TiempoPromedioMinutos = Math.Round(g.Average(x => x!.Minutos), 2)
+                })
+                .ToList();
+        }
     }
 }

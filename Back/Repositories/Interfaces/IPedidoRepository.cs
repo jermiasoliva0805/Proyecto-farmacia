@@ -21,5 +21,8 @@ namespace Back.Repositories.Interfaces
 
         // Actualización genérica de un pedido
         Task UpdateAsync(Pedido pedido);
+
+        // AGREGADO PARA EL REPORTE DE HOY (RF6.4)
+        Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync();
     }
 }
