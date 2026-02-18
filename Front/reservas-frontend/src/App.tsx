@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Sidebar } from './components/layout/Sidebar'; // Asegúrate de que la ruta sea correcta
+import { Sidebar } from './components/layout/Sidebar'; 
 
 // Importación de Páginas
 import { Login } from './pages/Login';
@@ -13,7 +13,7 @@ import { SeguimientoPedidos } from './pages/SeguimientoPedidos';
 import { AsignarOperarioPage } from './pages/AsignarOperario';
 import { AsignarCadetePage } from './pages/AsignarCadete';
 import OrderFormPage from './pages/orders/OrderFormPage';
-import { ReporteEntregas } from './pages/Reportes/ReporteEntregas';
+import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el Panel único
 
 // Componente Layout para mantener el Sidebar a la izquierda
 const MainLayout = () => {
@@ -48,11 +48,12 @@ function App() {
               }
             />
             
+            {/* RUTA ÚNICA DE REPORTES (Aquí dentro están tus pestañas) */}
             <Route
               path="/reportes"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <ReporteEntregas />
+                  <PanelReportes />
                 </ProtectedRoute>
               }
             />
@@ -88,7 +89,7 @@ function App() {
               path="/usuarios"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <div>Página de Usuarios</div> {/* Reemplazar por tu componente si existe */}
+                  <div>Página de Usuarios</div> 
                 </ProtectedRoute>
               }
             />

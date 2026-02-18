@@ -74,42 +74,54 @@ namespace Back.Repositories
             await _context.SaveChangesAsync();
         }
 
-    public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
-{
-    // 1. Buscamos el pedido
-    var pedido = await _context.Pedidos
-        .FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
-
-    if (pedido == null) return false;
-
-    // --- LÓGICA DE INTENTOS FALLIDOS ---
-    // Si el nuevo estado es 8 (Entrega Fallida)
-    if (dto.IDNuevoEstado == 8) 
-    {
-        pedido.IntentosEntregaFallida++; 
-
-        if (pedido.IntentosEntregaFallida >= 3)
+        public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
         {
-            pedido.IDEstadoDePedido = 9; // Cancelado
-            pedido.EstadoActual = "Cancelado";
-            pedido.JustificacionCancelacion = "Cancelación automática: superó los 3 intentos fallidos.";
-        }
-        else
-        {
-            pedido.IDEstadoDePedido = 8;
-            pedido.EstadoActual = "Entrega fallida";
+            var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
+            if (pedido == null) return false;
+
+            if (dto.IDNuevoEstado == 8) // Entrega Fallida
+            {
+                pedido.IntentosEntregaFallida++;
+                if (pedido.IntentosEntregaFallida >= 3)
+                {
+                    pedido.IDEstadoDePedido = 9; // Cancelado
+                    pedido.EstadoActual = "Cancelado";
+                }
+                else
+                {
+                    pedido.IDEstadoDePedido = 8;
+                    pedido.EstadoActual = "Entrega fallida";
+                }
+            }
+            else
+            {
+                pedido.IDEstadoDePedido = dto.IDNuevoEstado;
+                if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
+            }
+
+            // Usamos HistorialesDeEstados (Plural) que es como está en tu DB
+            var nuevoHistorial = new HistorialDeEstados
+            {
+                IDPedido = pedido.IDPedido,
+                IDEstadoDePedido = pedido.IDEstadoDePedido,
+                IDUsuario = dto.IDUsuario,
+                fecha_hora_inicio = DateTime.Now,
+                Observaciones = dto.Observaciones
+            };
+
+            _context.HistorialesDeEstados.Add(nuevoHistorial); 
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        // --- MÉTODO PARA EL REPORTE RF6.4 ---
         public async Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync()
         {
-            // Buscamos los estados 2 (Inicio) y 4 (Fin) en el historial
-            var historiales = await _context.HistorialDeEstados
+            // Buscamos en la tabla de historiales los estados de inicio (2) y fin (4)
+            var historiales = await _context.HistorialesDeEstados
                 .Include(h => h.Usuario)
                 .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
                 .ToListAsync();
 
-            // Calculamos la diferencia por cada pedido
             var tiemposPorPedido = historiales
                 .GroupBy(h => h.IDPedido)
                 .Select(grupo => {
@@ -119,7 +131,7 @@ namespace Back.Repositories
                     if (inicio != null && fin != null)
                     {
                         return new {
-                            Nombre = inicio.Usuario != null ? inicio.Usuario.Nombre : "Operario Desconocido",
+                            Nombre = inicio.Usuario != null ? $"{inicio.Usuario.Nombre} {inicio.Usuario.Apellido}" : "Operario Desconocido",
                             Minutos = (fin.fecha_hora_inicio - inicio.fecha_hora_inicio).TotalMinutes
                         };
                     }
@@ -128,7 +140,6 @@ namespace Back.Repositories
                 .Where(x => x != null)
                 .ToList();
 
-            // Agrupamos por Operario para el promedio final
             return tiemposPorPedido
                 .GroupBy(x => x!.Nombre)
                 .Select(g => new ReporteOperarioDTO
@@ -139,30 +150,5 @@ namespace Back.Repositories
                 })
                 .ToList();
         }
-    }
-    else 
-    {
-        pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-        // Si el estado es positivo (ej: Entregado), podrías resetear el contador si quisieras
-        if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
-    }
-
-    // --- GRABAR EN HISTORIAL (Usando tus nombres de campos) ---
-    var nuevoHistorial = new HistorialDeEstados
-    {
-        IDPedido = pedido.IDPedido,
-        IDEstadoDePedido = pedido.IDEstadoDePedido,
-        IDUsuario = dto.IDUsuario,
-        fecha_hora_inicio = DateTime.Now, // Tu campo se llama así
-        Observaciones = dto.IDNuevoEstado == 8 
-            ? $"Intento #{pedido.IntentosEntregaFallida} fallido. Motivo: {dto.Observaciones}" 
-            : dto.Observaciones
-    };
-
-    _context.HistorialesDeEstados.Add(nuevoHistorial); // Tu DbSet se llama HistorialesDeEstados
-    
-    await _context.SaveChangesAsync();
-    return true;
-}
     }
 }

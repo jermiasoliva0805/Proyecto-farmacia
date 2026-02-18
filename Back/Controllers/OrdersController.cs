@@ -4,7 +4,7 @@ using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using System.Linq; // Asegurate de tener este using para el Select de abajo
+using System.Linq;
 
 namespace Back.Controllers
 {
@@ -26,8 +26,23 @@ namespace Back.Controllers
             _pedidoRepository = pedidoRepository;
         }
 
-        // --- SECCIÓN DE REPORTES ---
-        
+        // ==========================================
+        // SECCIÓN DE REPORTES (RF6.4)
+        // ==========================================
+
+        [Authorize(Roles = "Administrador")]
+        [HttpGet("reporte-tiempos-operarios")]
+        public async Task<IActionResult> GetReporteTiempos()
+        {
+            // Importante: El repositorio debe tener este método definido
+            var resultado = await _pedidoRepository.GetTiempoPromedioArmadoAsync();
+            
+            if (resultado == null)
+                return Ok(new List<object>()); // Retorna lista vacía si no hay datos
+
+            return Ok(resultado);
+        }
+
         [Authorize]
         [HttpGet("reporte")]
         public async Task<IActionResult> GetReporte([FromQuery] OrderFilterDTO filters)
@@ -36,16 +51,10 @@ namespace Back.Controllers
             return Ok(pedidos);
         }
 
-        // AGREGADO PARA ACTIVIDAD DE HOY: RF6.4 - Tiempo promedio de armado
-        [Authorize(Roles = "Administrador")]
-        [HttpGet("reporte-tiempos-operarios")]
-        public async Task<IActionResult> GetReporteTiempos()
-        {
-            var resultado = await _pedidoRepository.GetTiempoPromedioArmadoAsync();
-            return Ok(resultado);
-        }
+        // ==========================================
+        // SECCIÓN ADMINISTRADOR: CONSULTAS FILTRADAS
+        // ==========================================
 
-        // --- SECCIÓN ADMINISTRADOR: CONSULTAS FILTRADAS ---
         [Authorize(Roles = "Administrador")]
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
@@ -62,7 +71,10 @@ namespace Back.Controllers
             return Ok(pedidos);
         }
 
-        // --- SECCIÓN ADMINISTRADOR: ASIGNACIÓN DE RESPONSABLES ---
+        // ==========================================
+        // SECCIÓN ADMINISTRADOR: ASIGNACIÓN
+        // ==========================================
+
         [Authorize(Roles = "Administrador")]
         [HttpPatch("asignar-operario")]
         public async Task<IActionResult> AsignarOperario([FromBody] AssignOperatorDTO dto)
@@ -71,9 +83,8 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Datos de asignación inválidos." });
 
             var resultado = await _statusService.AsignarOperarioAsync(dto);
-
             if (!resultado)
-                return BadRequest(new { message = "No se pudo asignar el operario. Verifique el estado del pedido." });
+                return BadRequest(new { message = "No se pudo asignar el operario." });
 
             return Ok(new { message = "Operario asignado exitosamente." });
         }
@@ -87,48 +98,42 @@ namespace Back.Controllers
 
             var resultado = await _statusService.AsignarCadeteAsync(dto);
             if (!resultado)
-                return BadRequest(new { message = "No se pudo asignar el cadete. Verifique que el pedido esté listo." });
+                return BadRequest(new { message = "No se pudo asignar el cadete." });
 
             return Ok(new { message = "Cadete asignado correctamente." });
         }
 
-        // --- SECCIÓN OPERATIVA: CAMBIOS DE ESTADO ---
+        // ==========================================
+        // SECCIÓN OPERATIVA: CAMBIOS DE ESTADO
+        // ==========================================
+
         [Authorize]
         [HttpPut("{id}/estado")]
         public async Task<IActionResult> CambiarEstado(int id, [FromBody] ChangeOrderStatusDTO changeStatusDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (id != changeStatusDto.IDPedido)
-                return BadRequest(new { message = "El ID del pedido no coincide." });
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (id != changeStatusDto.IDPedido) return BadRequest(new { message = "El ID no coincide." });
 
             var resultado = await _pedidoRepository.ActualizarEstadoPedidoAsync(changeStatusDto);
-
-            if (!resultado)
-                return BadRequest(new { message = "Cambio de estado rechazado por lógica de negocio." });
+            if (!resultado) return BadRequest(new { message = "Cambio de estado rechazado." });
 
             var pedidoActualizado = await _pedidoRepository.GetByIdAsync(id);
-            return Ok(new { message = "Estado actualizado correctamente.", pedido = pedidoActualizado });
+            return Ok(new { message = "Estado actualizado.", pedido = pedidoActualizado });
         }
 
-        // --- SECCIÓN CANCELACIÓN: RF16 ---
         [Authorize]
         [HttpPost("cancelar")]
         public async Task<IActionResult> CancelarPedido([FromBody] CancelarPedidoDTO dto)
         {
-            if (dto == null || dto.PedidoId <= 0 || dto.MotivoCancelacionId <= 0)
-                return BadRequest(new { message = "Datos de cancelación inválidos. Se requiere el ID del pedido y el motivo." });
-
             var resultado = await _statusService.CancelarPedidoAsync(dto);
-
-            if (!resultado)
-                return BadRequest(new { message = "No se pudo cancelar el pedido. Verifique si el pedido ya fue entregado, cancelado previamente o no existe." });
-
-            return Ok(new { message = "El pedido ha sido cancelado exitosamente." });
+            if (!resultado) return BadRequest(new { message = "No se pudo cancelar el pedido." });
+            return Ok(new { message = "Pedido cancelado exitosamente." });
         }
 
-        // --- SECCIÓN CONSULTAS: TRAZABILIDAD ---
+        // ==========================================
+        // SECCIÓN CONSULTAS Y SEGUIMIENTO
+        // ==========================================
+
         [HttpGet("{id}/seguimiento")]
         public async Task<ActionResult<OrderTrackingDTO>> GetSeguimiento(int id)
         {
@@ -144,6 +149,7 @@ namespace Back.Controllers
             var order = await _pedidoRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Pedido no encontrado." });
 
+            // Mapeo a DTO para impresión
             var dto = new OrderPrintDTO
             {
                 IDPedido = order.IDPedido,
@@ -152,31 +158,14 @@ namespace Back.Controllers
                 Total = order.Total,
                 ClienteDireccion = order.DireccionEntrega,
                 MetodoEnvio = (order.IDSucursal > 0) ? "Punto de retiro" : "Envío a domicilio",
-                PuntoRetiro = order.Sucursal != null ? order.Sucursal.Dirección : "N/A"
-            };
-
-            if (order.Cliente != null)
-            {
-                dto.ClienteNombre = $"{order.Cliente.Nombre} {order.Cliente.Apellido}";
-                dto.ClienteDNI = order.Cliente.DNI ?? "N/A";
-                dto.ClienteTelefono = order.Cliente.Telefono ?? "N/A";
-                dto.ClienteEmail = order.Cliente.Mail ?? "N/A";
-
-                var barrio = order.Cliente.Barrio?.Nombre ?? "N/A";
-                var localidad = order.Cliente.Localidad?.Ciudad ?? "N/A";
-                dto.ClienteLocalidadBarrio = $"{barrio}, {localidad}";
-            }
-
-            if (order.Detalles != null)
-            {
-                dto.Productos = order.Detalles.Select(d => new OrderDetailItemDTO
-                {
+                PuntoRetiro = order.Sucursal?.Dirección ?? "N/A",
+                ClienteNombre = order.Cliente != null ? $"{order.Cliente.Nombre} {order.Cliente.Apellido}" : "Cliente Final",
+                Productos = order.Detalles?.Select(d => new OrderDetailItemDTO {
                     Cantidad = d.Cantidad,
-                    ProductoNombre = d.Producto != null ? d.Producto.NombreProducto : "Producto " + d.IDProducto,
-                    SKU = d.IDProducto.ToString(),
-                    PrecioUnitario = d.Producto != null ? d.Producto.PrecioProducto : 0
-                }).ToList();
-            }
+                    ProductoNombre = d.Producto?.NombreProducto ?? "Producto " + d.IDProducto,
+                    PrecioUnitario = d.Producto?.PrecioProducto ?? 0
+                }).ToList()
+            };
 
             return Ok(dto);
         }
