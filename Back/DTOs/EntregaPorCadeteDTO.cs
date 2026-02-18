@@ -8,8 +8,6 @@ namespace Back.DTOs
         public int EntregasExitosas { get; set; }
         public int EntregasFallidas { get; set; }
         public decimal TotalRecaudado { get; set; }
-        public double PorcentajeEfectividad => TotalPedidosAsignados > 0 
-            ? (double)EntregasExitosas / TotalPedidosAsignados * 100 
-            : 0;
+        public double PorcentajeEfectividad { get; set; }
     }
 }

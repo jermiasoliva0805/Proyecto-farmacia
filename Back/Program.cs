@@ -88,6 +88,7 @@ namespace Back
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
+            builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 
             // --- NUEVOS REPOSITORIOS ---
             builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
