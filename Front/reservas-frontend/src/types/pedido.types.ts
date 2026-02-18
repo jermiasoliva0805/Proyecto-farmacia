@@ -11,7 +11,8 @@ export interface OrderSummaryDTO {
     estaDemorado: boolean;
     fechaEntregaReal?: string;
     // ✅ Agregado para vincular los productos del catálogo
-    detalles?: OrderDetailDTO[]; 
+    detalles?: OrderDetailDTO[];
+    intentosEntregaFallida: number;
 }
 
 export interface OrderDetailDTO {

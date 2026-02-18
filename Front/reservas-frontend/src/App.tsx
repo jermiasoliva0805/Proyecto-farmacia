@@ -1,17 +1,31 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@context/AuthContext';
-import { ProtectedRoute } from '@components/auth/ProtectedRoute';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Sidebar } from './components/layout/Sidebar'; // Asegúrate de que la ruta sea correcta
 
 // Importación de Páginas
-import { Login } from '@pages/Login';
-import { DashboardAdmin } from '@pages/DashboardAdmin';
-import { DashboardOperario } from '@pages/DashboardOperario';
-import { DashboardCadete } from '@pages/DashboardCadete';
-import { SeguimientoPedidos } from '@pages/SeguimientoPedidos';
-import { AsignarOperarioPage } from '@pages/AsignarOperario';
-import { AsignarCadetePage } from '@pages/AsignarCadete';
-import OrderFormPage from '@pages/orders/OrderFormPage'; // Importamos la nueva página de pedidos
+import { Login } from './pages/Login';
+import { DashboardAdmin } from './pages/DashboardAdmin';
+import { DashboardOperario } from './pages/DashboardOperario';
+import { DashboardCadete } from './pages/DashboardCadete';
+import { SeguimientoPedidos } from './pages/SeguimientoPedidos';
+import { AsignarOperarioPage } from './pages/AsignarOperario';
+import { AsignarCadetePage } from './pages/AsignarCadete';
+import OrderFormPage from './pages/orders/OrderFormPage';
+import { ReporteEntregas } from './pages/Reportes/ReporteEntregas';
+
+// Componente Layout para mantener el Sidebar a la izquierda
+const MainLayout = () => {
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar isOpen={true} />
+      <main className="flex-1 lg:ml-64 p-8">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
 
 function App() {
   return (
@@ -21,85 +35,96 @@ function App() {
           {/* --- RUTA PÚBLICA --- */}
           <Route path="/login" element={<Login />} />
 
-          {/* --- RUTAS EXCLUSIVAS PARA ADMINISTRADOR --- */}
-          <Route
-            path="/dashboard/admin"
-            element={
-              <ProtectedRoute allowedRoles={['Administrador']}>
-                <DashboardAdmin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/asignar-operario"
-            element={
-              <ProtectedRoute allowedRoles={['Administrador']}>
-                <AsignarOperarioPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/asignar-cadete"
-            element={
-              <ProtectedRoute allowedRoles={['Administrador']}>
-                <AsignarCadetePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/seguimiento"
-            element={
-              <ProtectedRoute allowedRoles={['Administrador']}>
-                <SeguimientoPedidos />
-              </ProtectedRoute>
-            }
-          />
+          {/* --- RUTAS CON SIDEBAR (ADMIN, OPERARIO, CADETE) --- */}
+          <Route element={<MainLayout />}>
+            
+            {/* ADMINISTRADOR */}
+            <Route
+              path="/dashboard/admin"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/reportes"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <ReporteEntregas />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* --- RUTAS COMPARTIDAS (ADMIN Y OPERARIO) --- */}
-          <Route
-            path="/pedidos"
-            element={
-              <ProtectedRoute allowedRoles={['Administrador', 'Operario']}>
-                <OrderFormPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/asignar-operario"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <AsignarOperarioPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* --- RUTA EXCLUSIVA PARA OPERARIO --- */}
-          <Route
-            path="/dashboard/operario"
-            element={
-              <ProtectedRoute allowedRoles={['Operario']}>
-                <DashboardOperario />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/asignar-cadete"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <AsignarCadetePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* --- RUTA EXCLUSIVA PARA CADETE --- */}
-          <Route
-            path="/dashboard/cadete"
-            element={
-              <ProtectedRoute allowedRoles={['Cadete']}>
-                <DashboardCadete />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/seguimiento"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <SeguimientoPedidos />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* --- PÁGINA DE NO AUTORIZADO --- */}
-          <Route
-            path="/unauthorized"
-            element={
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">403</h1>
-                  <p className="text-xl text-gray-600 mb-4">No autorizado</p>
-                  <p className="text-gray-500">No tienes permisos para acceder a esta página.</p>
-                </div>
-              </div>
-            }
-          />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <div>Página de Usuarios</div> {/* Reemplazar por tu componente si existe */}
+                </ProtectedRoute>
+              }
+            />
 
-          {/* --- REDIRECCIONAMIENTOS BÁSICOS --- */}
+            {/* OPERARIO */}
+            <Route
+              path="/dashboard/operario"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <DashboardOperario />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador', 'Operario']}>
+                  <OrderFormPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* CADETE */}
+            <Route
+              path="/dashboard/cadete"
+              element={
+                <ProtectedRoute allowedRoles={['Cadete']}>
+                  <DashboardCadete />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* --- ERRORES Y REDIRECCIONES --- */}
+          <Route path="/unauthorized" element={<div>No autorizado</div>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

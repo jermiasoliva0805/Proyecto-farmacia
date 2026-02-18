@@ -277,26 +277,44 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
 
             <div className="space-y-2 pt-4">
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={handleImprimirHoja} className="flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50">
-                  <Printer className="w-4 h-4" /> Imprimir Hoja
-                </button>
-                <button className="flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50">
-                  <Bell className="w-4 h-4" /> Notificar Cliente
-                </button>
-              </div>
+  <button 
+    onClick={handleImprimirHoja} 
+    className="flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+  >
+    <Printer className="w-4 h-4" /> Imprimir Hoja
+  </button>
+  
+  <button 
+    // BLOQUEO: No tiene sentido notificar si ya se cerró el pedido
+    disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
+    className="flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <Bell className="w-4 h-4" /> Notificar Cliente
+  </button>
+</div>
 
-              <button
-                onClick={handleVerHistorial}
-                disabled={loadingTracking}
-                className="w-full flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-              >
-                <History className={`w-4 h-4 ${loadingTracking ? 'animate-spin' : ''}`} />
-                {loadingTracking ? 'Cargando...' : 'Ver Historial de Estados'}
-              </button>
+<button
+  onClick={handleVerHistorial}
+  disabled={loadingTracking}
+  className="w-full flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+>
+  <History className={`w-4 h-4 ${loadingTracking ? 'animate-spin' : ''}`} />
+  {loadingTracking ? 'Cargando...' : 'Ver Historial de Estados'}
+</button>
 
-              <button className="w-full flex items-center justify-center gap-2 bg-red-600 text-white p-2 rounded-lg text-sm font-bold hover:bg-red-700 mt-2">
-                <Ban className="w-4 h-4" /> Cancelar Pedido
-              </button>
+{/* BOTÓN CANCELAR: Es el más importante de bloquear */}
+<button 
+  disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
+  className={`w-full flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-bold mt-2 transition-colors 
+    ${(pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
+      ? 'bg-gray-400 cursor-not-allowed' 
+      : 'bg-red-600 hover:bg-red-700 text-white'}`}
+>
+  <Ban className="w-4 h-4" /> 
+  {pedido.idEstadoDePedido === 9 ? 'Pedido Cancelado' : 
+  pedido.idEstadoDePedido === 7 ? 'Pedido Entregado' : 
+  'Cancelar Pedido'}
+</button>
             </div>
           </div>
         </div>
