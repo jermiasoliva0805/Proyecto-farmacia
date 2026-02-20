@@ -1,61 +1,74 @@
 ﻿using Back.Data;
+using Back.Models;
 using Back.DTOs;
 using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Back.Repositories
 {
-    public class ReporteRepository : IReporteRepository
+    public class OrderRepository : GenericRepository<Pedido>, IOrderRepository
     {
-        private readonly AppDbContext _context;
+        public OrderRepository(AppDbContext context) : base(context) { }
 
-        public ReporteRepository(AppDbContext context)
+        public async Task<IEnumerable<OrderSummaryDTO>> GetOrdersByStatusAsync(int statusId)
         {
-            _context = context;
-        }
-
-        public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta)
-        {
-            var reporte = await _context.Usuarios
-                .Where(u => u.Rol == "Cadete")
-                .Select(cadete => new EntregaPorCadeteDTO
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Where(p => p.IDEstadoDePedido == statusId)
+                .Select(p => new OrderSummaryDTO
                 {
-                    IDCadete = cadete.IDUsuario,
-                    NombreCadete = cadete.Nombre + " " + cadete.Apellido,
-
-                    TotalPedidosAsignados = _context.Pedidos
-                        .Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                    p.Fecha >= fechaDesde && p.Fecha <= fechaHasta),
-
-                    EntregasExitosas = _context.Pedidos
-                        .Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                    p.IDEstadoDePedido == 7 &&
-                                    p.Fecha >= fechaDesde && p.Fecha <= fechaHasta),
-
-                    EntregasFallidas = _context.Pedidos
-                        .Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                    p.IDEstadoDePedido == 8 &&
-                                    p.Fecha >= fechaDesde && p.Fecha <= fechaHasta),
-
-                    TotalRecaudado = _context.Pedidos
-                        .Where(p => p.IDUsuario == cadete.IDUsuario &&
-                                    p.IDEstadoDePedido == 7 &&
-                                    p.Fecha >= fechaDesde && p.Fecha <= fechaHasta)
-                        .Sum(p => (decimal?)p.Total) ?? 0,
-
-                    PorcentajeEfectividad = _context.Pedidos
-                        .Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                    p.Fecha >= fechaDesde && p.Fecha <= fechaHasta) > 0
-                        ? (double)_context.Pedidos.Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                                              p.IDEstadoDePedido == 7 &&
-                                                              p.Fecha >= fechaDesde && p.Fecha <= fechaHasta)
-                          / _context.Pedidos.Count(p => p.IDUsuario == cadete.IDUsuario &&
-                                                        p.Fecha >= fechaDesde && p.Fecha <= fechaHasta) * 100
-                        : 0
+                    IDPedido = p.IDPedido,
+                    Fecha = p.Fecha,
+                    Total = p.Total,
+                    IDEstadoDePedido = p.IDEstadoDePedido,
+                    EstadoNombre = p.EstadoActual,
+                    ClienteNombre = p.Cliente != null ? p.Cliente.Nombre : "Consumidor Final",
+                    ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin asignar"
                 })
                 .ToListAsync();
+        }
 
-            return reporte;
+        public async Task<int> CreateOrderAsync(Pedido pedido)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                pedido.Fecha = DateTime.Now;
+                pedido.IDEstadoDePedido = 1; // "Sin preparar"
+                pedido.EstadoActual = "Sin preparar";
+
+                if (pedido.Detalles != null && pedido.Detalles.Any())
+                {
+                    pedido.Total = pedido.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+                }
+
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return pedido.IDPedido;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        // Incluye Cliente para poder acceder al mail
+        public async Task<Pedido> GetByIdWithClienteAsync(int id)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .FirstOrDefaultAsync(p => p.IDPedido == id);
+        }
+
+        public async Task<Pedido> GetOrderWithDetailsAsync(int id)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Detalles)
+                .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(p => p.IDPedido == id);
         }
     }
 }

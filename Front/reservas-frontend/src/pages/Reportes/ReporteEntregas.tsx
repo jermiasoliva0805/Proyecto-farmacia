@@ -29,22 +29,30 @@ export const ReporteEntregas: React.FC = () => {
   const fechaHastaStr = fechaHasta.toISOString().split("T")[0];
 
   useEffect(() => {
-    const fetchReporte = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fechaDesdeStr}&fechaHasta=${fechaHastaStr}`
-        );
-        const data = await response.json();
-        setReporte(data);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReporte();
-  }, [periodo, sucursal]);
+  const fetchReporte = async () => {
+    try {
+      setLoading(true);
+      const url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fechaDesdeStr}&fechaHasta=${fechaHastaStr}&sucursal=${sucursal}`;
+      
+      console.log("[LOG] Fetching reporte desde:", url); // 🔎 Log URL
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Error en la petición");
+      
+      const data = await response.json();
+      console.log("[LOG] Respuesta del backend:", data); // 🔎 Log datos recibidos
+      setReporte(data);
+    } catch (error) {
+      console.error("[LOG] Error en fetchReporte:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+
+
+  fetchReporte();
+}, [periodo, sucursal]); // Se ejecutará cada vez que cambies el tiempo o la sucursal
   // Totales
   const totalPedidos = reporte.reduce((acc, c) => acc + c.totalPedidosAsignados, 0);
   const totalExito = reporte.reduce((acc, c) => acc + c.entregasExitosas, 0);
@@ -166,4 +174,5 @@ const Selector = ({ icon, label, value, options, onChange }: any) => (
       ))}
     </select>
   </div>
+  
 );

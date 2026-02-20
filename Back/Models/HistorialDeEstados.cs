@@ -8,7 +8,7 @@ namespace Back.Models
 {
     public class HistorialDeEstados
     {
-   
+    
         
             [Key]
             public int IDHistorialEstados { get; set; }

@@ -14,34 +14,63 @@ namespace Back.Repositories
             _context = context;
         }
 
-        public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
+            DateTime fechaDesde, 
+            DateTime fechaHasta,
+            int? idSucursal = null)
         {
-            var reporte = await _context.Usuarios
-                .Where(u => u.Rol == "Cadete")
-                .GroupJoin(
-                    _context.Pedidos.Where(p => p.Fecha >= fechaDesde && p.Fecha <= fechaHasta),
-                    cadete => cadete.IDUsuario,   // PK del cadete
-                    pedido => pedido.IDUsuario,   // FK en Pedido
-                    (cadete, pedidos) => new EntregaPorCadeteDTO
+            var inicio = fechaDesde.Date;
+            var fin = fechaHasta.Date.AddDays(1).AddTicks(-1);
+
+            // Traer todos los pedidos en el rango
+            var pedidosQuery = _context.Pedidos
+                .Where(p => p.Fecha >= inicio && p.Fecha <= fin)
+                .Include(p => p.Usuario)
+                .AsNoTracking();
+
+            // Filtrar por sucursal si es necesario
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                pedidosQuery = pedidosQuery.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var pedidosPeriodo = await pedidosQuery.ToListAsync();
+
+            // Agrupar por cadete y calcular métricas
+            var reportePorCadete = pedidosPeriodo
+                .Where(p => p.Usuario != null && p.Usuario.Rol != null && p.Usuario.Rol.Trim() == "Cadete")
+                .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre, p.Usuario.Apellido })
+                .Select(g => 
+                {
+                    var pedidosGrupo = g.ToList();
+
+                    var totalAsignados = pedidosGrupo.Count;
+                    
+                    // ENTREGADOS: Estado = 7
+                    var entregados = pedidosGrupo.Count(p => p.IDEstadoDePedido == 7);
+                    
+                    // FALLIDAS: Estado = 9 (Cancelado) - SOLO ESTADO 9
+                    var fallidosTotal = pedidosGrupo.Count(p => p.IDEstadoDePedido == 9);
+
+                    var recaudado = pedidosGrupo
+                        .Where(p => p.IDEstadoDePedido == 7)
+                        .Sum(p => p.Total);
+
+                    return new EntregaPorCadeteDTO
                     {
-                        IDCadete = cadete.IDUsuario,
-                        NombreCadete = cadete.Nombre + " " + cadete.Apellido,
-                        TotalPedidosAsignados = pedidos.Count(),
+                        IDCadete = g.Key.IDUsuario,
+                        NombreCadete = $"{g.Key.Nombre} {g.Key.Apellido}",
+                        TotalPedidosAsignados = totalAsignados,
+                        EntregasExitosas = entregados,
+                        EntregasFallidas = fallidosTotal,  // ← SOLO ESTADO 9
+                        TotalRecaudado = recaudado
+                    };
+                })
+                .Where(c => c.TotalPedidosAsignados > 0)
+                .OrderBy(c => c.NombreCadete)
+                .ToList();
 
-                        EntregasExitosas = pedidos.Count(p => p.IDEstadoDePedido == 7), // 7 = Entregado
-                        EntregasFallidas = pedidos.Count(p => p.IDEstadoDePedido == 8), // 8 = Fallido
-
-                        TotalRecaudado = pedidos.Where(p => p.IDEstadoDePedido == 7)
-                                                .Sum(p => (decimal?)p.Total) ?? 0,
-
-                        PorcentajeEfectividad = pedidos.Count() > 0
-                            ? (double)pedidos.Count(p => p.IDEstadoDePedido == 7) / pedidos.Count() * 100
-                            : 0
-                    }
-                )
-                .ToListAsync();
-
-            return reporte;
+            return reportePorCadete;
         }
     }
 }

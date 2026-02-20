@@ -74,55 +74,68 @@ namespace Back.Repositories
             await _context.SaveChangesAsync();
         }
 
-    public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
-{
-    // 1. Buscamos el pedido
-    var pedido = await _context.Pedidos
-        .FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
-
-    if (pedido == null) return false;
-
-    // --- LÓGICA DE INTENTOS FALLIDOS ---
-    // Si el nuevo estado es 8 (Entrega Fallida)
-    if (dto.IDNuevoEstado == 8) 
+   public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
     {
-        pedido.IntentosEntregaFallida++; 
+        var pedido = await _context.Pedidos
+            .FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
 
-        if (pedido.IntentosEntregaFallida >= 3)
+        if (pedido == null) return false;
+
+        int estadoFinal = pedido.IDEstadoDePedido; // Estado que se grabará
+
+        // --- LÓGICA DE INTENTOS FALLIDOS ---
+        if (dto.IDNuevoEstado == 8) // Entrega Fallida
         {
-            pedido.IDEstadoDePedido = 9; // Cancelado
+            pedido.IntentosEntregaFallida++;
+
+            if (pedido.IntentosEntregaFallida >= 3)
+            {
+                // Cancelar automáticamente
+                estadoFinal = 9; // Cancelado
+                pedido.IDEstadoDePedido = 9;
+                pedido.EstadoActual = "Cancelado";
+                pedido.JustificacionCancelacion = "Cancelación automática: superó los 3 intentos fallidos.";
+            }
+            else
+            {
+                // Mantener en fallido
+                estadoFinal = 8;
+                pedido.IDEstadoDePedido = 8;
+                pedido.EstadoActual = "Entrega fallida";
+            }
+        }
+        else if (dto.IDNuevoEstado == 9) // Cancelación manual
+        {
+            estadoFinal = 9;
+            pedido.IDEstadoDePedido = 9;
             pedido.EstadoActual = "Cancelado";
-            pedido.JustificacionCancelacion = "Cancelación automática: superó los 3 intentos fallidos.";
         }
         else
         {
-            pedido.IDEstadoDePedido = 8;
-            pedido.EstadoActual = "Entrega fallida";
+            estadoFinal = dto.IDNuevoEstado;
+            pedido.IDEstadoDePedido = dto.IDNuevoEstado;
+
+            if (dto.IDNuevoEstado == 7) // Entregado
+                pedido.IntentosEntregaFallida = 0;
         }
-    }
-    else 
-    {
-        pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-        // Si el estado es positivo (ej: Entregado), podrías resetear el contador si quisieras
-        if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
-    }
 
-    // --- GRABAR EN HISTORIAL (Usando tus nombres de campos) ---
-    var nuevoHistorial = new HistorialDeEstados
-    {
-        IDPedido = pedido.IDPedido,
-        IDEstadoDePedido = pedido.IDEstadoDePedido,
-        IDUsuario = dto.IDUsuario,
-        fecha_hora_inicio = DateTime.Now, // Tu campo se llama así
-        Observaciones = dto.IDNuevoEstado == 8 
-            ? $"Intento #{pedido.IntentosEntregaFallida} fallido. Motivo: {dto.Observaciones}" 
-            : dto.Observaciones
-    };
+        // --- GRABAR HISTORIAL CON EL ESTADO CORRECTO ---
+        var nuevoHistorial = new HistorialDeEstados
+        {
+            IDPedido = pedido.IDPedido,
+            IDEstadoDePedido = estadoFinal, // ← USA LA VARIABLE CALCULADA
+            IDUsuario = dto.IDUsuario,
+            fecha_hora_inicio = DateTime.Now,
+            Observaciones = dto.IDNuevoEstado == 8
+                ? $"Intento #{pedido.IntentosEntregaFallida} fallido. Motivo: {dto.Observaciones}"
+                : (dto.IDNuevoEstado == 9 ? "Pedido cancelado" : dto.Observaciones)
+        };
 
-    _context.HistorialesDeEstados.Add(nuevoHistorial); // Tu DbSet se llama HistorialesDeEstados
-    
-    await _context.SaveChangesAsync();
-    return true;
-}
+        _context.HistorialesDeEstados.Add(nuevoHistorial);
+        _context.Pedidos.Update(pedido);
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
     }
 }

@@ -11,16 +11,16 @@ export const pedidosService = {
         const params: any = {};
         
         const estadoMap: { [key: string]: number } = {
-            'Sin preparar': 1,
-            'Preparar pedido': 2,
-            'Demorado': 3,
-            'Listo para despachar': 4,
-            'Despachando': 5,
-            'En camino': 6,
-            'Entregado': 7,
-            'Entrega fallida': 8,
-            'Cancelado': 10 
-        };
+        'Sin preparar': 1,
+        'Preparar pedido': 2,
+        'Demorado': 3,
+        'Listo para despachar': 4,
+        'Despachando': 5,
+        'En camino': 6,
+        'Entregado': 7,
+        'Entrega fallida': 8,
+        'Cancelado': 9
+};
 
         if (filters.search) params.Search = filters.search;
         

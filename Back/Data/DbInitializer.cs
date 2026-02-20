@@ -9,7 +9,6 @@ namespace Back.Data
     {
         public static void Initialize(AppDbContext context)
         {
-            // BORRA y RECREA la base de datos siempre que arranca (para desarrollo/testing)
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
 
@@ -48,7 +47,7 @@ namespace Back.Data
             context.Sucursales.Add(suc);
             context.SaveChanges();
 
-            // 4.1 PRODUCTOS (sin ID explícito)
+            // 4.1 PRODUCTOS
             var prod1 = new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m };
             var prod2 = new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, Boos", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m };
             var prod582 = new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m };
@@ -82,11 +81,16 @@ namespace Back.Data
             // --- CARGA DE PEDIDOS ---
             var admin = context.Usuarios.First(u => u.Rol == "Administrador");
             var operario = context.Usuarios.First(u => u.Rol == "Operario");
+            var cadete = context.Usuarios.First(u => u.Rol == "Cadete"); // ← CARLOS
             var loc = context.Localidades.First();
+            
             var stSinPreparar = context.EstadosDePedidos.First(e => e.NombreEstado == "Sin preparar");
             var stListo = context.EstadosDePedidos.First(e => e.NombreEstado == "Listo para despachar");
+            var stEnCamino = context.EstadosDePedidos.First(e => e.NombreEstado == "En camino");
+            var stEntregado = context.EstadosDePedidos.First(e => e.NombreEstado == "Entregado");
+            var stFallido = context.EstadosDePedidos.First(e => e.NombreEstado == "Entrega fallida");
 
-            // PEDIDO 1: SIN PREPARAR (Con perfume Dadatina)
+            // PEDIDO 1: SIN PREPARAR (Admin)
             var p1 = new Pedido {
                 Fecha = DateTime.Now, 
                 Total = prod1.PrecioProducto, 
@@ -108,7 +112,6 @@ namespace Back.Data
                 PrecioUnitario = prod1.PrecioProducto 
             });
 
-            // Historial para el pedido 1
             context.HistorialesDeEstados.Add(new HistorialDeEstados {
                 IDPedido = p1.IDPedido,
                 IDEstadoDePedido = stSinPreparar.IDEstadoDePedido,
@@ -117,7 +120,7 @@ namespace Back.Data
                 Observaciones = "Pedido creado en estado inicial"
             });
 
-            // PEDIDO 2: LISTO PARA DESPACHAR (Con Oneblade y Boos)
+            // PEDIDO 2: LISTO PARA DESPACHAR (Operario)
             var p2 = new Pedido {
                 Fecha = DateTime.Now.AddHours(-3), 
                 Total = prod582.PrecioProducto + prod2.PrecioProducto, 
@@ -138,19 +141,77 @@ namespace Back.Data
                 new DetalleDePedido { IDPedido = p2.IDPedido, IDProducto = prod2.IDProducto, Cantidad = 1, PrecioUnitario = prod2.PrecioProducto }
             );
             
-            // Historial para el pedido 2
             context.HistorialesDeEstados.Add(new HistorialDeEstados {
                 IDPedido = p2.IDPedido, 
                 IDEstadoDePedido = stListo.IDEstadoDePedido,
                 IDUsuario = operario.IDUsuario, 
                 fecha_hora_inicio = DateTime.Now.AddMinutes(-20),
-                Observaciones = "Preparación terminada con productos de perfumería"
+                Observaciones = "Preparación terminada"
+            });
+
+            // ✅ PEDIDO 3: ASIGNADO A CARLOS - ENTREGADO
+            var p3 = new Pedido {
+                Fecha = DateTime.Now.AddDays(-2),  // Hace 2 días
+                Total = prod1.PrecioProducto, 
+                EstadoActual = "Entregado",
+                IDCliente = cliente.IDCliente, 
+                IDEstadoDePedido = stEntregado.IDEstadoDePedido,
+                IDUsuario = cadete.IDUsuario,  // ← CARLOS
+                IDSucursal = suc.IDSucursal, 
+                IDLocalidad = loc.IDLocalidad,
+                DireccionEntrega = "Rivadavia 456"
+            };
+            context.Pedidos.Add(p3);
+            context.SaveChanges();
+
+            context.DetallesDePedidos.Add(new DetalleDePedido { 
+                IDPedido = p3.IDPedido, 
+                IDProducto = prod1.IDProducto, 
+                Cantidad = 1, 
+                PrecioUnitario = prod1.PrecioProducto 
+            });
+
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p3.IDPedido,
+                IDEstadoDePedido = stEntregado.IDEstadoDePedido,
+                IDUsuario = cadete.IDUsuario,
+                fecha_hora_inicio = DateTime.Now.AddDays(-2),
+                Observaciones = "Pedido entregado correctamente"
+            });
+
+            // ✅ PEDIDO 4: ASIGNADO A CARLOS - FALLIDO
+            var p4 = new Pedido {
+                Fecha = DateTime.Now.AddDays(-1),  // Ayer
+                Total = prod582.PrecioProducto, 
+                EstadoActual = "Entrega fallida",
+                IDCliente = cliente.IDCliente, 
+                IDEstadoDePedido = stFallido.IDEstadoDePedido,
+                IDUsuario = cadete.IDUsuario,  // ← CARLOS
+                IDSucursal = suc.IDSucursal, 
+                IDLocalidad = loc.IDLocalidad,
+                DireccionEntrega = "San Martin 789"
+            };
+            context.Pedidos.Add(p4);
+            context.SaveChanges();
+
+            context.DetallesDePedidos.Add(new DetalleDePedido { 
+                IDPedido = p4.IDPedido, 
+                IDProducto = prod582.IDProducto, 
+                Cantidad = 1, 
+                PrecioUnitario = prod582.PrecioProducto 
+            });
+
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p4.IDPedido,
+                IDEstadoDePedido = stFallido.IDEstadoDePedido,
+                IDUsuario = cadete.IDUsuario,
+                fecha_hora_inicio = DateTime.Now.AddDays(-1),
+                Observaciones = "Domicilio sin moradores"
             });
 
             context.SaveChanges();
 
-            Console.WriteLine("--- Semillado completo: Pedidos con productos del catálogo cargados ---");
+            Console.WriteLine("--- Semillado completo: Pedidos con Carlos (Cadete) incluidos ---");
         }
     }
 }
-
