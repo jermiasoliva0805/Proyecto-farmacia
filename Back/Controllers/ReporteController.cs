@@ -31,5 +31,25 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
         }
+
+
+        // clientes frecuentes por volumen jere.
+        [HttpGet("ranking-clientes")]
+        public async Task<IActionResult> GetRankingClientes()
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al generar el ranking de clientes", error = ex.Message });
+            }
+        }
     }
+
+
+    
+
 }

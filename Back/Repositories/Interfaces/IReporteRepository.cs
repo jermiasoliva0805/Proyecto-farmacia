@@ -9,5 +9,7 @@ namespace Back.Repositories.Interfaces
         /// en un rango de fechas determinado.
         /// </summary>
         Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta);
+        // Agrega esto a IReporteRepository.cs
+        Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync();// de clientes frecuentes por volumen jere.
     }
 }
