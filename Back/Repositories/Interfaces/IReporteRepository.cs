@@ -1,4 +1,4 @@
-using Back.DTOs; // Asegúrate de que apunte a donde definiste el EntregaPorCadeteDTO
+using Back.DTOs;
 
 namespace Back.Repositories.Interfaces
 {
@@ -8,6 +8,9 @@ namespace Back.Repositories.Interfaces
         /// Obtiene un reporte agrupado por cadete con sus estadísticas de entrega
         /// en un rango de fechas determinado.
         /// </summary>
-        Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
+            DateTime fechaDesde, 
+            DateTime fechaHasta,
+            int? idSucursal = null);
     }
 }

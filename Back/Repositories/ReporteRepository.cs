@@ -1,5 +1,4 @@
 using Back.Data;
-using Back.Models;
 using Back.DTOs;
 using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,28 +14,63 @@ namespace Back.Repositories
             _context = context;
         }
 
-       public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta)
-{
-    return await _context.Pedidos
-        .Where(p => p.Fecha >= fechaDesde && p.Fecha <= fechaHasta)
-        .Include(p => p.Usuario)
-        .GroupBy(p => new 
-        { 
-            p.IDUsuario, 
-            // Concatenamos Nombre y Apellido ya que NombreCompleto no existe en el modelo
-            NombreCompleto = p.Usuario.Nombre + " " + p.Usuario.Apellido 
-        })
-        .Select(g => new EntregaPorCadeteDTO
+        public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
+            DateTime fechaDesde, 
+            DateTime fechaHasta,
+            int? idSucursal = null)
         {
-            IDCadete = g.Key.IDUsuario,
-            NombreCadete = g.Key.NombreCompleto,
-            TotalPedidosAsignados = g.Count(),
-            // Estado 7 = Entregado, Estado 9 = Cancelado
-            EntregasExitosas = g.Count(p => p.IDEstadoDePedido == 7),
-            EntregasFallidas = g.Count(p => p.IDEstadoDePedido == 9),
-            TotalRecaudado = g.Where(p => p.IDEstadoDePedido == 7).Sum(p => p.Total)
-        })
-        .ToListAsync();
-}
+            var inicio = fechaDesde.Date;
+            var fin = fechaHasta.Date.AddDays(1).AddTicks(-1);
+
+            // Traer todos los pedidos en el rango
+            var pedidosQuery = _context.Pedidos
+                .Where(p => p.Fecha >= inicio && p.Fecha <= fin)
+                .Include(p => p.Usuario)
+                .AsNoTracking();
+
+            // Filtrar por sucursal si es necesario
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                pedidosQuery = pedidosQuery.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var pedidosPeriodo = await pedidosQuery.ToListAsync();
+
+            // Agrupar por cadete y calcular métricas
+            var reportePorCadete = pedidosPeriodo
+                .Where(p => p.Usuario != null && p.Usuario.Rol != null && p.Usuario.Rol.Trim() == "Cadete")
+                .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre, p.Usuario.Apellido })
+                .Select(g => 
+                {
+                    var pedidosGrupo = g.ToList();
+
+                    var totalAsignados = pedidosGrupo.Count;
+                    
+                    // ENTREGADOS: Estado = 7
+                    var entregados = pedidosGrupo.Count(p => p.IDEstadoDePedido == 7);
+                    
+                    // FALLIDAS: Estado = 9 (Cancelado) - SOLO ESTADO 9
+                    var fallidosTotal = pedidosGrupo.Count(p => p.IDEstadoDePedido == 9);
+
+                    var recaudado = pedidosGrupo
+                        .Where(p => p.IDEstadoDePedido == 7)
+                        .Sum(p => p.Total);
+
+                    return new EntregaPorCadeteDTO
+                    {
+                        IDCadete = g.Key.IDUsuario,
+                        NombreCadete = $"{g.Key.Nombre} {g.Key.Apellido}",
+                        TotalPedidosAsignados = totalAsignados,
+                        EntregasExitosas = entregados,
+                        EntregasFallidas = fallidosTotal,  // ← SOLO ESTADO 9
+                        TotalRecaudado = recaudado
+                    };
+                })
+                .Where(c => c.TotalPedidosAsignados > 0)
+                .OrderBy(c => c.NombreCadete)
+                .ToList();
+
+            return reportePorCadete;
+        }
     }
 }

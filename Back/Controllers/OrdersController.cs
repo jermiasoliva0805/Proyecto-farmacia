@@ -39,16 +39,24 @@ namespace Back.Controllers
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
         {
-            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 1 });
-            return Ok(pedidos);
+        // Corregido: 'IDEstadoDePedido' (sin espacios) y el método 'GetFilteredOrdersAsync'
+        var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO 
+        { 
+            IDEstadoDePedido = 1 
+        });
+        return Ok(pedidos);
         }
 
         [Authorize(Roles = "Administrador")]
         [HttpGet("pendientes-cadete")]
         public async Task<IActionResult> GetPendientesCadete()
         {
-            var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO { IDEstadoDePedido = 4 });
-            return Ok(pedidos);
+        // Corregido: 'IDEstadoDePedido' (sin espacios) y el método 'GetFilteredOrdersAsync'
+        var pedidos = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO 
+        { 
+            IDEstadoDePedido = 4 
+        });
+        return Ok(pedidos);
         }
 
         // --- SECCIÓN ADMINISTRADOR: ASIGNACIÓN DE RESPONSABLES ---
@@ -175,6 +183,8 @@ namespace Back.Controllers
 
             return Ok(dto);
         }
+
+        
 
     }
 }
