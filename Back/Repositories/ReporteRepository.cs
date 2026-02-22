@@ -20,64 +20,91 @@ namespace Back.Repositories
 
         public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
             DateTime fechaDesde, 
-            DateTime fechaHasta, 
+            DateTime fechaHasta,
             int? idSucursal = null)
         {
-            // Ajuste de rango de fechas (Lógica de tu compañera para incluir todo el último día)
             var inicio = fechaDesde.Date;
             var fin = fechaHasta.Date.AddDays(1).AddTicks(-1);
 
-            // Consulta base con Include para obtener datos del Usuario
-            var pedidosQuery = _context.Pedidos
-                .Where(p => p.Fecha >= inicio && p.Fecha <= fin)
-                .Include(p => p.Usuario)
-                .AsNoTracking()
-                .AsQueryable();
+            Console.WriteLine($"[REPO DEBUG] Rango: {inicio:yyyy-MM-dd} a {fin:yyyy-MM-dd}");
 
-            // Filtro por sucursal (Mantenemos la funcionalidad extra de tu compa)
+            // Obtener TODOS los pedidos en el rango (sin filtro de cadete primero)
+            var todosLosPedidos = await _context.Pedidos
+                .Include(p => p.Usuario)
+                .Where(p => p.Fecha >= inicio && p.Fecha <= fin)
+                .ToListAsync();
+
+            Console.WriteLine($"[REPO DEBUG] Total pedidos en rango: {todosLosPedidos.Count}");
+
+            // Ver qué roles hay
+            var rolesUnicos = todosLosPedidos
+                .Where(p => p.Usuario != null)
+                .Select(p => p.Usuario.Rol)
+                .Distinct()
+                .ToList();
+
+            Console.WriteLine($"[REPO DEBUG] Roles únicos encontrados: {string.Join(", ", rolesUnicos)}");
+
+            // Filtrar por sucursal si viene
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
-                pedidosQuery = pedidosQuery.Where(p => p.IDSucursal == idSucursal.Value);
+                todosLosPedidos = todosLosPedidos
+                    .Where(p => p.IDSucursal == idSucursal.Value)
+                    .ToList();
+
+                Console.WriteLine($"[REPO DEBUG] Pedidos después filtro sucursal: {todosLosPedidos.Count}");
             }
 
-            var pedidosPeriodo = await pedidosQuery.ToListAsync();
-
-            // Agrupación y cálculo de métricas (Combinando ambas lógicas)
-            var reportePorCadete = pedidosPeriodo
+            // Filtrar solo los que tienen usuario con rol Cadete
+            var pedidosCadete = todosLosPedidos
                 .Where(p => p.Usuario != null && 
-                    p.Usuario.Rol != null && 
-                       p.Usuario.Rol.Trim() == "Cadete") // Aseguramos que solo sean cadetes
-                .GroupBy(p => new 
-                { 
-                    p.IDUsuario, 
-                    p.Usuario.Nombre, 
-                    p.Usuario.Apellido 
-                })
+                            p.Usuario.Rol != null && 
+                            p.Usuario.Rol.Trim().ToLower() == "cadete")  // ← Comparación case-insensitive
+                .ToList();
+
+            Console.WriteLine($"[REPO DEBUG] Pedidos de cadetes: {pedidosCadete.Count}");
+
+            if (pedidosCadete.Count == 0)
+            {
+                Console.WriteLine("[REPO DEBUG] ⚠️ No hay pedidos de cadetes!");
+                return new List<EntregaPorCadeteDTO>();
+            }
+
+            // Agrupar y calcular
+            var reporte = pedidosCadete
+                .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre, p.Usuario.Apellido })
                 .Select(g =>
                 {
                     var pedidosGrupo = g.ToList();
+                    var totalAsignados = pedidosGrupo.Count;
+                    var entregados = pedidosGrupo.Count(p => p.IDEstadoDePedido == 7);
+                    var fallidos = pedidosGrupo.Count(p => p.IDEstadoDePedido == 8 || p.IDEstadoDePedido == 9);
+                    var recaudado = pedidosGrupo
+                        .Where(p => p.IDEstadoDePedido == 7)
+                        .Sum(p => p.Total);
+
+                    var porcentaje = totalAsignados > 0 
+                        ? (entregados * 100.0 / totalAsignados) 
+                        : 0;
+
+                    Console.WriteLine($"[REPO DEBUG] Cadete: {g.Key.Nombre} {g.Key.Apellido} - Pedidos: {totalAsignados}, Entregados: {entregados}");
 
                     return new EntregaPorCadeteDTO
                     {
                         IDCadete = g.Key.IDUsuario,
-                        // Concatenación de nombre y apellido como en tu lógica
                         NombreCadete = $"{g.Key.Nombre} {g.Key.Apellido}",
-                        TotalPedidosAsignados = pedidosGrupo.Count,
-                        // Estado 7 = Entregado
-                        EntregasExitosas = pedidosGrupo.Count(p => p.IDEstadoDePedido == 7),
-                        // Estado 9 = Cancelado (Lógica compartida)
-                        EntregasFallidas = pedidosGrupo.Count(p => p.IDEstadoDePedido == 9),
-                        // Suma de totales solo de entregas exitosas
-                        TotalRecaudado = pedidosGrupo
-                            .Where(p => p.IDEstadoDePedido == 7)
-                            .Sum(p => p.Total)
+                        TotalPedidosAsignados = totalAsignados,
+                        EntregasExitosas = entregados,
+                        EntregasFallidas = fallidos,
+                        TotalRecaudado = recaudado,
+                        PorcentajeEfectividad = porcentaje
                     };
                 })
-                .Where(c => c.TotalPedidosAsignados > 0)
                 .OrderBy(c => c.NombreCadete)
                 .ToList();
 
-            return reportePorCadete;
+            Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} cadetes");
+            return reporte;
         }
     }
 }
