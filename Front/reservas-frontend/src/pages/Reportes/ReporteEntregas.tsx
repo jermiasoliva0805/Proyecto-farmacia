@@ -74,10 +74,11 @@ export const ReporteEntregas: React.FC = () => {
           <h1 className="text-xl font-bold text-gray-800">Reportes y Análisis</h1>
           <p className="text-sm text-gray-500">Visualiza métricas y estadísticas de rendimiento</p>
         </div>
-        <button className="bg-black text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-          <DollarSign size={16} /> Exportar Reporte
-        </button>
-      </div>
+                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-all shadow-md">
+                
+                    Exportar Reporte
+                </button>
+            </div>
 
       {/* Selectores dinámicos */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
