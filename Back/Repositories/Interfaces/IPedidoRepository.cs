@@ -21,5 +21,10 @@ namespace Back.Repositories.Interfaces
 
         // Actualización genérica de un pedido
         Task UpdateAsync(Pedido pedido);
+
+        // AGREGADO PARA EL REPORTE DE HOY (RF6.4)
+        // Se agregan parámetros con valores por defecto para no romper la implementación actual
+        Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync(int dias = 7, int? idSucursal = null);
+        
     }
 }

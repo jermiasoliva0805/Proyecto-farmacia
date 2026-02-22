@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization; // IMPORTANTE para ReferenceHandler
+using System.Text.Json.Serialization;
 using Microsoft.OpenApi.Models;
 using Back.Interfaces;
 
@@ -30,8 +30,9 @@ namespace Back
                 {
                     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // 🔑 evita ciclos
-                    options.JsonSerializerOptions.WriteIndented = true; // opcional, para legibilidad
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull; // ← AGREGAR ESTA LÍNEA
                 });
 
             builder.Services.AddEndpointsApiExplorer();
@@ -88,6 +89,7 @@ namespace Back
             builder.Services.AddScoped<IClientRepository, ClientRepository>();
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
+            builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 
             // --- NUEVOS REPOSITORIOS ---
             builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();

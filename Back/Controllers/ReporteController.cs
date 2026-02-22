@@ -1,5 +1,7 @@
 using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace Back.Controllers
 {
@@ -15,19 +17,34 @@ namespace Back.Controllers
         }
 
         [HttpGet("entregas-cadete")]
-        public async Task<IActionResult> GetEntregasPorCadete([FromQuery] DateTime fechaDesde, [FromQuery] DateTime fechaHasta)
+        public async Task<IActionResult> GetEntregasPorCadete(
+            [FromQuery] DateTime? fechaDesde = null, 
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
         {
             try
             {
-                // Si no se envían fechas, por defecto tomamos el último mes
-                if (fechaDesde == default) fechaDesde = DateTime.Now.AddMonths(-1);
-                if (fechaHasta == default) fechaHasta = DateTime.Now;
+                // LOGS DE DEBUG
+                Console.WriteLine($"[CONTROLLER] fechaDesde: {fechaDesde}");
+                Console.WriteLine($"[CONTROLLER] fechaHasta: {fechaHasta}");
+                Console.WriteLine($"[CONTROLLER] idSucursal: {idSucursal}");
 
-                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(fechaDesde, fechaHasta);
+                var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+                var hasta = fechaHasta ?? DateTime.Now;
+
+                Console.WriteLine($"[CONTROLLER] Calculado desde: {desde}");
+                Console.WriteLine($"[CONTROLLER] Calculado hasta: {hasta}");
+
+                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta, idSucursal);
+                
+                Console.WriteLine($"[CONTROLLER] Reporte devuelto: {reporte.Count} cadetes");
+
                 return Ok(reporte);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[CONTROLLER] ERROR: {ex.Message}");
+                Console.WriteLine($"[CONTROLLER] Stack: {ex.StackTrace}");
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
         }
