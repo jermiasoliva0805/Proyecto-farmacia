@@ -58,13 +58,10 @@ namespace Back.Repositories
         public async Task<Pedido?> GetByIdAsync(int idPedido)
         {
             return await _context.Pedidos
-                .Include(p => p.Cliente)
-                    .ThenInclude(c => c.Barrio)
-                .Include(p => p.Cliente)
-                    .ThenInclude(c => c.Localidad)
+                .Include(p => p.Cliente).ThenInclude(c => c.Barrio)
+                .Include(p => p.Cliente).ThenInclude(c => c.Localidad)
                 .Include(p => p.Sucursal)
-                .Include(p => p.Detalles)
-                    .ThenInclude(d => d.Producto)
+                .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(p => p.IDPedido == idPedido);
         }
 
@@ -74,68 +71,105 @@ namespace Back.Repositories
             await _context.SaveChangesAsync();
         }
 
-   public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
-    {
-        var pedido = await _context.Pedidos
-            .FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
-
-        if (pedido == null) return false;
-
-        int estadoFinal = pedido.IDEstadoDePedido; // Estado que se grabará
-
-        // --- LÓGICA DE INTENTOS FALLIDOS ---
-        if (dto.IDNuevoEstado == 8) // Entrega Fallida
+        public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
         {
-            pedido.IntentosEntregaFallida++;
+            var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
+            if (pedido == null) return false;
 
-            if (pedido.IntentosEntregaFallida >= 3)
+            int estadoFinal = dto.IDNuevoEstado;
+
+            if (dto.IDNuevoEstado == 8) 
             {
-                // Cancelar automáticamente
-                estadoFinal = 9; // Cancelado
-                pedido.IDEstadoDePedido = 9;
-                pedido.EstadoActual = "Cancelado";
-                pedido.JustificacionCancelacion = "Cancelación automática: superó los 3 intentos fallidos.";
+                pedido.IntentosEntregaFallida++;
+                if (pedido.IntentosEntregaFallida >= 3)
+                {
+                    estadoFinal = 9;
+                    pedido.IDEstadoDePedido = 9;
+                    pedido.EstadoActual = "Cancelado";
+                    pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
+                }
+                else
+                {
+                    pedido.IDEstadoDePedido = 8;
+                    pedido.EstadoActual = "Entrega fallida";
+                }
             }
             else
             {
-                // Mantener en fallido
-                estadoFinal = 8;
-                pedido.IDEstadoDePedido = 8;
-                pedido.EstadoActual = "Entrega fallida";
+                pedido.IDEstadoDePedido = dto.IDNuevoEstado;
+                if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
             }
+
+            var nuevoHistorial = new HistorialDeEstados
+            {
+                IDPedido = pedido.IDPedido,
+                IDEstadoDePedido = estadoFinal,
+                IDUsuario = dto.IDUsuario,
+                fecha_hora_inicio = DateTime.Now,
+                Observaciones = dto.Observaciones
+            };
+
+            _context.HistorialesDeEstados.Add(nuevoHistorial);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        else if (dto.IDNuevoEstado == 9) // Cancelación manual
+
+        // REPORTE ACTUALIZADO PARA DASHBOARD (RF6.4)
+        public async Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync(int dias = 7, int? idSucursal = null)
         {
-            estadoFinal = 9;
-            pedido.IDEstadoDePedido = 9;
-            pedido.EstadoActual = "Cancelado";
+            DateTime fechaInicioFiltro = DateTime.Now.AddDays(-dias);
+            const int UMBRAL_MINUTOS = 30; // Definido para el análisis de eficiencia
+
+            var query = _context.HistorialesDeEstados
+                .Include(h => h.Usuario)
+                .Include(h => h.Pedido)
+                .Where(h => h.fecha_hora_inicio >= fechaInicioFiltro)
+                .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
+                .AsQueryable();
+
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(h => h.Pedido.IDSucursal == idSucursal.Value);
+            }
+
+            var historiales = await query.ToListAsync();
+
+            var reporte = historiales
+                .GroupBy(h => h.IDPedido)
+                .Select(g => new
+                {
+                    PedidoId = g.Key,
+                    Inicio = g.Where(h => h.IDEstadoDePedido == 2).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
+                    Fin = g.Where(h => h.IDEstadoDePedido == 4).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
+                    NombreCompleto = g.Where(h => h.Usuario != null)
+                                    .Select(h => $"{h.Usuario.Nombre} {h.Usuario.Apellido}")
+                                    .FirstOrDefault()
+                })
+                .Where(x => x.Inicio != default && x.Fin != default && !string.IsNullOrEmpty(x.NombreCompleto))
+                .Select(x => new 
+                { 
+                    x.NombreCompleto, 
+                    Minutos = (x.Fin - x.Inicio).TotalMinutes 
+                })
+                .GroupBy(x => x.NombreCompleto)
+                .Select(g => 
+                {
+                    int totales = g.Count();
+                    int dentro = g.Count(x => x.Minutos <= UMBRAL_MINUTOS);
+                    return new ReporteOperarioDTO
+                    {
+                        NombreOperario = g.Key,
+                        PedidosTotales = totales, // Antes era TotalPedidosArmados
+                        DentroUmbral = dentro,
+                        FueraUmbral = totales - dentro,
+                        TiempoPromedioMinutos = Math.Round(g.Average(x => x.Minutos), 2),
+                        PorcentajeEficiencia = Math.Round((double)dentro / totales * 100, 2)
+                    };
+                })
+                .OrderByDescending(r => r.PorcentajeEficiencia)
+                .ToList();
+
+            return reporte;
         }
-        else
-        {
-            estadoFinal = dto.IDNuevoEstado;
-            pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-
-            if (dto.IDNuevoEstado == 7) // Entregado
-                pedido.IntentosEntregaFallida = 0;
-        }
-
-        // --- GRABAR HISTORIAL CON EL ESTADO CORRECTO ---
-        var nuevoHistorial = new HistorialDeEstados
-        {
-            IDPedido = pedido.IDPedido,
-            IDEstadoDePedido = estadoFinal, // ← USA LA VARIABLE CALCULADA
-            IDUsuario = dto.IDUsuario,
-            fecha_hora_inicio = DateTime.Now,
-            Observaciones = dto.IDNuevoEstado == 8
-                ? $"Intento #{pedido.IntentosEntregaFallida} fallido. Motivo: {dto.Observaciones}"
-                : (dto.IDNuevoEstado == 9 ? "Pedido cancelado" : dto.Observaciones)
-        };
-
-        _context.HistorialesDeEstados.Add(nuevoHistorial);
-        _context.Pedidos.Update(pedido);
-
-        await _context.SaveChangesAsync();
-        return true;
-    }
     }
 }
