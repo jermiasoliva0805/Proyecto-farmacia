@@ -51,17 +51,17 @@ namespace Back.Controllers
 
 
         // clientes frecuentes por volumen jere.
-        [HttpGet("ranking-clientes")]
+                [HttpGet("ranking-clientes")]
         public async Task<IActionResult> GetRankingClientes()
         {
-            try
+            try 
             {
                 var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
                 return Ok(reporte);
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
-                return BadRequest(new { message = "Error al generar el ranking de clientes", error = ex.Message });
+                return BadRequest(new { message = "Error en ranking", error = ex.Message });
             }
         }
     }

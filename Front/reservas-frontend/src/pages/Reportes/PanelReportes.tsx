@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Truck, Clock } from 'lucide-react';
+import { Truck, Clock, Users } from 'lucide-react'; // Agregamos Users
 import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
+import { RankingClientes } from './RankingClientes'; // Importamos tu componente
 
 export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
@@ -10,7 +11,7 @@ export const PanelReportes = () => {
         <div className="p-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de Reportes</h1>
 
-            {/* Selectores de Pestaña */}
+            {/* Selectores de Pestaña Actualizados */}
             <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-2xl w-fit">
                 <button
                     onClick={() => setTabActiva('entregas')}
@@ -28,11 +29,22 @@ export const PanelReportes = () => {
                 >
                     <Clock size={18} /> Rendimiento Operarios
                 </button>
+                {/* TU NUEVA PESTAÑA */}
+                <button
+                    onClick={() => setTabActiva('ranking')}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'ranking' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    <Users size={18} /> Ranking Clientes
+                </button>
             </div>
 
-            {/* El contenido (que ahora incluye sus propios filtros) */}
+            {/* Contenido Dinámico */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                {tabActiva === 'entregas' ? <ReporteEntregas /> : <ReporteOperarios />}
+                {tabActiva === 'entregas' && <ReporteEntregas />}
+                {tabActiva === 'operarios' && <ReporteOperarios />}
+                {tabActiva === 'ranking' && <RankingClientes />}
             </div>
         </div>
     );
