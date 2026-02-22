@@ -1,4 +1,4 @@
-using Back.DTOs; // Asegúrate de que apunte a donde definiste el EntregaPorCadeteDTO
+using Back.DTOs;
 
 namespace Back.Repositories.Interfaces
 {
@@ -9,7 +9,5 @@ namespace Back.Repositories.Interfaces
         /// en un rango de fechas determinado.
         /// </summary>
         Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(DateTime fechaDesde, DateTime fechaHasta);
-        // Agrega esto a IReporteRepository.cs
-        Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync();// de clientes frecuentes por volumen jere.
     }
 }

@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             { path: '/asignar-operario', icon: Users, label: 'Asignar Operarios' },
             { path: '/asignar-cadete', icon: MapPin, label: 'Asignar Cadetes' },
             { path: '/seguimiento', icon: ClipboardList, label: 'Seguimiento' },
-            { path: '/reportes', icon: BarChart3, label: 'Reportes' },
+            { path: '/reportes', icon: BarChart3, label: 'Reportes' }, // Único acceso a reportes
             { path: '/usuarios', icon: Users, label: 'Usuarios' },
         ],
         Operario: [
@@ -48,10 +48,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         ],
     };
 
+    // Obtenemos el rol del usuario, por defecto Administrador para evitar errores
     const userRole = (user?.rol as UserRole) || 'Administrador';
     const currentMenu = menuItems[userRole] || [];
 
-    // En pantallas grandes (lg) siempre mostramos el sidebar, en móviles depende de isOpen
     const visibilityClass = isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0';
 
     return (
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${
                                 isActive
-                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200' // Estilo activo sólido como en la imagen
+                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                             }`
                         }

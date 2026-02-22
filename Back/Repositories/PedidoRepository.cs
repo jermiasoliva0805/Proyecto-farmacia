@@ -58,13 +58,10 @@ namespace Back.Repositories
         public async Task<Pedido?> GetByIdAsync(int idPedido)
         {
             return await _context.Pedidos
-                .Include(p => p.Cliente)
-                    .ThenInclude(c => c.Barrio)
-                .Include(p => p.Cliente)
-                    .ThenInclude(c => c.Localidad)
+                .Include(p => p.Cliente).ThenInclude(c => c.Barrio)
+                .Include(p => p.Cliente).ThenInclude(c => c.Localidad)
                 .Include(p => p.Sucursal)
-                .Include(p => p.Detalles)
-                    .ThenInclude(d => d.Producto)
+                .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(p => p.IDPedido == idPedido);
         }
 
@@ -74,55 +71,105 @@ namespace Back.Repositories
             await _context.SaveChangesAsync();
         }
 
-    public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
-{
-    // 1. Buscamos el pedido
-    var pedido = await _context.Pedidos
-        .FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
-
-    if (pedido == null) return false;
-
-    // --- LÓGICA DE INTENTOS FALLIDOS ---
-    // Si el nuevo estado es 8 (Entrega Fallida)
-    if (dto.IDNuevoEstado == 8) 
-    {
-        pedido.IntentosEntregaFallida++; 
-
-        if (pedido.IntentosEntregaFallida >= 3)
+        public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
         {
-            pedido.IDEstadoDePedido = 9; // Cancelado
-            pedido.EstadoActual = "Cancelado";
-            pedido.JustificacionCancelacion = "Cancelación automática: superó los 3 intentos fallidos.";
+            var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
+            if (pedido == null) return false;
+
+            int estadoFinal = dto.IDNuevoEstado;
+
+            if (dto.IDNuevoEstado == 8) 
+            {
+                pedido.IntentosEntregaFallida++;
+                if (pedido.IntentosEntregaFallida >= 3)
+                {
+                    estadoFinal = 9;
+                    pedido.IDEstadoDePedido = 9;
+                    pedido.EstadoActual = "Cancelado";
+                    pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
+                }
+                else
+                {
+                    pedido.IDEstadoDePedido = 8;
+                    pedido.EstadoActual = "Entrega fallida";
+                }
+            }
+            else
+            {
+                pedido.IDEstadoDePedido = dto.IDNuevoEstado;
+                if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
+            }
+
+            var nuevoHistorial = new HistorialDeEstados
+            {
+                IDPedido = pedido.IDPedido,
+                IDEstadoDePedido = estadoFinal,
+                IDUsuario = dto.IDUsuario,
+                fecha_hora_inicio = DateTime.Now,
+                Observaciones = dto.Observaciones
+            };
+
+            _context.HistorialesDeEstados.Add(nuevoHistorial);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        else
+
+        // REPORTE ACTUALIZADO PARA DASHBOARD (RF6.4)
+        public async Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync(int dias = 7, int? idSucursal = null)
         {
-            pedido.IDEstadoDePedido = 8;
-            pedido.EstadoActual = "Entrega fallida";
+            DateTime fechaInicioFiltro = DateTime.Now.AddDays(-dias);
+            const int UMBRAL_MINUTOS = 30; // Definido para el análisis de eficiencia
+
+            var query = _context.HistorialesDeEstados
+                .Include(h => h.Usuario)
+                .Include(h => h.Pedido)
+                .Where(h => h.fecha_hora_inicio >= fechaInicioFiltro)
+                .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
+                .AsQueryable();
+
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(h => h.Pedido.IDSucursal == idSucursal.Value);
+            }
+
+            var historiales = await query.ToListAsync();
+
+            var reporte = historiales
+                .GroupBy(h => h.IDPedido)
+                .Select(g => new
+                {
+                    PedidoId = g.Key,
+                    Inicio = g.Where(h => h.IDEstadoDePedido == 2).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
+                    Fin = g.Where(h => h.IDEstadoDePedido == 4).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
+                    NombreCompleto = g.Where(h => h.Usuario != null)
+                                    .Select(h => $"{h.Usuario.Nombre} {h.Usuario.Apellido}")
+                                    .FirstOrDefault()
+                })
+                .Where(x => x.Inicio != default && x.Fin != default && !string.IsNullOrEmpty(x.NombreCompleto))
+                .Select(x => new 
+                { 
+                    x.NombreCompleto, 
+                    Minutos = (x.Fin - x.Inicio).TotalMinutes 
+                })
+                .GroupBy(x => x.NombreCompleto)
+                .Select(g => 
+                {
+                    int totales = g.Count();
+                    int dentro = g.Count(x => x.Minutos <= UMBRAL_MINUTOS);
+                    return new ReporteOperarioDTO
+                    {
+                        NombreOperario = g.Key,
+                        PedidosTotales = totales, // Antes era TotalPedidosArmados
+                        DentroUmbral = dentro,
+                        FueraUmbral = totales - dentro,
+                        TiempoPromedioMinutos = Math.Round(g.Average(x => x.Minutos), 2),
+                        PorcentajeEficiencia = Math.Round((double)dentro / totales * 100, 2)
+                    };
+                })
+                .OrderByDescending(r => r.PorcentajeEficiencia)
+                .ToList();
+
+            return reporte;
         }
-    }
-    else 
-    {
-        pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-        // Si el estado es positivo (ej: Entregado), podrías resetear el contador si quisieras
-        if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
-    }
-
-    // --- GRABAR EN HISTORIAL (Usando tus nombres de campos) ---
-    var nuevoHistorial = new HistorialDeEstados
-    {
-        IDPedido = pedido.IDPedido,
-        IDEstadoDePedido = pedido.IDEstadoDePedido,
-        IDUsuario = dto.IDUsuario,
-        fecha_hora_inicio = DateTime.Now, // Tu campo se llama así
-        Observaciones = dto.IDNuevoEstado == 8 
-            ? $"Intento #{pedido.IntentosEntregaFallida} fallido. Motivo: {dto.Observaciones}" 
-            : dto.Observaciones
-    };
-
-    _context.HistorialesDeEstados.Add(nuevoHistorial); // Tu DbSet se llama HistorialesDeEstados
-    
-    await _context.SaveChangesAsync();
-    return true;
-}
     }
 }
