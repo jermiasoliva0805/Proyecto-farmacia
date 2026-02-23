@@ -1,4 +1,5 @@
 using Back.DTOs;
+using Proyecto_farmacia.DTOs;
 
 namespace Back.Repositories.Interfaces
 {
@@ -15,5 +16,9 @@ namespace Back.Repositories.Interfaces
 
         Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync();
     // ... otros métodos existentes (como el de cadetes)
+    // Contrato para obtener el ranking de facturación
+        Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync();
     }
+
+    
 }

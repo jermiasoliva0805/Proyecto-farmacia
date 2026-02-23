@@ -1,5 +1,6 @@
 using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Proyecto_farmacia.DTOs;
 using System;
 using System.Threading.Tasks;
 
@@ -51,18 +52,42 @@ namespace Back.Controllers
 
         }
 
-        [HttpGet("ranking-clientes")]
-public async Task<IActionResult> GetRankingClientes()
+                [HttpGet("ranking-clientes")]
+        public async Task<IActionResult> GetRankingClientes()
+        {
+            try 
+            {
+                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
+                return Ok(reporte);
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(new { message = "Error en ranking", error = ex.Message });
+            }
+        }
+
+        [HttpGet("clientes-facturacion")]
+public async Task<ActionResult<List<ClienteFacturacionDTO>>> GetRankingFacturacion()
 {
-    try 
+    try
     {
-        var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
+        // Llamamos al método que acabamos de crear en el repositorio
+        var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync();
+        
+        // Si no hay datos, devolvemos una lista vacía pero con status 200
+        if (reporte == null)
+        {
+            return Ok(new List<ClienteFacturacionDTO>());
+        }
+
         return Ok(reporte);
     }
-    catch (Exception ex) 
+    catch (Exception ex)
     {
-        return BadRequest(new { message = "Error en ranking", error = ex.Message });
+        // Es importante loguear el error por si algo falla en el servidor
+        return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
     }
 }
+
     }
 }
