@@ -65,3 +65,10 @@ export interface RankingClienteDTO {
     ticketPromedio: number;
     ultimaCompra: string;
 }
+
+export interface ClienteFacturacionDTO {
+    nombreCliente: string;
+    totalFacturado: number;
+    cantidadPedidos: number;
+    ticketPromedio: number;
+}

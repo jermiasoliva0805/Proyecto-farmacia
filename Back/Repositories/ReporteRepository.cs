@@ -2,6 +2,7 @@ using Back.Data;
 using Back.DTOs;
 using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Proyecto_farmacia.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -125,6 +126,25 @@ namespace Back.Repositories
         .ToListAsync();
 }
 
+       public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync()
+{
+    // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
+    const int ID_ESTADO_ENTREGADO = 7;
+
+    return await _context.Pedidos
+        .Include(p => p.Cliente) 
+        .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // <-- CORREGIDO: IDEstadoDePedido
+        .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre }) // <-- Agrupamos mejor por ID y Nombre
+        .Select(grupo => new ClienteFacturacionDTO
+        {
+            NombreCliente = grupo.Key.Nombre,
+            TotalFacturado = grupo.Sum(p => p.Total), 
+            CantidadPedidos = grupo.Count()
+        })
+        .OrderByDescending(c => c.TotalFacturado) 
+        .Take(10) 
+        .ToListAsync();
+}
         
     }
     

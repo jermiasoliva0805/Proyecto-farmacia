@@ -24,18 +24,18 @@ export const RankingClientes: React.FC = () => {
     }, [periodo, sucursal]);
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <Users size={22} className="text-blue-600" /> Ranking de Clientes Frecuentes
-                    </h1>
-                    <p className="text-sm text-gray-500">Top 10 clientes por volumen de pedidos</p>
-                </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-all">
-                    <Download size={18} /> Exportar
-                </button>
-            </div>
+       <div className="space-y-6">
+    <div className="flex justify-between items-center mb-6">
+        <div>
+            <h1 className="text-xl font-bold text-gray-800">
+                Ranking de Clientes Frecuentes
+            </h1>
+            <p className="text-sm text-gray-500">Top 10 clientes por volumen de pedidos</p>
+        </div>
+        <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+            Exportar Reporte
+        </button>
+    </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between">
