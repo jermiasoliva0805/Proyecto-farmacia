@@ -47,6 +47,22 @@ namespace Back.Controllers
                 Console.WriteLine($"[CONTROLLER] Stack: {ex.StackTrace}");
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
+
+
         }
+
+        [HttpGet("ranking-clientes")]
+public async Task<IActionResult> GetRankingClientes()
+{
+    try 
+    {
+        var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
+        return Ok(reporte);
+    }
+    catch (Exception ex) 
+    {
+        return BadRequest(new { message = "Error en ranking", error = ex.Message });
+    }
+}
     }
 }

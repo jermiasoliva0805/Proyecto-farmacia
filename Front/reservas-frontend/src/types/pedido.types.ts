@@ -57,3 +57,11 @@ export interface OrderFilterDTO {
     fechaDesde?: string;
     fechaHasta?: string;
 }
+
+export interface RankingClienteDTO {
+    nombreCliente: string;
+    cantidadPedidos: number;
+    gastoTotal: number;
+    ticketPromedio: number;
+    ultimaCompra: string;
+}

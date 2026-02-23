@@ -106,5 +106,26 @@ namespace Back.Repositories
             Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} cadetes");
             return reporte;
         }
+        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync()
+        {
+        return await _context.Pedidos
+        .Where(p => p.IDEstadoDePedido == 7) // RN: Solo pedidos con estado 'Entregado'
+        .Include(p => p.Cliente)
+        .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre })
+        .Select(g => new RankingClienteDTO
+        {
+            NombreCliente = g.Key.Nombre,
+            CantidadPedidos = g.Count(),
+            GastoTotal = g.Sum(p => p.Total),
+            TicketPromedio = g.Count() > 0 ? g.Sum(p => p.Total) / g.Count() : 0,
+            UltimaCompra = g.Max(p => p.Fecha)
+        })
+        .OrderByDescending(x => x.CantidadPedidos) // Orden descendente por volumen
+        .Take(10) // Top 10 según Metadata
+        .ToListAsync();
+}
+
+        
     }
+    
 }

@@ -12,5 +12,8 @@ namespace Back.Repositories.Interfaces
             DateTime fechaDesde, 
             DateTime fechaHasta,
             int? idSucursal = null);
+
+        Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync();
+    // ... otros métodos existentes (como el de cadetes)
     }
 }
