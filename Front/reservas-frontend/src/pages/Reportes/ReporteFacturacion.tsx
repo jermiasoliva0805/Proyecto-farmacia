@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Calendar, MapPin, DollarSign, TrendingUp } from 'lucide-react';
+import { Card } from '../../components/common/Card';
 import { getRankingClientesFacturacion } from '../../service/reporteService';
 import { ClienteFacturacionDTO } from '../../types/pedido.types';
 
 export const ReporteFacturacion = () => {
     const [datos, setDatos] = useState<ClienteFacturacionDTO[]>([]);
     const [loading, setLoading] = useState(true);
+    const [periodo, setPeriodo] = useState("7");
+    const [sucursal, setSucursal] = useState("todas");
 
     useEffect(() => {
         const cargarData = async () => {
             try {
+                setLoading(true);
+                // Aquí podrías pasar periodo y sucursal si tu servicio lo soporta
                 const res = await getRankingClientesFacturacion();
                 setDatos(res);
             } catch (error) {
@@ -19,111 +25,153 @@ export const ReporteFacturacion = () => {
             }
         };
         cargarData();
-    }, []);
+    }, [periodo, sucursal]);
 
     const totalGeneral = datos.reduce((acc, curr) => acc + curr.totalFacturado, 0);
     const promedioGeneral = datos.length > 0 ? totalGeneral / datos.length : 0;
 
-    if (loading) return <div className="p-10 text-center text-gray-500 font-medium">Cargando reporte de facturación...</div>;
+    if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de facturación...</p>;
 
     return (
-        <div className="space-y-8">
-            {/* Encabezado: Botón sin símbolos como pediste */}
-            <div className="flex justify-between items-center">
+        <div className="p-6 bg-[#f8f9fa] min-h-screen">
+            {/* Header unificado */}
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800">Reportes y Análisis</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Facturación</h1>
                     <p className="text-sm text-gray-500">Visualiza métricas y estadísticas de facturación por cliente</p>
                 </div>
-                <button className="bg-black text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
                     Exportar Reporte
                 </button>
             </div>
 
-            {/* Tarjetas de Resumen Ampliadas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Ingresos Totales: Fondo blanco, bordes y texto verde */}
-                <div className="bg-white p-6 rounded-2xl border border-green-200 shadow-sm">
-                    <span className="text-green-600 text-sm font-semibold uppercase tracking-wider">Ingresos Totales (Top 10)</span>
-                    <h3 className="text-3xl font-black text-green-700 mt-2">
-                        {totalGeneral.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                    </h3>
-                    <div className="text-xs text-green-500/60 mt-1 italic">Suma de pedidos entregados</div>
-                </div>
-                
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <span className="text-blue-500 text-sm font-semibold uppercase tracking-wider">Gasto Promedio</span>
-                    <h3 className="text-3xl font-black text-blue-600 mt-2">
-                        {promedioGeneral.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                    </h3>
-                    <div className="text-xs text-blue-300 mt-1 italic">Promedio por cliente en el top</div>
-                </div>
+            {/* Selectores idénticos a los otros reportes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <Selector
+                    icon={<Calendar size={18} />}
+                    label="Periodo:"
+                    value={periodo}
+                    options={[
+                        { value: "7", label: "Últimos 7 días" },
+                        { value: "30", label: "Últimos 30 días" },
+                        { value: "90", label: "Últimos 90 días" },
+                    ]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPeriodo(e.target.value)}
+                />
+                <Selector
+                    icon={<MapPin size={18} />}
+                    label="Sucursal:"
+                    value={sucursal}
+                    options={[
+                        { value: "todas", label: "Todas las sucursales" },
+                        { value: "centro", label: "Sucursal Centro" },
+                        { value: "norte", label: "Sucursal Norte" },
+                    ]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSucursal(e.target.value)}
+                />
             </div>
 
-            {/* Gráfico de Barras Horizontal */}
-            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                <h4 className="text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">Distribución de Facturación</h4>
+            {/* Métricas unificadas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <MetricCard 
+                    title="Ingresos Totales (Top 10)" 
+                    value={`$${totalGeneral.toLocaleString('es-AR')}`} 
+                    sub="Suma de pedidos entregados" 
+                    icon={<DollarSign className="text-green-500" />} 
+                    color="text-green-600"
+                />
+                <MetricCard 
+                    title="Gasto Promedio" 
+                    value={`$${promedioGeneral.toLocaleString('es-AR')}`} 
+                    sub="Promedio por cliente en el top" 
+                    icon={<TrendingUp className="text-blue-500" />} 
+                    color="text-blue-600"
+                />
+            </div>
+
+            {/* Gráfico unificado */}
+            <Card className="p-6 mb-8">
+                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Distribución de Facturación</h3>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                            data={datos}
-                            layout="vertical"
-                            margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
+                        <BarChart data={datos} layout="vertical" margin={{ left: 20, right: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                             <XAxis type="number" hide />
                             <YAxis 
                                 dataKey="nombreCliente" 
                                 type="category" 
+                                axisLine={false} 
+                                tickLine={false} 
                                 width={120} 
-                                tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 600 }}
-                                axisLine={false}
-                                tickLine={false}
+                                style={{ fontSize: '12px', fontWeight: '500' }} 
                             />
-                             <Tooltip 
-                            cursor={{ fill: '#f9fafb' }}
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            formatter={(value: number | undefined) => [
-                              (value ?? 0).toLocaleString('es-AR'), 
-                              'Total Facturado'
-                            ]}
-                        />
-                            <Bar dataKey="totalFacturado" fill="#3b82f6" radius={[0, 8, 8, 0]} barSize={24} />
+                            <Tooltip cursor={{ fill: '#f8fafc' }} />
+                            <Bar dataKey="totalFacturado" radius={[0, 4, 4, 0]} barSize={25}>
+                                {datos.map((_, index) => (
+                                    <Cell key={index} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
+                                ))}
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-            </div>
+            </Card>
 
-            {/* Tabla de Ranking */}
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-50">
+            {/* Tabla unificada */}
+            <Card className="p-6">
+                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Ranking de Facturación</h3>
                 <table className="w-full text-left">
                     <thead>
-                        <tr className="border-b border-gray-50">
-                            <th className="py-5 px-4 font-bold text-gray-400 text-xs uppercase tracking-widest">Ranking</th>
-                            <th className="py-5 px-4 font-bold text-gray-400 text-xs uppercase tracking-widest">Cliente</th>
-                            <th className="py-5 px-4 font-bold text-gray-400 text-xs uppercase tracking-widest text-right">Total Facturado</th>
-                            <th className="py-5 px-4 font-bold text-gray-400 text-xs uppercase tracking-widest text-right">Pedidos</th>
+                        <tr className="text-gray-400 text-xs uppercase border-b border-gray-100">
+                            <th className="pb-4 font-semibold w-12 text-center">Ranking</th>
+                            <th className="pb-4 font-semibold px-4">Cliente</th>
+                            <th className="pb-4 font-semibold text-center px-4">Pedidos</th>
+                            <th className="pb-4 font-semibold text-right px-4">Total Facturado</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-50 text-sm">
                         {datos.map((cliente, index) => (
-                            <tr key={index} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                                <td className="py-5 px-4">
-                                    <span className="bg-gray-100 text-gray-500 text-xs font-bold px-2.5 py-1 rounded-lg">
-                                        #{index + 1}
-                                    </span>
-                                </td>
-                                <td className="py-5 px-4 text-sm font-bold text-gray-800">{cliente.nombreCliente}</td>
-                                <td className="py-5 px-4 text-sm font-black text-gray-900 text-right">
-                                    {cliente.totalFacturado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                                </td>
-                                <td className="py-5 px-4 text-sm font-bold text-gray-500 text-right">
-                                    {cliente.cantidadPedidos}
+                            <tr key={index} className="hover:bg-gray-50 transition-all">
+                                <td className="py-4 text-center font-bold text-gray-300">{index + 1}</td>
+                                <td className="py-4 px-4 font-semibold text-gray-700">{cliente.nombreCliente}</td>
+                                <td className="py-4 px-4 text-center font-medium text-gray-600">{cliente.cantidadPedidos}</td>
+                                <td className="py-4 px-4 text-right font-bold text-gray-900">
+                                    ${cliente.totalFacturado.toLocaleString('es-AR')}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-            </div>
+            </Card>
         </div>
     );
 };
+
+// Componente Selector (Consistente en todos los reportes)
+const Selector = ({ icon, label, value, options, onChange }: any) => (
+    <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+            {icon} <span>{label}</span>
+        </div>
+        <select
+            value={value}
+            onChange={onChange}
+            className="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer font-semibold text-gray-700"
+        >
+            {options.map((opt: any) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+        </select>
+    </div>
+);
+
+// Componente MetricCard (Consistente en todos los reportes)
+const MetricCard = ({ title, value, sub, icon, color = "text-gray-900" }: any) => (
+    <Card className="p-5 flex justify-between items-start border-gray-100 shadow-sm">
+        <div>
+            <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">{title}</p>
+            <h4 className={`text-2xl font-bold ${color}`}>{value}</h4>
+            <p className="text-[10px] text-gray-400 mt-2 uppercase font-semibold italic">{sub}</p>
+        </div>
+        <div className="bg-gray-50 p-2 rounded-lg">{icon}</div>
+    </Card>
+);
