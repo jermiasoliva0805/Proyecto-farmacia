@@ -12,9 +12,15 @@ export const getRankingClientes = async (): Promise<RankingClienteDTO[]> => {
     }
 };
 
-export const getRankingClientesFacturacion = async (): Promise<ClienteFacturacionDTO[]> => {
+export const getRankingClientesFacturacion = async (periodo: string, sucursal: string): Promise<ClienteFacturacionDTO[]> => {
     try {
-        const response = await api.get<ClienteFacturacionDTO[]>('/reporte/clientes-facturacion');
+        const response = await api.get<ClienteFacturacionDTO[]>('/reporte/clientes-facturacion', {
+            params: {
+                // Si es "todas", mandamos null o vacío para que el backend traiga todo
+                sucursal: sucursal === "todas" ? undefined : sucursal,
+                dias: periodo
+            }
+        });
         return response.data;
     } catch (error) {
         console.error("Error al obtener ranking de facturación", error);

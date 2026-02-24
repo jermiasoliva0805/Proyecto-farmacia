@@ -11,21 +11,21 @@ export const ReporteFacturacion = () => {
     const [periodo, setPeriodo] = useState("7");
     const [sucursal, setSucursal] = useState("todas");
 
-    useEffect(() => {
-        const cargarData = async () => {
-            try {
-                setLoading(true);
-                // Aquí podrías pasar periodo y sucursal si tu servicio lo soporta
-                const res = await getRankingClientesFacturacion();
-                setDatos(res);
-            } catch (error) {
-                console.error("Error al cargar facturación:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        cargarData();
-    }, [periodo, sucursal]);
+   useEffect(() => {
+    const cargarData = async () => {
+        try {
+            setLoading(true);
+            // IMPORTANTE: Pasamos las dos variables de estado aquí
+            const res = await getRankingClientesFacturacion(periodo, sucursal);
+            setDatos(res);
+        } catch (error) {
+            console.error("Error al cargar facturación:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    cargarData();
+}, [periodo, sucursal]); // <--- Esto detecta cuando cambias el selector y recarga
 
     const totalGeneral = datos.reduce((acc, curr) => acc + curr.totalFacturado, 0);
     const promedioGeneral = datos.length > 0 ? totalGeneral / datos.length : 0;
@@ -89,32 +89,7 @@ export const ReporteFacturacion = () => {
                 />
             </div>
 
-            {/* Gráfico unificado */}
-            <Card className="p-6 mb-8">
-                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Distribución de Facturación</h3>
-                <div className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={datos} layout="vertical" margin={{ left: 20, right: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                            <XAxis type="number" hide />
-                            <YAxis 
-                                dataKey="nombreCliente" 
-                                type="category" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                width={120} 
-                                style={{ fontSize: '12px', fontWeight: '500' }} 
-                            />
-                            <Tooltip cursor={{ fill: '#f8fafc' }} />
-                            <Bar dataKey="totalFacturado" radius={[0, 4, 4, 0]} barSize={25}>
-                                {datos.map((_, index) => (
-                                    <Cell key={index} fill={index % 2 === 0 ? '#3b82f6' : '#60a5fa'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </Card>
+          
 
             {/* Tabla unificada */}
             <Card className="p-6">
