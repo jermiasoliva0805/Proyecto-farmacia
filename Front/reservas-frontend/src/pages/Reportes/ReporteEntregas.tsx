@@ -16,71 +16,61 @@ export const ReporteEntregas: React.FC = () => {
   const [reporte, setReporte] = useState<EntregaPorCadeteDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros dinámicos
-  const [periodo, setPeriodo] = useState("7"); // últimos 7 días por defecto
-  const [sucursal, setSucursal] = useState("todas"); // todas las sucursales por defecto
-
-  // Calculamos fechas desde/hasta según el periodo
-  const fechaHasta = new Date();
-  const fechaDesde = new Date();
-  fechaDesde.setDate(fechaHasta.getDate() - parseInt(periodo));
-
-  const fechaDesdeStr = fechaDesde.toISOString().split("T")[0];
-  const fechaHastaStr = fechaHasta.toISOString().split("T")[0];
+  // Estados de los filtros
+  const [periodo, setPeriodo] = useState("7"); 
+  const [sucursal, setSucursal] = useState("todas"); 
 
   useEffect(() => {
-  const fetchReporte = async () => {
-    try {
+    // Definimos la función de carga DENTRO para asegurar que tome los valores frescos de 'periodo' y 'sucursal'
+    const fetchReporte = async () => {
       setLoading(true);
-      const url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fechaDesdeStr}&fechaHasta=${fechaHastaStr}&sucursal=${sucursal}`;
-      
-      console.log("[LOG] Fetching reporte desde:", url); // 🔎 Log URL
-      
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Error en la petición");
-      
-      const data = await response.json();
-      console.log("[LOG] Respuesta del backend:", data); // 🔎 Log datos recibidos
-      setReporte(data);
-    } catch (error) {
-      console.error("[LOG] Error en fetchReporte:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        // 1. Calculamos las fechas en el momento del click/cambio
+        const hoy = new Date();
+        const inicio = new Date();
+        inicio.setDate(hoy.getDate() - parseInt(periodo));
 
+        const fDesde = inicio.toISOString().split("T")[0];
+        const fHasta = hoy.toISOString().split("T")[0];
 
+        // 2. Construimos la URL
+        // IMPORTANTE: Asegúrate que el backend espere "centro", "norte" o "todas" tal cual
+        const url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}&sucursal=${sucursal}`;
+        
+        console.log("Solicitando datos para:", { periodo, sucursal, url });
 
-  fetchReporte();
-}, [periodo, sucursal]); // Se ejecutará cada vez que cambies el tiempo o la sucursal
-  // Totales
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+        
+        const data = await response.json();
+        setReporte(data);
+      } catch (error) {
+        console.error("Error al filtrar reporte:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReporte();
+  }, [periodo, sucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
+
+  // Cálculos de totales (se recalculan automáticamente al cambiar el estado 'reporte')
   const totalPedidos = reporte.reduce((acc, c) => acc + c.totalPedidosAsignados, 0);
   const totalExito = reporte.reduce((acc, c) => acc + c.entregasExitosas, 0);
   const totalFallidos = reporte.reduce((acc, c) => acc + c.entregasFallidas, 0);
   const tasaExitoGlobal = totalPedidos > 0 ? ((totalExito / totalPedidos) * 100).toFixed(1) : "0.0";
-  const tasaFalloGlobal = totalPedidos > 0 ? ((totalFallidos / totalPedidos) * 100).toFixed(1) : "0.0";
   const ingresosTotales = reporte.reduce((acc, c) => acc + c.totalRecaudado, 0);
-  const ingresoPromedio = reporte.length > 0 ? (ingresosTotales / reporte.length).toFixed(2) : "0.00";
-
-  if (loading) {
-    return <p className="p-6 text-gray-500">Cargando reporte...</p>;
-  }
 
   return (
     <div className="p-6 bg-[#f8f9fa] min-h-screen">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Reportes y Análisis</h1>
-          <p className="text-sm text-gray-500">Visualiza métricas y estadísticas de rendimiento</p>
+          <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reportes y Análisis</h1>
+          <p className="text-sm text-gray-500">Métricas de rendimiento de cadetes</p>
         </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-all shadow-md">
-                
-                    Exportar Reporte
-                </button>
-            </div>
+      </div>
 
-      {/* Selectores dinámicos */}
+      {/* Selectores */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Selector
           icon={<Calendar size={18} />}
@@ -106,74 +96,78 @@ export const ReporteEntregas: React.FC = () => {
         />
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <MetricCard title="Total Pedidos" value={totalPedidos} sub="En progreso" icon={<Package className="text-gray-400" />} />
-        <MetricCard title="Tasa de Éxito" value={`${tasaExitoGlobal}%`} sub={`${totalExito} entregados`} icon={<CheckCircle2 className="text-green-500" />} color="text-green-500" />
-        <MetricCard title="Tasa de Fallo" value={`${tasaFalloGlobal}%`} sub={`${totalFallidos} fallidos`} icon={<XCircle className="text-red-500" />} color="text-red-500" />
-        <MetricCard title="Ingresos Totales" value={`$${ingresosTotales}`} sub={`Promedio: $${ingresoPromedio}`} icon={<DollarSign className="text-gray-400" />} />
-      </div>
+      {loading ? (
+        <div className="flex justify-center p-20">
+            <p className="text-gray-400 font-medium animate-pulse">Actualizando resultados...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <MetricCard title="Total Pedidos" value={totalPedidos} sub="Asignados" icon={<Package className="text-gray-400" />} />
+            <MetricCard title="Tasa de Éxito" value={`${tasaExitoGlobal}%`} sub="Entregas completadas" icon={<CheckCircle2 className="text-green-500" />} color="text-green-600" />
+            <MetricCard title="Pedidos Fallidos" value={totalFallidos} sub="No entregados" icon={<XCircle className="text-red-500" />} color="text-red-600" />
+            <MetricCard title="Recaudación" value={`$${ingresosTotales.toLocaleString()}`} sub="Total periodo" icon={<DollarSign className="text-blue-500" />} />
+          </div>
 
-      {/* Tabla */}
-      <Card className="p-6">
-        <h3 className="text-sm font-bold text-gray-700 mb-6">Rendimiento de Cadetes</h3>
-        <table className="w-full text-left">
-          <thead>
-            <tr className="text-gray-400 text-xs uppercase border-b border-gray-100">
-              <th className="pb-4 font-semibold">Cadete</th>
-              <th className="pb-4 font-semibold text-center">Pedidos Asignados</th>
-              <th className="pb-4 font-semibold text-center text-blue-500">Entregados</th>
-              <th className="pb-4 font-semibold text-center text-red-400">Fallidos</th>
-              <th className="pb-4 font-semibold text-right">Tasa de Éxito</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 text-sm">
-            {reporte.map((item) => (
-              <tr key={item.idCadete} className="hover:bg-gray-50 transition-all">
-                <td className="py-4 font-medium text-gray-700">{item.nombreCadete}</td>
-                <td className="py-4 text-center">{item.totalPedidosAsignados}</td>
-                <td className="py-4 text-center text-blue-500 font-semibold">{item.entregasExitosas}</td>
-                <td className="py-4 text-center text-red-400">{item.entregasFallidas}</td>
-                <td className="py-4 text-right font-bold text-green-600">
-                  {item.porcentajeEfectividad.toFixed(1)}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+          <Card className="p-6">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-gray-400 text-xs uppercase border-b border-gray-100">
+                  <th className="pb-4 font-semibold px-2">Cadete</th>
+                  <th className="pb-4 font-semibold text-center">Asignados</th>
+                  <th className="pb-4 font-semibold text-center">Exitosos</th>
+                  <th className="pb-4 font-semibold text-right px-2">Efectividad</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-sm">
+                {reporte.length > 0 ? (
+                    reporte.map((item) => (
+                    <tr key={item.idCadete} className="hover:bg-gray-50 transition-all">
+                        <td className="py-4 px-2 font-medium text-gray-700">{item.nombreCadete}</td>
+                        <td className="py-4 text-center">{item.totalPedidosAsignados}</td>
+                        <td className="py-4 text-center text-blue-600">{item.entregasExitosas}</td>
+                        <td className="py-4 text-right px-2 font-bold text-green-600">
+                        {item.porcentajeEfectividad.toFixed(1)}%
+                        </td>
+                    </tr>
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan={4} className="py-10 text-center text-gray-400">No hay datos para este periodo o sucursal</td>
+                    </tr>
+                )}
+              </tbody>
+            </table>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
 
-// Componentes auxiliares
-const MetricCard = ({ title, value, sub, icon, color = "text-gray-900" }: any) => (
-  <Card className="p-5 flex justify-between items-start">
-    <div>
-      <p className="text-xs text-gray-500 mb-1">{title}</p>
-      <h4 className={`text-xl font-bold ${color}`}>{value}</h4>
-      <p className="text-[10px] text-gray-400 mt-2 uppercase">{sub}</p>
-    </div>
-    <div className="bg-gray-50 p-2 rounded-lg">{icon}</div>
-  </Card>
-);
-
+// Componentes internos limpios
 const Selector = ({ icon, label, value, options, onChange }: any) => (
-  <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between">
-    <div className="flex items-center gap-2 text-gray-500 text-sm">
+  <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between shadow-sm">
+    <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
       {icon} <span>{label}</span>
     </div>
     <select
       value={value}
       onChange={onChange}
-      className="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+      className="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-700 cursor-pointer"
     >
-      {options.map((opt: any) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
+      {options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   </div>
-  
+);
+
+const MetricCard = ({ title, value, sub, icon, color = "text-gray-900" }: any) => (
+  <Card className="p-5 flex justify-between items-start">
+    <div>
+      <p className="text-xs text-gray-500 mb-1 font-medium">{title}</p>
+      <h4 className={`text-xl font-bold ${color}`}>{value}</h4>
+      <p className="text-[10px] text-gray-400 mt-2 uppercase font-semibold">{sub}</p>
+    </div>
+    <div className="bg-gray-50 p-2 rounded-lg">{icon}</div>
+  </Card>
 );
