@@ -27,6 +27,15 @@ namespace Back.Repositories
                 .Include(p => p.Usuario)
                 .AsNoTracking()
                 .AsQueryable();
+            
+            // --- NUEVO FILTRO DE SEGURIDAD/PERTENENCIA ---
+            // Si viene un IDUsuario en el filtro, solo traemos lo que le pertenece
+            if (filters.IDUsuario.HasValue && filters.IDUsuario.Value > 0)
+            {
+                // Filtramos por el ID del cadete/operario asignado al pedido
+                query = query.Where(p => p.IDUsuario == filters.IDUsuario.Value);
+            }
+            // ---------------------------------------------
 
             if (!string.IsNullOrWhiteSpace(filters.Search))
             {
