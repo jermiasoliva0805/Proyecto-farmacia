@@ -41,6 +41,20 @@ namespace Back.Repositories
             if (filters.IDEstadoDePedido.HasValue && filters.IDEstadoDePedido.Value > 0)
                 query = query.Where(p => p.IDEstadoDePedido == filters.IDEstadoDePedido.Value);
 
+            // Filtro por Fecha Desde
+            if (filters.FechaDesde.HasValue)
+            {
+                // Usamos .Date para comparar solo el día, o >= si queremos desde el inicio del día
+                query = query.Where(p => p.Fecha >= filters.FechaDesde.Value);
+            }
+
+            // Filtro por Fecha Hasta
+            if (filters.FechaHasta.HasValue)
+            {
+                // Para incluir los pedidos de TODO el día hasta el final, sumamos 1 día
+                var fechaHastaLimite = filters.FechaHasta.Value.AddDays(1);
+                query = query.Where(p => p.Fecha < fechaHastaLimite);
+            }
             return await query
                 .OrderByDescending(p => p.Fecha)
                 .Select(p => new OrderSummaryDTO

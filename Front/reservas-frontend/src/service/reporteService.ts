@@ -14,11 +14,12 @@ export const getRankingClientes = async (): Promise<RankingClienteDTO[]> => {
 
 export const getRankingClientesFacturacion = async (periodo: string, sucursal: string): Promise<ClienteFacturacionDTO[]> => {
     try {
+        // 'api' es tu instancia de axios
         const response = await api.get<ClienteFacturacionDTO[]>('/reporte/clientes-facturacion', {
-            params: {
-                // Si es "todas", mandamos null o vacío para que el backend traiga todo
-                sucursal: sucursal === "todas" ? undefined : sucursal,
-                dias: periodo
+            params: { 
+                dias: periodo, 
+                // Si es 'todas' mandamos undefined para que no filtre
+                sucursal: sucursal === 'todas' ? undefined : sucursal 
             }
         });
         return response.data;
