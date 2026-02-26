@@ -57,6 +57,8 @@ namespace Back.Data
             context.SaveChanges();
 
             // 5. USUARIOS
+            var userAdmin = new Usuario { Nombre = "Admin", Apellido = "User", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail= "a@a.com" };
+            //OPERARIOS
             var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "ana", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
             var opLuis = new Usuario { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "luis@test.com" };
             var opMarta = new Usuario { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "marta@test.com" };
@@ -67,68 +69,116 @@ namespace Back.Data
             var cadete3 = new Usuario { Nombre = "Sofia", Apellido = "Garcia", UsuarioNombre = "sofia", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "sofia@test.com" };
 
             context.Usuarios.AddRange(
-                new Usuario { Nombre = "Admin", Apellido = "User", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail = "a@a.com" },
+    
+                userAdmin,
                 opAna, opLuis, opMarta,
                 cadete1, cadete2, cadete3
             );
             context.SaveChanges();
-
+            
             // 6. CLIENTES
             var cliente1 = new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = context.Barrios.First().IDBarrio, IDLocalidad = context.Localidades.First().IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@gmail.com", Telefono = "3512345678" };
             var cliente2 = new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = context.Barrios.First().IDBarrio, IDLocalidad = context.Localidades.First().IDLocalidad, Direccion = "San Martin 500", Mail = "maria@gmail.com", Telefono = "3517654321" };
             context.Clientes.AddRange(cliente1, cliente2);
             context.SaveChanges();
 
-            // 7. PEDIDOS PARA OPERARIOS (Armado)
-            var usuariosOperarios = new List<Usuario> { opAna, opLuis, opMarta };
-            var random = new Random();
+            // 7. PEDIDOS PARA GESTIÓN (Sin modificar modelos)
+var usuariosOperarios = new List<Usuario> { opAna, opLuis, opMarta };
+var random = new Random();
 
-            foreach (var op in usuariosOperarios)
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    var p = new Pedido
-                    {
-                        Fecha = DateTime.Now.AddDays(-random.Next(1, 5)),
-                        Total = 15000,
-                        EstadoActual = "Listo para despachar",
-                        IDCliente = cliente1.IDCliente,
-                        IDEstadoDePedido = 4,
-                        IDUsuario = op.IDUsuario,
-                        IDSucursal = suc.IDSucursal,
-                        IDLocalidad = cordoba.IDLocalidad,
-                        DireccionEntrega = "Calle Falsa 123"
-                    };
-                    context.Pedidos.Add(p);
-                    context.SaveChanges();
+// --- PARTE A: PEDIDOS PENDIENTES ---
+// En lugar de null, usamos el ID del administrador que ya tenés creado arriba
+for (int i = 0; i < 5; i++)
+{
+    var pPendiente = new Pedido
+    {
+        Fecha = DateTime.Now.AddMinutes(-random.Next(10, 500)),
+        Total = (decimal)random.Next(5000, 30000),
+        EstadoActual = "Sin preparar",
+        IDCliente = cliente2.IDCliente,
+        IDEstadoDePedido = 1,
+        
+        // CAMBIO AQUÍ: Usamos el objeto admin que definiste al principio del Initializer
+        IDUsuario = userAdmin.IDUsuario, 
+        
+        IDSucursal = suc.IDSucursal,
+        IDLocalidad = cordoba.IDLocalidad,
+        DireccionEntrega = "Calle Pendiente " + random.Next(1, 999)
+    };
+    context.Pedidos.Add(pPendiente);
+    context.SaveChanges();
 
-                    int minutosArmado = op.Nombre == "Ana" ? random.Next(15, 25) : 
-                                    op.Nombre == "Luis" ? random.Next(35, 55) : random.Next(25, 35);
+    context.HistorialesDeEstados.Add(new HistorialDeEstados {
+        IDPedido = pPendiente.IDPedido,
+        IDEstadoDePedido = 1,
+        
+        // CAMBIO AQUÍ: También se lo asignamos al admin
+        IDUsuario = userAdmin.IDUsuario, 
+        
+        fecha_hora_inicio = pPendiente.Fecha,
+        Observaciones = "Pedido recibido y en bandeja del Administrador"
+    });
+}
 
-                    var fechaInicio = p.Fecha.AddMinutes(-minutosArmado);
+// --- PARTE B: PEDIDOS YA ASIGNADOS A OPERARIOS (Tu flujo anterior) ---
+foreach (var op in usuariosOperarios)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        int idEstado;
+        string nombreEstado;
 
-                    context.HistorialesDeEstados.AddRange(
-                        new HistorialDeEstados
-                        {
-                            IDPedido = p.IDPedido,
-                            IDEstadoDePedido = 2,
-                            IDUsuario = op.IDUsuario,
-                            fecha_hora_inicio = fechaInicio,
-                            Observaciones = "Empezó a preparar"
-                        },
-                        new HistorialDeEstados
-                        {
-                            IDPedido = p.IDPedido,
-                            IDEstadoDePedido = 4,
-                            IDUsuario = op.IDUsuario,
-                            fecha_hora_inicio = fechaInicio.AddMinutes(minutosArmado),
-                            Observaciones = "Terminó de preparar"
-                        }
-                    );
-                }
-            }
-            context.SaveChanges();
+        if (i < 3) { idEstado = 2; nombreEstado = "Preparar pedido"; }
+        else if (i == 3) { idEstado = 3; nombreEstado = "Demorado"; }
+        else { idEstado = 4; nombreEstado = "Listo para despachar"; }
 
+        var p = new Pedido
+        {
+            Fecha = DateTime.Now.AddHours(-i),
+            Total = (decimal)random.Next(10000, 50000),
+            EstadoActual = nombreEstado,
+            IDCliente = cliente1.IDCliente,
+            IDEstadoDePedido = idEstado,
+            IDUsuario = op.IDUsuario, 
+            IDSucursal = suc.IDSucursal,
+            IDLocalidad = cordoba.IDLocalidad,
+            DireccionEntrega = "Calle " + random.Next(100, 999)
+        };
+        
+        context.Pedidos.Add(p);
+        context.SaveChanges();
+
+        // Para el historial del operario, arrancamos desde la asignación (ID 2)
+        context.HistorialesDeEstados.Add(new HistorialDeEstados {
+            IDPedido = p.IDPedido,
+            IDEstadoDePedido = 2,
+            IDUsuario = op.IDUsuario,
+            fecha_hora_inicio = p.Fecha.AddMinutes(-30),
+            Observaciones = "Pedido asignado para preparación"
+        });
+
+        if (idEstado == 3) {
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p.IDPedido,
+                IDEstadoDePedido = 3,
+                IDUsuario = op.IDUsuario,
+                fecha_hora_inicio = p.Fecha,
+                Observaciones = "Preparación pausada por falta de stock"
+            });
+        }
+
+        if (idEstado == 4) {
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p.IDPedido,
+                IDEstadoDePedido = 4,
+                IDUsuario = op.IDUsuario,
+                fecha_hora_inicio = p.Fecha,
+                Observaciones = "Control de calidad aprobado y embalado"
+            });
+        }
+    }
+}
+context.SaveChanges();
             // ✅ 8. PEDIDOS PARA CADETES (Entregas)
             var usuariosCadetes = new List<Usuario> { cadete1, cadete2, cadete3 };
 

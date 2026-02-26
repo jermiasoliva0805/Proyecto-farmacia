@@ -30,7 +30,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({ userRole, onFilterCh
 
         if (userRole === 'Operario') {
             return allFilters.filter(f => 
-                ['Todos', 'Sin preparar', 'Preparar pedido', 'Listo para despachar', 'Demorado'].includes(f.value)
+                ['Todos',  'Preparar pedido', 'Listo para despachar', 'Demorado'].includes(f.value)
             );
         }
 
