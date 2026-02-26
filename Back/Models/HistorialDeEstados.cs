@@ -18,7 +18,7 @@ namespace Back.Models
 
             public int IDUsuario { get; set; }
             [ForeignKey("IDUsuario")]
-            public Usuario Usuario { get; set; } = null!;
+            public Usuario? Usuario { get; set; } = null!;
 
             public int IDPedido { get; set; }
             [ForeignKey("IDPedido")]

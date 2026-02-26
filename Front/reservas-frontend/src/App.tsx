@@ -16,7 +16,7 @@ import OrderFormPage from './pages/orders/OrderFormPage';
 import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el Panel único
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
-
+import MisPedidosOperario from './pages/MisPedidosOperario';
 
 // Componente Layout para mantener el Sidebar a la izquierda
 const MainLayout = () => {
@@ -98,23 +98,25 @@ function App() {
             />
 
             {/* OPERARIO */}
-            <Route
-              path="/dashboard/operario"
-              element={
-                <ProtectedRoute allowedRoles={['Operario']}>
-                  <DashboardOperario />
-                </ProtectedRoute>
-              }
-            />
+           {/* Dashboard Operario */}
+<Route
+  path="/dashboard/operario"
+  element={
+    <ProtectedRoute allowedRoles={['Operario']}>
+      <DashboardOperario />
+    </ProtectedRoute>
+  }
+/>
 
-            <Route
-              path="/pedidos"
-              element={
-                <ProtectedRoute allowedRoles={['Administrador', 'Operario']}>
-                  <OrderFormPage />
-                </ProtectedRoute>
-              }
-            />
+{/* Mis Pedidos Operario - RUTA SEPARADA */}
+<Route
+  path="/mis-pedidos"
+  element={
+    <ProtectedRoute allowedRoles={['Operario']}>
+      <MisPedidosOperario />
+    </ProtectedRoute>
+  }
+/>
 
             {/* CADETE */}
             <Route
