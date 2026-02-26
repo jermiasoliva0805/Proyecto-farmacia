@@ -73,7 +73,12 @@ namespace Back.Repositories
                     Total = p.Total,
                     IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
-                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente"
+                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
+                    // --- para que cadete en dashboard sume pedidos entregados por dia. ---
+                    FechaEntregaReal = p.FechaEntregaReal, 
+                    IntentosEntregaFallida = p.IntentosEntregaFallida,
+                    FechaEntregaEstimada = p.FechaEntregaEstimada
+                    // ---------------------------
                 })
                 .ToListAsync();
         }
@@ -120,7 +125,14 @@ namespace Back.Repositories
             else
             {
                 pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-                if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
+                if (dto.IDNuevoEstado == 7) 
+                {
+                    pedido.IntentosEntregaFallida = 0;
+                    // --- ESTA ES LA LÍNEA MÁGICA ---
+                    pedido.FechaEntregaReal = DateTime.Now; 
+                    // -------------------------------
+                    _context.Entry(pedido).State = EntityState.Modified;
+                }
             }
 
             var nuevoHistorial = new HistorialDeEstados

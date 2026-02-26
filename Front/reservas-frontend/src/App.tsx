@@ -14,8 +14,9 @@ import { AsignarOperarioPage } from './pages/AsignarOperario';
 import { AsignarCadetePage } from './pages/AsignarCadete';
 import OrderFormPage from './pages/orders/OrderFormPage';
 import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el Panel único
-import { MisEntregas } from './pages/MisEntregasCadete';
-import { EntregasFallidas } from './pages/EntregasFallidasCadete';
+import MisEntregas from './pages/MisEntregasCadete';
+import EntregasFallidas from './pages/EntregasFallidasCadete';
+
 
 // Componente Layout para mantener el Sidebar a la izquierda
 const MainLayout = () => {
@@ -124,25 +125,29 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          </Route>
-          {/* NUEVAS RUTAS CADETE */}
-          <Route
-            path="/entregas"
-            element={
-              <ProtectedRoute allowedRoles={['Cadete']}>
-                <MisEntregas />
-              </ProtectedRoute>
-            }
-          />
 
-          <Route
-            path="/intentos-fallidos"
-            element={
-              <ProtectedRoute allowedRoles={['Cadete']}>
-                <EntregasFallidas />
-              </ProtectedRoute>
-            }
-          />
+            {/* RUTAS DE CADETE MOVIDAS AQUÍ ADENTRO PARA QUE MUESTREN EL SIDEBAR */}
+            <Route
+              path="/entregas"
+              element={
+                <ProtectedRoute allowedRoles={['Cadete']}>
+                  <MisEntregas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/intentos-fallidos"
+              element={
+                <ProtectedRoute allowedRoles={['Cadete']}>
+                  <EntregasFallidas />
+                </ProtectedRoute>
+              }
+            />
+            {/* ----------------------------------------------------------- */}
+
+          </Route> {/* <--- ESTE ES EL CIERRE DEL LAYOUT QUE AHORA ENVUELVE TODO */}
+
           {/* --- ERRORES Y REDIRECCIONES --- */}
           <Route path="/unauthorized" element={<div>No autorizado</div>} />
           <Route path="/" element={<Navigate to="/login" replace />} />

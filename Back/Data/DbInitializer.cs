@@ -155,7 +155,8 @@ namespace Back.Data
                         IDLocalidad = cordoba.IDLocalidad,
                         DireccionEntrega = "Direccion de entrega " + random.Next(1, 100),
                         FechaEntregaEstimada = DateTime.Now.AddDays(1),
-                        FechaEntregaReal = idEstado == 7 ? DateTime.Now.AddHours(-random.Next(1, 24)) : null,
+                        //FechaEntregaReal = idEstado == 7 ? DateTime.Now.AddHours(-random.Next(1, 24)) : null,
+                        FechaEntregaReal = idEstado == 7 ? DateTime.Now.AddDays(-random.Next(1, 7)) : null,
                         HoraEntregaEstimada = new TimeSpan(14, 0, 0),
                         IntentosEntregaFallida = idEstado == 8 ? random.Next(1, 3) : (idEstado == 9 ? 3 : 0)
                     };
