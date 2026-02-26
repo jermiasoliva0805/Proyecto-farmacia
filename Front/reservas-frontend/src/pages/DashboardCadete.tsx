@@ -54,8 +54,40 @@ export const DashboardCadete: React.FC = () => {
         return colors[name.length % colors.length];
     };
 
-    const pedidosEnCamino = pedidos.filter(p => p.estadoNombre === 'En camino');
 
+  // 1. Pedidos que están actualmente en ruta
+const pedidosEnCamino = pedidos.filter(p => p.estadoNombre === 'En camino');
+
+// 1. Preparamos la fecha de hoy
+const hoyDate = new Date();
+const hoyFormateado = hoyDate.getDate() + "/" + (hoyDate.getMonth() + 1) + "/" + hoyDate.getFullYear();
+
+// 2. Filtramos por la fecha en que REALMENTE se entregó
+const entregadosHoyCount = pedidos.filter(p => {
+    // Solo nos interesan los entregados
+    if (p.estadoNombre !== 'Entregado') return false;
+
+    // IMPORTANTE: Usamos fechaEntregaReal. 
+    // Si el cadete lo entregó hoy, esta es la fecha que vale.
+    const fechaABuscar = p.fechaEntregaReal || p.fecha; 
+    
+    if (!fechaABuscar) return false;
+
+    const d = new Date(fechaABuscar);
+    const fechaPedidoFormateada = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
+
+    // Verás en la consola que ahora la fecha coincidirá con hoy si lo entregaste recién
+    //console.log(`Pedido #${p.idPedido} entregado el: ${fechaPedidoFormateada} | Hoy es: ${hoyFormateado}`);
+   console.log("PEDIDOS QUE ESTÁN SUMANDO HOY:", pedidos.filter(p => {
+    const hoy = new Date().toLocaleDateString('es-AR');
+    return p.estadoNombre === 'Entregado' && 
+           p.fechaEntregaReal && 
+           new Date(p.fechaEntregaReal).toLocaleDateString('es-AR') === hoy;
+}));
+    return fechaPedidoFormateada === hoyFormateado;
+}).length;
+// Pedidos con estado "Entrega fallida" (ID 8)
+const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
     return (
         <DashboardLayout>
             <div className="space-y-8 font-sans">
@@ -81,7 +113,9 @@ export const DashboardCadete: React.FC = () => {
                     <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-emerald-600 text-sm font-medium mb-1">Entregados Hoy</p>
-                            <h3 className="text-4xl font-bold mb-2 text-emerald-900">{pedidos.filter(p => p.estadoNombre === 'Entregado').length}</h3>
+                            
+                            {/* Ahora usamos la variable que filtramos arriba */}
+                            <h3 className="text-4xl font-bold mb-2 text-emerald-900">{entregadosHoyCount}</h3>
                             <p className="text-gray-500 text-xs">Objetivo diario</p>
                         </div>
                         <div className="absolute right-4 top-4 bg-emerald-100/50 p-3 rounded-xl backdrop-blur-sm">
@@ -195,6 +229,7 @@ export const DashboardCadete: React.FC = () => {
                                                             Detalles
                                                         </button>
                                                       <Button
+                                                      
   size="sm"
   onClick={() => handleConfirmarEntrega(pedido)}
   // 1. Agregamos el bloqueo lógico

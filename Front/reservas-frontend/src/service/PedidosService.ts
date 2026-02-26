@@ -37,8 +37,8 @@ export const pedidosService = {
         else if (filters.idCadete) params.IDUsuario = filters.idCadete;
         else if (filters.idUsuario) params.IDUsuario = filters.idUsuario;
 
-        if (filters.fechaDesde) params.FechaDesde = filters.fechaDesde;
-        if (filters.fechaHasta) params.FechaHasta = filters.fechaHasta;
+        if (filters.fechaDesde) params.fechaDesde = filters.fechaDesde;
+        if (filters.fechaHasta) params.fechaHasta = filters.fechaHasta;
 
         console.log("== DEBUG INICIO PETICIÓN ==");
         console.log("Enviando parámetros al Backend:", params);

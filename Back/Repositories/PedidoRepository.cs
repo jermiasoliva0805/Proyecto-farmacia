@@ -27,6 +27,15 @@ namespace Back.Repositories
                 .Include(p => p.Usuario)
                 .AsNoTracking()
                 .AsQueryable();
+            
+            // --- NUEVO FILTRO DE SEGURIDAD/PERTENENCIA ---
+            // Si viene un IDUsuario en el filtro, solo traemos lo que le pertenece
+            if (filters.IDUsuario.HasValue && filters.IDUsuario.Value > 0)
+            {
+                // Filtramos por el ID del cadete/operario asignado al pedido
+                query = query.Where(p => p.IDUsuario == filters.IDUsuario.Value);
+            }
+            // ---------------------------------------------
 
             if (!string.IsNullOrWhiteSpace(filters.Search))
             {
@@ -41,6 +50,20 @@ namespace Back.Repositories
             if (filters.IDEstadoDePedido.HasValue && filters.IDEstadoDePedido.Value > 0)
                 query = query.Where(p => p.IDEstadoDePedido == filters.IDEstadoDePedido.Value);
 
+            // Filtro por Fecha Desde
+            if (filters.FechaDesde.HasValue)
+            {
+                // Usamos .Date para comparar solo el día, o >= si queremos desde el inicio del día
+                query = query.Where(p => p.Fecha >= filters.FechaDesde.Value);
+            }
+
+            // Filtro por Fecha Hasta
+            if (filters.FechaHasta.HasValue)
+            {
+                // Para incluir los pedidos de TODO el día hasta el final, sumamos 1 día
+                var fechaHastaLimite = filters.FechaHasta.Value.AddDays(1);
+                query = query.Where(p => p.Fecha < fechaHastaLimite);
+            }
             return await query
                 .OrderByDescending(p => p.Fecha)
                 .Select(p => new OrderSummaryDTO
@@ -50,7 +73,12 @@ namespace Back.Repositories
                     Total = p.Total,
                     IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
-                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente"
+                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
+                    // --- para que cadete en dashboard sume pedidos entregados por dia. ---
+                    FechaEntregaReal = p.FechaEntregaReal, 
+                    IntentosEntregaFallida = p.IntentosEntregaFallida,
+                    FechaEntregaEstimada = p.FechaEntregaEstimada
+                    // ---------------------------
                 })
                 .ToListAsync();
         }
@@ -97,7 +125,14 @@ namespace Back.Repositories
             else
             {
                 pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-                if (dto.IDNuevoEstado == 7) pedido.IntentosEntregaFallida = 0;
+                if (dto.IDNuevoEstado == 7) 
+                {
+                    pedido.IntentosEntregaFallida = 0;
+                    // --- ESTA ES LA LÍNEA MÁGICA ---
+                    pedido.FechaEntregaReal = DateTime.Now; 
+                    // -------------------------------
+                    _context.Entry(pedido).State = EntityState.Modified;
+                }
             }
 
             var nuevoHistorial = new HistorialDeEstados
