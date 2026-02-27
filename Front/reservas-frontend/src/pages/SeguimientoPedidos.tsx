@@ -33,6 +33,35 @@ export const SeguimientoPedidos: React.FC = () => {
         { value: '10', label: 'Cancelado' },
     ];
 
+    // Función de colores unificada
+    const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
+        if (estaDemorado) return 'bg-orange-100 text-orange-600 border-orange-200';
+        
+        const est = estado.toLowerCase();
+        switch (est) {
+            case 'sin preparar':
+                return 'bg-gray-100 text-gray-400 border-gray-200';
+            case 'preparar pedido':
+            case 'preparando':
+            case 'en preparación':
+                return 'bg-blue-100 text-blue-600 border-blue-200';
+            case 'demorado':
+                return 'bg-orange-100 text-orange-600 border-orange-200';
+            case 'listo para despachar':
+                return 'bg-green-100 text-green-600 border-green-200';
+            case 'en camino':
+            case 'despachando':
+                return 'bg-indigo-100 text-indigo-600 border-indigo-200';
+            case 'entregado':
+                return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'cancelado':
+            case 'entrega fallida':
+                return 'bg-red-100 text-red-600 border-red-200';
+            default:
+                return 'bg-gray-50 text-gray-500 border-gray-100';
+        }
+    };
+
     useEffect(() => {
         handleSearch();
     }, []);
@@ -78,7 +107,6 @@ export const SeguimientoPedidos: React.FC = () => {
                         <Search className="w-8 h-8" />
                         Seguimiento de Pedidos
                     </h1>
-                    <p className="text-gray-600 mt-1">Historial completo y trazabilidad (RF6, RF13)</p>
                 </div>
 
                 <Card>
@@ -164,13 +192,9 @@ export const SeguimientoPedidos: React.FC = () => {
                                                 {pedido.clienteNombre}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge variant={
-                                                    pedido.estadoNombre === 'Entregado' ? 'success' :
-                                                    pedido.estadoNombre === 'Cancelado' ? 'danger' :
-                                                    pedido.estaDemorado ? 'warning' : 'info'
-                                                }>
-                                                    {pedido.estadoNombre}
-                                                </Badge>
+                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-700">
                                                 {pedido.responsableNombre}
@@ -205,15 +229,15 @@ export const SeguimientoPedidos: React.FC = () => {
                     size="lg"
                 >
                     <div className="space-y-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className={`border rounded-lg p-4 ${getEstadoStyle(selectedTracking.estadoActual, false)}`}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-blue-800">Estado Actual</p>
-                                    <p className="text-xl font-bold text-blue-900">{selectedTracking.estadoActual}</p>
+                                    <p className="text-sm opacity-80 text-gray-700">Estado Actual</p>
+                                    <p className="text-xl font-bold">{selectedTracking.estadoActual.toUpperCase()}</p>
                                 </div>
-                                <Calendar className="w-8 h-8 text-blue-600" />
+                                <Calendar className="w-8 h-8 opacity-40" />
                             </div>
-                            <p className="text-sm text-blue-700 mt-2">
+                            <p className="text-sm mt-2 opacity-80">
                                 Última actualización: {new Date(selectedTracking.ultimaActualizacion).toLocaleString('es-AR')}
                             </p>
                         </div>
