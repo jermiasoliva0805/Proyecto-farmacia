@@ -33,7 +33,7 @@ function buildUrlFromPath(path: string, idPedido: number): string {
 // Busca el token en distintas keys comunes
 function getAuthToken(): string | null {
   const envToken = import.meta.env.VITE_API_TOKEN;
-  const keys = ['token', 'accessToken', 'access_token', 'authToken', 'jwt'];
+  const keys = ['token', 'accessToken', 'access_token', 'authToken', 'jwt','farmacia_token'];
   const storageToken =
     localStorage.getItem(keys.find((k) => localStorage.getItem(k)) || '') ||
     sessionStorage.getItem(keys.find((k) => sessionStorage.getItem(k)) || '') ||

@@ -19,8 +19,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ✅ Al montar, revisamos si hay token guardado
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem('farmacia_token');
+    const userData = localStorage.getItem('farmacia_user');
 
     if (token && userData) {
       setUser(JSON.parse(userData));
@@ -49,8 +49,8 @@ const login = async (usuario: string, password: string) => {
       const { token, user } = response.data;
 
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('farmacia_token', token);
+      localStorage.setItem('farmacia_user', JSON.stringify(user));
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
 
@@ -70,8 +70,8 @@ const login = async (usuario: string, password: string) => {
 
   // ✅ Función de logout
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('farmacia_token');
+    localStorage.removeItem('farmacia_user');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);

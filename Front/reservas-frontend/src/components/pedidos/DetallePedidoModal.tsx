@@ -52,7 +52,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
     }
   };
 
-  const buildPrintHTML = (data: PrintData) => {
+const buildPrintHTML = (data: PrintData) => {
     const lineSubtotals = (Array.isArray(data.productos) ? data.productos : []).map((p: PrintData['productos'][number]) => {
       const desc = p.descuento ?? 0;
       const sub = p.subtotal != null ? p.subtotal : p.cantidad * p.precioUnitario - desc;
@@ -77,7 +77,6 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
             .brand { font-size:20px; font-weight:800; color:var(--brand); }
             .order-id { font-size:12px; color:var(--muted); margin-top:4px; }
             .info { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; }
-            .info h4 { font-size:12px; margin:0 0 6px; font-weight:700; }
             .block { border:1px solid var(--border); border-radius:4px; padding:10px; }
             .row { display:grid; grid-template-columns:140px 1fr; gap:8px; font-size:12px; margin:2px 0; }
             .label { color:var(--muted); }
@@ -94,8 +93,20 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
             .totals-box { border:1px solid var(--border); border-radius:4px; padding:10px; }
             .totals-row { display:flex; justify-content:space-between; font-size:12px; margin:4px 0; }
             .totals-row.total { font-weight:800; border-top:1px dashed var(--border); padding-top:6px; }
-            .signatures { margin-top:18px; display:grid; grid-template-columns:repeat(4,1fr); gap:16px; text-align:center; font-size:12px; color:var(--muted); }
-            .sig-line { margin-top:14px; border-top:1px dotted var(--border); height:18px; }
+            
+            /* --- SECCIÓN DE FIRMAS UNIFORME --- */
+            .signatures-container { margin-top: 30px; }
+            .signature-block { 
+              display: grid; 
+              grid-template-columns: repeat(4, 1fr); 
+              gap: 16px; 
+              text-align: center; 
+              font-size: 12px; 
+              color: var(--muted); 
+              margin-bottom: 30px; 
+            }
+            .sig-line { margin-top: 25px; border-top: 1px dotted var(--border); height: 10px; }
+
             @media print { .sheet { border-color: transparent; } }
           </style>
         </head>
@@ -108,6 +119,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
               </div>
               <div class="order-id">Fecha: ${formatDate(data.fecha)}</div>
             </div>
+
             <div class="info">
               <div class="block">
                 <h4>Detalles de Facturación</h4>
@@ -124,6 +136,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 <div class="row"><div class="label">Estado de entrega:</div><div class="value">-</div></div>
               </div>
             </div>
+
             <div class="section-title">Productos/Servicios</div>
             <table>
               <thead>
@@ -139,17 +152,13 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 ${
                   Array.isArray(data.productos) && data.productos.length
                     ? data.productos
-                        .map((p: PrintData['productos'][number]) => {
+                        .map((p: any) => {
                           const desc = p.descuento ?? 0;
                           const sub = p.subtotal != null ? p.subtotal : p.cantidad * p.precioUnitario - desc;
-                          const sku = p.sku ?? '';
                           return `
                             <tr>
                               <td class="td-center">${p.cantidad}</td>
-                              <td>
-                                <div class="product-name">${p.productoNombre}</div>
-                                ${sku ? `<div class="product-note">SKU: ${sku}</div>` : ''}
-                              </td>
+                              <td><div class="product-name">${p.productoNombre}</div></td>
                               <td class="td-right">${formatCurrency(p.precioUnitario)}</td>
                               <td class="td-right">${desc ? '-' + formatCurrency(desc) : formatCurrency(0)}</td>
                               <td class="td-right">${formatCurrency(sub)}</td>
@@ -161,6 +170,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 }
               </tbody>
             </table>
+
             <div class="totals">
               <div></div>
               <div class="totals-box">
@@ -169,11 +179,21 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 <div class="totals-row total"><span>Total:</span><span>${formatCurrency(total)}</span></div>
               </div>
             </div>
-            <div class="signatures">
-              <div>Firma<div class="sig-line"></div></div>
-              <div>Aclaración<div class="sig-line"></div></div>
-              <div>DNI<div class="sig-line"></div></div>
-              <div>Fecha<div class="sig-line"></div></div>
+
+            <div class="signatures-container">
+              <div class="signature-block">
+                <div>Firma Operario<div class="sig-line"></div></div>
+                <div>Aclaración<div class="sig-line"></div></div>
+                <div>DNI<div class="sig-line"></div></div>
+                <div>Fecha<div class="sig-line"></div></div>
+              </div>
+
+              <div class="signature-block">
+                <div>Firma Cadete<div class="sig-line"></div></div>
+                <div>Aclaración<div class="sig-line"></div></div>
+                <div>DNI<div class="sig-line"></div></div>
+                <div>Fecha<div class="sig-line"></div></div>
+              </div>
             </div>
           </div>
           <script>window.addEventListener('load', () => window.print());</script>
@@ -181,7 +201,6 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
       </html>
     `;
   };
-
   const handleImprimirHoja = async () => {
     try {
       const data = await getPrintData(pedido.idPedido);
