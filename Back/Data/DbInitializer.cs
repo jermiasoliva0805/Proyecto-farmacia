@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Globalization;
+using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace Back.Data
 {
@@ -59,7 +63,7 @@ namespace Back.Data
             // 5. USUARIOS
             var userAdmin = new Usuario { Nombre = "Admin", Apellido = "User", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail= "a@a.com" };
             //OPERARIOS
-            var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "ana", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
+            var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "anaLop", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
             var opLuis = new Usuario { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "luis@test.com" };
             var opMarta = new Usuario { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "marta@test.com" };
             
@@ -221,7 +225,7 @@ context.SaveChanges();
                         IDUsuario = cadete.IDUsuario,
                         fecha_hora_inicio = p.Fecha,
                         Observaciones = idEstado == 7 ? "Entrega completada" : 
-                                       idEstado == 8 ? "Intento fallido" : "Pedido cancelado"
+                                    idEstado == 8 ? "Intento fallido" : "Pedido cancelado"
                     });
                 }
             }
