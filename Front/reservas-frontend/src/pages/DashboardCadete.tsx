@@ -21,6 +21,26 @@ export const DashboardCadete: React.FC = () => {
     const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState<OrderSummaryDTO | null>(null);
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
 
+    // Función de colores unificada para mantener consistencia
+    const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
+        if (estaDemorado) return 'bg-orange-100 text-orange-600 border-orange-200';
+        const est = estado.toLowerCase();
+        switch (est) {
+            case 'sin preparar': return 'bg-gray-100 text-gray-400 border-gray-200';
+            case 'preparar pedido':
+            case 'preparando':
+            case 'en preparación': return 'bg-blue-100 text-blue-600 border-blue-200';
+            case 'demorado': return 'bg-orange-100 text-orange-600 border-orange-200';
+            case 'listo para despachar': return 'bg-green-100 text-green-600 border-green-200';
+            case 'en camino':
+            case 'despachando': return 'bg-indigo-100 text-indigo-600 border-indigo-200';
+            case 'entregado': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'cancelado':
+            case 'entrega fallida': return 'bg-red-100 text-red-600 border-red-200';
+            default: return 'bg-gray-50 text-gray-500 border-gray-100';
+        }
+    };
+
     useEffect(() => { 
         if (user?.id) loadPedidos(); 
     }, [user?.id]);
@@ -47,47 +67,21 @@ export const DashboardCadete: React.FC = () => {
         setModalDetalleOpen(true);
     };
 
-    // Funciones auxiliares para avatar
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     const getAvatarColor = (name: string) => {
         const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
         return colors[name.length % colors.length];
     };
 
+    const pedidosEnCamino = pedidos.filter(p => p.estadoNombre === 'En camino');
 
-  // 1. Pedidos que están actualmente en ruta
-const pedidosEnCamino = pedidos.filter(p => p.estadoNombre === 'En camino');
+    const entregadosHoyCount = pedidos.filter(p => {
+        if (p.estadoNombre !== 'Entregado') return false;
+        const hoy = new Date().toLocaleDateString('es-AR');
+        const fechaABuscar = p.fechaEntregaReal || p.fecha; 
+        return new Date(fechaABuscar).toLocaleDateString('es-AR') === hoy;
+    }).length;
 
-// 1. Preparamos la fecha de hoy
-const hoyDate = new Date();
-const hoyFormateado = hoyDate.getDate() + "/" + (hoyDate.getMonth() + 1) + "/" + hoyDate.getFullYear();
-
-// 2. Filtramos por la fecha en que REALMENTE se entregó
-const entregadosHoyCount = pedidos.filter(p => {
-    // Solo nos interesan los entregados
-    if (p.estadoNombre !== 'Entregado') return false;
-
-    // IMPORTANTE: Usamos fechaEntregaReal. 
-    // Si el cadete lo entregó hoy, esta es la fecha que vale.
-    const fechaABuscar = p.fechaEntregaReal || p.fecha; 
-    
-    if (!fechaABuscar) return false;
-
-    const d = new Date(fechaABuscar);
-    const fechaPedidoFormateada = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
-
-    // Verás en la consola que ahora la fecha coincidirá con hoy si lo entregaste recién
-    //console.log(`Pedido #${p.idPedido} entregado el: ${fechaPedidoFormateada} | Hoy es: ${hoyFormateado}`);
-   console.log("PEDIDOS QUE ESTÁN SUMANDO HOY:", pedidos.filter(p => {
-    const hoy = new Date().toLocaleDateString('es-AR');
-    return p.estadoNombre === 'Entregado' && 
-           p.fechaEntregaReal && 
-           new Date(p.fechaEntregaReal).toLocaleDateString('es-AR') === hoy;
-}));
-    return fechaPedidoFormateada === hoyFormateado;
-}).length;
-// Pedidos con estado "Entrega fallida" (ID 8)
-const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
     return (
         <DashboardLayout>
             <div className="space-y-8 font-sans">
@@ -96,9 +90,7 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                     <p className="text-gray-500 mt-1">Panel de Entregas - {user?.nombreSucursal}</p>
                 </div>
 
-                {/* Stats Sólidos (Estilo Bordeado) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* En Camino - Naranja/Amarillo */}
                     <div className="bg-white border-2 border-amber-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-amber-600 text-sm font-medium mb-1">En Camino</p>
@@ -109,12 +101,9 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                             <Truck className="w-6 h-6 text-amber-600" />
                         </div>
                     </div>
-                    {/* Entregados Hoy - Verde */}
                     <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-emerald-600 text-sm font-medium mb-1">Entregados Hoy</p>
-                            
-                            {/* Ahora usamos la variable que filtramos arriba */}
                             <h3 className="text-4xl font-bold mb-2 text-emerald-900">{entregadosHoyCount}</h3>
                             <p className="text-gray-500 text-xs">Objetivo diario</p>
                         </div>
@@ -134,7 +123,6 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                     </div>
                 ) : (
                     <>
-                        {/* Sección Pedidos Activos (Tarjetas detalladas) */}
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <MapPin className="w-5 h-5 text-amber-500" /> 
@@ -164,7 +152,9 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <Badge variant="warning" className="w-full justify-center py-1">{pedido.estadoNombre}</Badge>
+                                                <span className={`flex w-full justify-center py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3">
@@ -191,7 +181,6 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                             )}
                         </div>
 
-                        {/* Historial (Tabla simplificada) */}
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8">
                             <div className="p-6 border-b border-gray-100">
                                 <h2 className="text-lg font-bold text-gray-800">Historial de Entregas</h2>
@@ -214,38 +203,32 @@ const pedidosIncidentes = pedidos.filter(p => p.idEstadoDePedido === 8);
                                                     <td className="p-4 font-medium text-gray-700">#{pedido.idPedido}</td>
                                                     <td className="p-4 text-sm">{pedido.clienteNombre}</td>
                                                     <td className="p-4">
-                                                        <Badge
-                                                            variant={pedido.estadoNombre === 'Entregado' ? 'success' : 'info'}
-                                                            className="w-full justify-center py-1"
-                                                        >
-                                                            {pedido.estadoNombre}
-                                                        </Badge>
+                                                        <span className={`flex w-full justify-center py-1 rounded-full text-[10px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                            {pedido.estadoNombre.toUpperCase()}
+                                                        </span>
                                                     </td>
-                                                    <td className="p-4 text-right flex gap-2 justify-end">
-                                                        <button
-                                                            onClick={() => handleVerDetalle(pedido)}
-                                                            className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:underline"
+                                                    <td className="p-4 text-right flex gap-2 justify-end items-center">
+                                                        <button 
+                                                            onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
+                                                            className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 transition-colors"
                                                         >
-                                                            Detalles
+                                                            <Eye className="w-4 h-4" /> 
+                                                            <span>Ver Detalle</span>
                                                         </button>
-                                                      <Button
-                                                      
-  size="sm"
-  onClick={() => handleConfirmarEntrega(pedido)}
-  // 1. Agregamos el bloqueo lógico
-  disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
-  // 2. Cambiamos el color dinámicamente: si está bloqueado, usamos gris
-  className={`rounded-lg text-xs px-3 py-1 ${
-    (pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
-      ? "bg-gray-400 cursor-not-allowed" 
-      : "bg-green-600 hover:bg-green-700 text-white"
-  }`}
->
-  {/* 3. Cambiamos el texto según el estado */}
-  {pedido.idEstadoDePedido === 7 ? 'Entregado' : 
-   pedido.idEstadoDePedido === 9 ? 'Cancelado' : 
-   'Gestionar Entrega'}
-</Button>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleConfirmarEntrega(pedido)}
+                                                            disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
+                                                            className={`rounded-lg text-xs px-3 py-1 ${
+                                                                (pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
+                                                                ? "bg-gray-400 cursor-not-allowed text-white" 
+                                                                : "bg-green-600 hover:bg-green-700 text-white"
+                                                            }`}
+                                                        >
+                                                            {pedido.idEstadoDePedido === 7 ? 'Entregado' : 
+                                                             pedido.idEstadoDePedido === 9 ? 'Cancelado' : 
+                                                             'Gestionar'}
+                                                        </Button>
                                                     </td>
                                                 </tr>
                                             ))}

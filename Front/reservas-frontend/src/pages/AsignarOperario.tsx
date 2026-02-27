@@ -4,7 +4,7 @@ import { Card } from '@components/common/Card';
 import { Badge } from '@components/common/Badge';
 import { Button } from '@components/common/Button';
 import { AsignarOperarioModal } from '@components/pedidos/AsignarOperarioModal';
-import { pedidosService } from '../service/PedidosService'; // Corregido el path a 'services'
+import { pedidosService } from '../service/PedidosService'; 
 import { OrderSummaryDTO } from '@/types/pedido.types';
 import { Users } from 'lucide-react';
 
@@ -18,36 +18,40 @@ export const AsignarOperarioPage: React.FC = () => {
         loadPedidos();
     }, []);
 
- const loadPedidos = async () => {
-    setLoading(true);
-    try {
-        // 1. Pedimos los datos al endpoint que ya filtra en el servidor (ID 1)
-        const data = await pedidosService.getPendientesOperario();
-        
-        console.log("Datos crudos del servidor:", data);
-
-        // 2. En lugar de filtrar estrictamente, validamos que los datos existan.
-        // Si el endpoint /pendientes-operario funciona, 'data' ya solo trae los ID 1.
-        if (data && data.length > 0) {
-            setPedidos(data);
-        } else {
-            setPedidos([]);
+    // Función de colores para mantener la consistencia visual
+    const getEstadoStyle = (estado: string) => {
+        const est = estado.toLowerCase();
+        if (est === 'sin preparar') {
+            return 'bg-gray-100 text-gray-400 border-gray-200'; // Gris para "Sin preparar"
         }
-    } catch (error) {
-        console.error('Error cargando pedidos:', error);
-        setPedidos([]);
-    } finally {
-        setLoading(false);
-    }
-};
+        return 'bg-blue-100 text-blue-600 border-blue-200';
+    };
+
+    const loadPedidos = async () => {
+        setLoading(true);
+        try {
+            const data = await pedidosService.getPendientesOperario();
+            if (data && data.length > 0) {
+                setPedidos(data);
+            } else {
+                setPedidos([]);
+            }
+        } catch (error) {
+            console.error('Error cargando pedidos:', error);
+            setPedidos([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleAsignar = (pedido: OrderSummaryDTO) => {
         setSelectedPedido(pedido);
         setModalOpen(true);
     };
 
     const handleSuccess = () => {
-        setModalOpen(false); // Cerramos el modal
-        loadPedidos(); // Recargamos la lista (el pedido ya no saldrá porque cambió a ID 2)
+        setModalOpen(false);
+        loadPedidos();
     };
 
     return (
@@ -106,12 +110,16 @@ export const AsignarOperarioPage: React.FC = () => {
                                                 ${pedido.total.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Badge variant="warning">{pedido.estadoNombre}</Badge>
+                                                {/* AQUÍ VA EL COLOR Y EL ESTADO */}
+                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Button
                                                     size="sm"
                                                     variant="primary"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
                                                     onClick={() => handleAsignar(pedido)}
                                                 >
                                                     Asignar Operario
