@@ -18,14 +18,15 @@ export const AsignarCadetePage: React.FC = () => {
         loadPedidos();
     }, []);
 
+    // Color verde para indicar que el proceso de preparación terminó con éxito
+    const getEstadoStyle = (estado: string) => {
+        return 'bg-green-100 text-green-600 border-green-200';
+    };
+
     const loadPedidos = async () => {
         setLoading(true);
         try {
-            // CAMBIO CLAVE: Usamos el método específico para cadetes
-            // Este endpoint en el Back-end filtra por IDEstadoDePedido == 2 (Preparado)
             const data = await pedidosService.getPendientesCadete();
-            
-            // Seteamos los pedidos directamente porque el servidor ya los filtró
             setPedidos(data);
         } catch (error) {
             console.error('Error cargando pedidos para cadete:', error);
@@ -74,6 +75,7 @@ export const AsignarCadetePage: React.FC = () => {
                                         <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Preparado por</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
                                         <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
                                     </tr>
@@ -88,9 +90,15 @@ export const AsignarCadetePage: React.FC = () => {
                                                 {pedido.clienteNombre}
                                             </td>
                                             <td className="px-4 py-3 text-sm text-gray-600">
-                                                <Badge variant="info" >
+                                                <Badge variant="info">
                                                     {pedido.responsableNombre || 'Sistema'}
                                                 </Badge>
+                                            </td>
+                                            {/* COLUMNA DE ESTADO EN VERDE */}
+                                            <td className="px-4 py-3">
+                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3 text-sm font-medium text-gray-900">
                                                 ${pedido.total.toFixed(2)}
@@ -99,6 +107,7 @@ export const AsignarCadetePage: React.FC = () => {
                                                 <Button
                                                     size="sm"
                                                     variant="success"
+                                                    className="bg-green-600 hover:bg-green-700 text-white"
                                                     onClick={() => handleAsignar(pedido)}
                                                 >
                                                     Asignar Cadete

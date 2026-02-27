@@ -74,6 +74,7 @@ namespace Back.Repositories
                     IDEstadoDePedido = p.IDEstadoDePedido,
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
+                    ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
                     // --- para que cadete en dashboard sume pedidos entregados por dia. ---
                     FechaEntregaReal = p.FechaEntregaReal, 
                     IntentosEntregaFallida = p.IntentosEntregaFallida,

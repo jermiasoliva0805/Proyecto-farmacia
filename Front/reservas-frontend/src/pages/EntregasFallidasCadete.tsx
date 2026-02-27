@@ -19,6 +19,15 @@ const EntregasFallidas = () => {
 
     const estadosIds = [8, 9]; // Fallidos y Cancelados
 
+    // Lógica de colores corregida: Cancelado y Fallida en Rojo
+    const getEstadoStyle = (estado: string) => {
+        const est = estado.toLowerCase();
+        if (est.includes('fallida') || est.includes('incidente') || est.includes('cancelado')) {
+            return 'bg-red-100 text-red-600 border-red-200';
+        }
+        return 'bg-orange-100 text-orange-600 border-orange-200';
+    };
+
     const loadPedidos = async () => {
         try {
             setLoading(true);
@@ -60,7 +69,8 @@ const EntregasFallidas = () => {
                         <table className="w-full">
                             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                                 <tr>
-                                    <th className="p-4 text-left">Pedido</th>
+                                    <th className="p-4 text-left">ID</th>
+                                    <th className="p-4 text-left">Fecha</th>
                                     <th className="p-4 text-left">Cliente</th>
                                     <th className="p-4 text-left">Estado</th>
                                     <th className="p-4 text-right">Acciones</th>
@@ -70,14 +80,14 @@ const EntregasFallidas = () => {
                                 {pedidos.map((pedido) => (
                                     <tr key={pedido.idPedido} className="hover:bg-gray-50 transition-colors">
                                         <td className="p-4 font-bold text-blue-600">#{pedido.idPedido}</td>
+                                        <td className="p-4 text-sm text-gray-600">
+                                            {pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '-'}
+                                        </td>
                                         <td className="p-4 text-sm text-gray-700">{pedido.clienteNombre}</td>
                                         <td className="p-4">
-                                            <Badge 
-                                                variant={pedido.idEstadoDePedido === 8 ? 'warning' : 'info'}
-                                                className="px-3 py-1"
-                                            >
-                                                {pedido.estadoNombre}
-                                            </Badge>
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                                {pedido.estadoNombre.toUpperCase()}
+                                            </span>
                                         </td>
                                         <td className="p-4 text-right">
                                             <Button
@@ -86,7 +96,7 @@ const EntregasFallidas = () => {
                                                 disabled={pedido.idEstadoDePedido === 9}
                                                 className={`rounded-lg text-xs px-4 py-2 font-bold ${
                                                     pedido.idEstadoDePedido === 9 
-                                                    ? "bg-gray-400 cursor-not-allowed text-white" 
+                                                    ? "bg-gray-400 cursor-not-allowed text-white border-none" 
                                                     : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
                                                 }`}
                                             >

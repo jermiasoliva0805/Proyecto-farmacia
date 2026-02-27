@@ -73,6 +73,35 @@ export const DashboardAdmin: React.FC = () => {
         return colors[index];
     };
 
+   const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
+        if (estaDemorado) return 'bg-orange-100 text-orange-600 border-orange-200';
+        
+        const est = estado.toLowerCase();
+        switch (est) {
+            case 'sin preparar':
+                return 'bg-gray-100 text-gray-400 border-gray-200'; // Gris suave: inactivo
+            case 'preparar pedido':
+            case 'preparando':
+            case 'en preparación':
+                return 'bg-blue-100 text-blue-600 border-blue-200'; // Azul: acción en curso
+                case 'demorado':
+                return 'bg-orange-100 text-orange-600 border-orange-200';
+            case 'listo para despachar':
+                return 'bg-green-100 text-green-600 border-green-200'; // Verde: listo para el siguiente paso
+            case 'en camino':
+            case 'despachando':
+                return 'bg-indigo-100 text-indigo-600 border-indigo-200'; // Indigo: transporte
+            case 'entregado':
+                return 'bg-emerald-100 text-emerald-700 border-emerald-200'; // Esmeralda: éxito
+            case 'cancelado':
+            case 'entrega fallida':
+                return 'bg-red-100 text-red-600 border-red-200'; // Rojo: error/cancelación
+            default:
+                return 'bg-gray-50 text-gray-500 border-gray-100';
+                
+        }
+    };
+
     return (
         <DashboardLayout>
             <div className="space-y-8 font-sans">
@@ -180,7 +209,7 @@ export const DashboardAdmin: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-gray-800 text-sm">{pedido.clienteNombre}</p>
-                                                    <p className="text-xs text-gray-500">Sin preparar</p>
+                                                    <p className="text-xs text-gray-500 font-medium">Sin preparar</p>
                                                 </div>
                                             </div>
                                             <Button 
@@ -224,7 +253,7 @@ export const DashboardAdmin: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-gray-800 text-sm">{pedido.clienteNombre}</p>
-                                                    <p className="text-xs text-yellow-600 font-medium">Listo para despachar</p>
+                                                    <p className="text-xs text-green-600 font-medium">Listo para despachar</p>
                                                 </div>
                                             </div>
                                             <Button 
@@ -243,57 +272,67 @@ export const DashboardAdmin: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Tabla General Estilo Imagen */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="p-6 bg-blue-600 text-white">
-                                <h2 className="text-lg font-bold">Todos los Pedidos</h2>
-                                <p className="text-blue-100 text-sm">Gestiona y monitorea todos los pedidos en tiempo real</p>
+                       {/* Tabla General Estilo Imagen */}
+<div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="p-6 bg-blue-600 text-white">
+        <h2 className="text-lg font-bold">Todos los Pedidos</h2>
+        <p className="text-blue-100 text-sm">Gestiona y monitorea todos los pedidos en tiempo real</p>
+    </div>
+    <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
+                <tr>
+                    <th className="p-5">ID</th>
+                    {/* MOVIDO AQUÍ: Fecha después del ID */}
+                    <th className="p-5">Fecha</th> 
+                    <th className="p-5">Cliente</th>
+                    <th className="p-5">Responsable</th>
+                    <th className="p-5">Estado</th>
+                    <th className="p-5 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+                {pedidos.map((pedido) => (
+                    <tr key={pedido.idPedido} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="p-5 font-bold text-gray-700">#{pedido.idPedido}</td>
+                        
+                        {/* MOVIDO AQUÍ: Celda de Fecha */}
+                        <td className="p-5 text-sm text-gray-500 whitespace-nowrap">
+                            {new Date(pedido.fecha).toLocaleDateString('es-AR')}
+                        </td>
+
+                        <td className="p-5">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
+                                    {getInitials(pedido.clienteNombre)}
+                                </div>
+                                <span className="font-medium text-gray-800">{pedido.clienteNombre}</span>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-                                        <tr>
-                                            <th className="p-5">ID</th>
-                                            <th className="p-5">Cliente</th>
-                                            <th className="p-5">Responsable</th>
-                                            <th className="p-5">Estado</th>
-                                            <th className="p-5 text-right">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {pedidos.map((pedido) => (
-                                            <tr key={pedido.idPedido} className="hover:bg-blue-50/30 transition-colors group">
-                                                <td className="p-5 font-bold text-gray-700">#{pedido.idPedido}</td>
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
-                                                            {getInitials(pedido.clienteNombre)}
-                                                        </div>
-                                                        <span className="font-medium text-gray-800">{pedido.clienteNombre}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-sm text-gray-500">
-                                                    {pedido.responsableNombre || <span className="text-gray-400 italic">Sin asignar</span>}
-                                                </td>
-                                                <td className="p-5">
-                                                    <Badge variant={(pedido.estaDemorado || (pedido as any).EstaDemorado) ? 'warning' : 'info'}>
-                                                        {pedido.estadoNombre}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <button 
-                                                        onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
-                                                        className="text-gray-400 hover:text-blue-600 font-medium text-sm flex items-center justify-end gap-2 ml-auto transition-colors"
-                                                    >
-                                                        <Eye className="w-4 h-4" /> Ver detalles
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        </td>
+                        <td className="p-5 text-sm text-gray-500">
+                            {pedido.responsableNombre || <span className="text-gray-400 italic">Sin asignar</span>}
+                        </td>
+                        <td className="p-5">
+                            <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado || (pedido as any).EstaDemorado)}`}>
+                                {pedido.estadoNombre.toUpperCase()}
+                            </span>
+                        </td>
+                        <td className="p-5 text-right">
+                            <button 
+    onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
+    className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center justify-end gap-2 ml-auto transition-colors group"
+>
+    <Eye className="w-4 h-4 text-blue-600 group-hover:text-blue-800" /> 
+    <span>Ver detalles</span>
+</button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+</div>
+{/* CIERRES DE SEGURIDAD */}
                     </>
                 )}
             </div>
