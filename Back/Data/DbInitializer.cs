@@ -3,10 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
-using System.Globalization;
-using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Back.Data
 {
@@ -44,194 +40,131 @@ namespace Back.Data
             var cordoba = new Localidad { Ciudad = "Córdoba", Provincia = "Córdoba", CodigoPostal = "5000" };
             context.Localidades.Add(cordoba);
             context.SaveChanges();
-            context.Barrios.Add(new Barrio { Nombre = "Nueva Córdoba", IDLocalidad = cordoba.IDLocalidad });
+            var barrioGral = new Barrio { Nombre = "Nueva Córdoba", IDLocalidad = cordoba.IDLocalidad };
+            context.Barrios.Add(barrioGral);
             context.SaveChanges();
 
             // 4. SUCURSALES
-            var suc = new Sucursal { NombreSucursal = "Farmacia Centro", Dirección = "Av. Colon 123", Teléfono = "3514445566" };
+            var suc = new Sucursal { NombreSucursal = "Farmacia General Paz Centro", Dirección = "Av. Colon 123", Teléfono = "3514445566" };
             context.Sucursales.Add(suc);
             context.SaveChanges();
 
-            // 4.1 PRODUCTOS
-            var prod1 = new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m };
-            var prod2 = new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, Boos", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m };
-            var prod582 = new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m };
+            // 4.1 CATÁLOGO AMPLIADO (12 Productos de diversas categorías)
+            var listaProductos = new List<Producto>
+            {
+                // PERFUMERÍA
+                new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m },
+                new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, fragancia masculina", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m },
+                new Producto { NombreProducto = "Shakira Amarillo EDP", Descripcion = "80ml, fragancia femenina", Categoria = "Perfumeria", CantidadProducto = 30, PrecioProducto = 45045m },
+                
+                // ELECTRO
+                new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824 - Afeitadora", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m },
+                new Producto { NombreProducto = "Nebulizador Pistón", Descripcion = "ASPEN Nbb02-A-50 Silencioso", Categoria = "Electro", CantidadProducto = 20, PrecioProducto = 80330.58m },
+                new Producto { NombreProducto = "Tensiometro Aneroide", Descripcion = "FEMMTO Kit con Estetoscopio", Categoria = "Electro", CantidadProducto = 25, PrecioProducto = 42274.33m },
+                new Producto { NombreProducto = "Planchita Pelo Bellissima", Descripcion = "Ceramic Long Plates", Categoria = "Electro", CantidadProducto = 15, PrecioProducto = 75199m },
 
-            context.Productos.AddRange(prod1, prod2, prod582);
+                // CUIDADO PERSONAL / DERMOCOSMÉTICA
+                new Producto { NombreProducto = "Protector Solar Eucerin", Descripcion = "Toque Seco FPS 50+ 50ml", Categoria = "Cuidado Personal", CantidadProducto = 60, PrecioProducto = 28500.50m },
+                new Producto { NombreProducto = "Serum Effaclar La Roche", Descripcion = "Peeling diario 30ml", Categoria = "Cuidado Personal", CantidadProducto = 40, PrecioProducto = 41200m },
+
+                // SALUD / FARMACIA
+                new Producto { NombreProducto = "Termómetro IR Aspen", Descripcion = "Infrarrojo TS8 4 en 1", Categoria = "Salud", CantidadProducto = 35, PrecioProducto = 42798.99m },
+                new Producto { NombreProducto = "Tiras Accu Chek Guide", Descripcion = "Caja x 25 unidades", Categoria = "Salud", CantidadProducto = 100, PrecioProducto = 73521m },
+                new Producto { NombreProducto = "Alcohol en Gel 500ml", Descripcion = "Antibacterial con dosificador", Categoria = "Salud", CantidadProducto = 200, PrecioProducto = 3500m }
+            };
+
+            context.Productos.AddRange(listaProductos);
             context.SaveChanges();
 
             // 5. USUARIOS
-            var userAdmin = new Usuario { Nombre = "Admin", Apellido = "User", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail= "a@a.com" };
-            //OPERARIOS
+            var userAdmin = new Usuario { Nombre = "Admin", Apellido = "Sistema", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail= "admin@farmacia.com" };
             var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "anaLop", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
-            var opLuis = new Usuario { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "luis@test.com" };
-            var opMarta = new Usuario { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "marta@test.com" };
-            
-            // ✅ CADETES - AGREGADOS
             var cadete1 = new Usuario { Nombre = "Carlos", Apellido = "Martinez", UsuarioNombre = "carlos", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "carlos@test.com" };
-            var cadete2 = new Usuario { Nombre = "Pedro", Apellido = "Romero", UsuarioNombre = "pedro", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "pedro@test.com" };
-            var cadete3 = new Usuario { Nombre = "Sofia", Apellido = "Garcia", UsuarioNombre = "sofia", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "sofia@test.com" };
 
-            context.Usuarios.AddRange(
-    
-                userAdmin,
-                opAna, opLuis, opMarta,
-                cadete1, cadete2, cadete3
-            );
+            context.Usuarios.AddRange(userAdmin, opAna, cadete1);
             context.SaveChanges();
             
             // 6. CLIENTES
-            var cliente1 = new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = context.Barrios.First().IDBarrio, IDLocalidad = context.Localidades.First().IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@gmail.com", Telefono = "3512345678" };
-            var cliente2 = new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = context.Barrios.First().IDBarrio, IDLocalidad = context.Localidades.First().IDLocalidad, Direccion = "San Martin 500", Mail = "maria@gmail.com", Telefono = "3517654321" };
+            var cliente1 = new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@gmail.com", Telefono = "3512345678" };
+            var cliente2 = new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "San Martin 500", Mail = "maria@gmail.com", Telefono = "3517654321" };
             context.Clientes.AddRange(cliente1, cliente2);
             context.SaveChanges();
 
-            // 7. PEDIDOS PARA GESTIÓN (Sin modificar modelos)
-var usuariosOperarios = new List<Usuario> { opAna, opLuis, opMarta };
-var random = new Random();
+            // 7. GENERACIÓN AUTOMÁTICA DE PEDIDOS
+            var random = new Random();
 
-// --- PARTE A: PEDIDOS PENDIENTES ---
-// En lugar de null, usamos el ID del administrador que ya tenés creado arriba
-for (int i = 0; i < 5; i++)
-{
-    var pPendiente = new Pedido
-    {
-        Fecha = DateTime.Now.AddMinutes(-random.Next(10, 500)),
-        Total = (decimal)random.Next(5000, 30000),
-        EstadoActual = "Sin preparar",
-        IDCliente = cliente2.IDCliente,
-        IDEstadoDePedido = 1,
-        
-        // CAMBIO AQUÍ: Usamos el objeto admin que definiste al principio del Initializer
-        IDUsuario = userAdmin.IDUsuario, 
-        
-        IDSucursal = suc.IDSucursal,
-        IDLocalidad = cordoba.IDLocalidad,
-        DireccionEntrega = "Calle Pendiente " + random.Next(1, 999)
-    };
-    context.Pedidos.Add(pPendiente);
-    context.SaveChanges();
-
-    context.HistorialesDeEstados.Add(new HistorialDeEstados {
-        IDPedido = pPendiente.IDPedido,
-        IDEstadoDePedido = 1,
-        
-        // CAMBIO AQUÍ: También se lo asignamos al admin
-        IDUsuario = userAdmin.IDUsuario, 
-        
-        fecha_hora_inicio = pPendiente.Fecha,
-        Observaciones = "Pedido recibido y en bandeja del Administrador"
-    });
-}
-
-// --- PARTE B: PEDIDOS YA ASIGNADOS A OPERARIOS (Tu flujo anterior) ---
-foreach (var op in usuariosOperarios)
-{
-    for (int i = 0; i < 6; i++)
-    {
-        int idEstado;
-        string nombreEstado;
-
-        if (i < 3) { idEstado = 2; nombreEstado = "Preparar pedido"; }
-        else if (i == 3) { idEstado = 3; nombreEstado = "Demorado"; }
-        else { idEstado = 4; nombreEstado = "Listo para despachar"; }
-
-        var p = new Pedido
-        {
-            Fecha = DateTime.Now.AddHours(-i),
-            Total = (decimal)random.Next(10000, 50000),
-            EstadoActual = nombreEstado,
-            IDCliente = cliente1.IDCliente,
-            IDEstadoDePedido = idEstado,
-            IDUsuario = op.IDUsuario, 
-            IDSucursal = suc.IDSucursal,
-            IDLocalidad = cordoba.IDLocalidad,
-            DireccionEntrega = "Calle " + random.Next(100, 999)
-        };
-        
-        context.Pedidos.Add(p);
-        context.SaveChanges();
-
-        // Para el historial del operario, arrancamos desde la asignación (ID 2)
-        context.HistorialesDeEstados.Add(new HistorialDeEstados {
-            IDPedido = p.IDPedido,
-            IDEstadoDePedido = 2,
-            IDUsuario = op.IDUsuario,
-            fecha_hora_inicio = p.Fecha.AddMinutes(-30),
-            Observaciones = "Pedido asignado para preparación"
-        });
-
-        if (idEstado == 3) {
-            context.HistorialesDeEstados.Add(new HistorialDeEstados {
-                IDPedido = p.IDPedido,
-                IDEstadoDePedido = 3,
-                IDUsuario = op.IDUsuario,
-                fecha_hora_inicio = p.Fecha,
-                Observaciones = "Preparación pausada por falta de stock"
-            });
-        }
-
-        if (idEstado == 4) {
-            context.HistorialesDeEstados.Add(new HistorialDeEstados {
-                IDPedido = p.IDPedido,
-                IDEstadoDePedido = 4,
-                IDUsuario = op.IDUsuario,
-                fecha_hora_inicio = p.Fecha,
-                Observaciones = "Control de calidad aprobado y embalado"
-            });
-        }
-    }
-}
-context.SaveChanges();
-            // ✅ 8. PEDIDOS PARA CADETES (Entregas)
-            var usuariosCadetes = new List<Usuario> { cadete1, cadete2, cadete3 };
-
-            foreach (var cadete in usuariosCadetes)
+            // Pedidos Pendientes
+            for (int i = 0; i < 6; i++)
             {
-                for (int i = 0; i < 6; i++)
-                {
-                    var estado = random.Next(1, 101);
-                    int idEstado;
-                    
-                    if (estado <= 60) idEstado = 7;        // 60% Entregado
-                    else if (estado <= 80) idEstado = 8;   // 20% Fallo
-                    else idEstado = 9;                     // 20% Cancelado
-
-                    var p = new Pedido
-                    {
-                        Fecha = DateTime.Now.AddDays(-random.Next(1, 7)),
-                        Total = (decimal)random.Next(10000, 100000),
-                        EstadoActual = idEstado == 7 ? "Entregado" : idEstado == 8 ? "Entrega fallida" : "Cancelado",
-                        IDCliente = random.Next(1, 3) == 1 ? cliente1.IDCliente : cliente2.IDCliente,
-                        IDEstadoDePedido = idEstado,
-                        IDUsuario = cadete.IDUsuario,
-                        IDSucursal = suc.IDSucursal,
-                        IDLocalidad = cordoba.IDLocalidad,
-                        DireccionEntrega = "Direccion de entrega " + random.Next(1, 100),
-                        FechaEntregaEstimada = DateTime.Now.AddDays(1),
-                        //FechaEntregaReal = idEstado == 7 ? DateTime.Now.AddHours(-random.Next(1, 24)) : null,
-                        FechaEntregaReal = idEstado == 7 ? DateTime.Now.AddDays(-random.Next(1, 7)) : null,
-                        HoraEntregaEstimada = new TimeSpan(14, 0, 0),
-                        IntentosEntregaFallida = idEstado == 8 ? random.Next(1, 3) : (idEstado == 9 ? 3 : 0)
-                    };
-                    context.Pedidos.Add(p);
-                    context.SaveChanges();
-
-                    // Historial para cadete
-                    context.HistorialesDeEstados.Add(new HistorialDeEstados
-                    {
-                        IDPedido = p.IDPedido,
-                        IDEstadoDePedido = idEstado,
-                        IDUsuario = cadete.IDUsuario,
-                        fecha_hora_inicio = p.Fecha,
-                        Observaciones = idEstado == 7 ? "Entrega completada" : 
-                                    idEstado == 8 ? "Intento fallido" : "Pedido cancelado"
-                    });
-                }
+                var p = CrearPedidoBase(context, userAdmin.IDUsuario, 1, "Sin preparar", cliente2.IDCliente, suc.IDSucursal, cordoba.IDLocalidad);
+                AsignarProductosAPedido(context, p, listaProductos, random);
             }
-            context.SaveChanges();
 
-            Console.WriteLine("✅ --- Semillado completo: Data de reportes generada ---");
+            // Pedidos en Proceso (Operario)
+            for (int i = 0; i < 5; i++)
+            {
+                var p = CrearPedidoBase(context, opAna.IDUsuario, 2, "Preparar pedido", cliente1.IDCliente, suc.IDSucursal, cordoba.IDLocalidad);
+                AsignarProductosAPedido(context, p, listaProductos, random);
+            }
+
+            // Pedidos Entregados (Cadete)
+            for (int i = 0; i < 4; i++)
+            {
+                var p = CrearPedidoBase(context, cadete1.IDUsuario, 7, "Entregado", cliente1.IDCliente, suc.IDSucursal, cordoba.IDLocalidad);
+                p.FechaEntregaReal = DateTime.Now.AddHours(-1);
+                AsignarProductosAPedido(context, p, listaProductos, random);
+            }
+
+            context.SaveChanges();
+        }
+
+        // Métodos auxiliares para limpieza del código
+        private static Pedido CrearPedidoBase(AppDbContext context, int userId, int estadoId, string estadoNombre, int clienteId, int sucId, int locId)
+        {
+            var p = new Pedido {
+                Fecha = DateTime.Now.AddMinutes(-new Random().Next(60, 1000)),
+                Total = 0,
+                EstadoActual = estadoNombre,
+                IDCliente = clienteId,
+                IDEstadoDePedido = estadoId,
+                IDUsuario = userId, 
+                IDSucursal = sucId,
+                IDLocalidad = locId,
+                DireccionEntrega = "Calle Ficticia " + new Random().Next(1, 999)
+            };
+            context.Pedidos.Add(p);
+            context.SaveChanges();
+            
+            context.HistorialesDeEstados.Add(new HistorialDeEstados {
+                IDPedido = p.IDPedido, IDEstadoDePedido = estadoId, IDUsuario = userId,
+                fecha_hora_inicio = p.Fecha, Observaciones = "Generado por Seed"
+            });
+            
+            return p;
+        }
+
+        private static void AsignarProductosAPedido(AppDbContext context, Pedido pedido, List<Producto> productos, Random rng)
+        {
+            int itemsCount = rng.Next(1, 5); 
+            decimal acumulado = 0;
+
+            // Seleccionar productos sin repetir en el mismo pedido
+            var seleccionados = productos.OrderBy(x => rng.Next()).Take(itemsCount).ToList();
+
+            foreach (var prod in seleccionados)
+            {
+                int cantidad = rng.Next(1, 3);
+                context.DetallesDePedidos.Add(new DetalleDePedido {
+                    IDPedido = pedido.IDPedido,
+                    IDProducto = prod.IDProducto,
+                    Cantidad = cantidad,
+                    PrecioUnitario = prod.PrecioProducto
+                });
+                acumulado += (prod.PrecioProducto * cantidad);
+            }
+
+            pedido.Total = acumulado;
+            context.SaveChanges();
         }
     }
 }

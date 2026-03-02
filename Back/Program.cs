@@ -32,16 +32,15 @@ namespace Back
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull; // ← AGREGAR ESTA LÍNEA
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
 
             builder.Services.AddEndpointsApiExplorer();
 
-            // 2. Configuración de Swagger con Seguridad JWT
+            // 2. Configuración de Swagger
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API Farmacia", Version = "v1" });
-
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: 'Bearer 12345abcdef'",
@@ -50,35 +49,28 @@ namespace Back
                     Type = SecuritySchemeType.ApiKey,
                     Scheme = "Bearer"
                 });
-
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
                         },
                         new string[] {}
                     }
                 });
             });
 
-            // 3. Configuración de Base de Datos
+            // 3. DB Context
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // 4. AutoMapper
+            // 4. AutoMapper y Validaciones
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
-
-            // --- FLUENT VALIDATION ---
             builder.Services.AddFluentValidationAutoValidation();
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
 
-            // 5. Inyección de Dependencias (Repositorios)
+            // 5. Inyección de Repositorios
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -90,13 +82,11 @@ namespace Back
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
             builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
-
-            // --- NUEVOS REPOSITORIOS ---
             builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
             builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
             builder.Services.AddScoped<ICancellationRepository, CancellationRepository>();
 
-            // 6. Inyección de Dependencias (Servicios)
+            // 6. Inyección de Servicios
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IProductService, ProductService>();
@@ -107,16 +97,14 @@ namespace Back
             builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();
             builder.Services.AddScoped<ITrackingService, TrackingService>();
             builder.Services.AddScoped<IUserManagementService, UserManagementService>();
-
+            builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+            builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
 
-            builder.Services.AddScoped<IHistoryService, HistoryService>();
-            builder.Services.AddScoped<IDeliveryService, DeliveryService>();
-            builder.Services.AddScoped<ICancellationService, CancellationService>();
-
-            // 7. Configuración de Seguridad JWT
+            // 7. SEGURIDAD JWT (Ajuste de expiración y validación)
             var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options => {
@@ -125,47 +113,36 @@ namespace Back
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
-                        ValidateAudience = false
+                        ValidateAudience = false,
+                        ClockSkew = TimeSpan.Zero // Hace que el token expire exactamente cuando dice el payload
                     };
                 });
 
             var app = builder.Build();
 
-            // 8. Inicialización de Datos (Seeding)
+            // 8. Seeding
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                try
-                {
+                try {
                     var context = services.GetRequiredService<AppDbContext>();
                     DbInitializer.Initialize(context);
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Ocurrió un error al sembrar la base de datos.");
+                    logger.LogError(ex, "Error al sembrar la base de datos.");
                 }
             }
 
-            // 9. Pipeline de Solicitudes HTTP
-            if (app.Environment.IsDevelopment())
-            {
+            if (app.Environment.IsDevelopment()) {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(x => x
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
-
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseHttpsRedirection();
-
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
-
             app.Run();
         }
     }
