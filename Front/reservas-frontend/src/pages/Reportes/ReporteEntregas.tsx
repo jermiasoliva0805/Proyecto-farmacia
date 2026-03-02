@@ -18,10 +18,10 @@ export const ReporteEntregas: React.FC = () => {
 
   // Estados de los filtros
   const [periodo, setPeriodo] = useState("7"); 
-  const [sucursal, setSucursal] = useState("todas"); 
+  const [idSucursal, setIdSucursal] = useState<number | null>(null); 
 
   useEffect(() => {
-    // Definimos la función de carga DENTRO para asegurar que tome los valores frescos de 'periodo' y 'sucursal'
+    // Definimos la función de carga DENTRO para asegurar que tome los valores frescos de 'periodo' e 'idSucursal'
     const fetchReporte = async () => {
       setLoading(true);
       try {
@@ -33,11 +33,14 @@ export const ReporteEntregas: React.FC = () => {
         const fDesde = inicio.toISOString().split("T")[0];
         const fHasta = hoy.toISOString().split("T")[0];
 
-        // 2. Construimos la URL
-        // IMPORTANTE: Asegúrate que el backend espere "centro", "norte" o "todas" tal cual
-        const url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}&sucursal=${sucursal}`;
+        // 2. Construimos la URL con parámetros correctos
+        let url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}`;
         
-        console.log("Solicitando datos para:", { periodo, sucursal, url });
+        if (idSucursal !== null && idSucursal > 0) {
+          url += `&idSucursal=${idSucursal}`;
+        }
+        
+        console.log("Solicitando datos para:", { periodo, idSucursal, url });
 
         const response = await fetch(url);
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
@@ -52,7 +55,7 @@ export const ReporteEntregas: React.FC = () => {
     };
 
     fetchReporte();
-  }, [periodo, sucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
+  }, [periodo, idSucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
 
   // Cálculos de totales (se recalculan automáticamente al cambiar el estado 'reporte')
   const totalPedidos = reporte.reduce((acc, c) => acc + c.totalPedidosAsignados, 0);
@@ -86,13 +89,13 @@ export const ReporteEntregas: React.FC = () => {
         <Selector
           icon={<MapPin size={18} />}
           label="Sucursal:"
-          value={sucursal}
+          value={idSucursal !== null ? idSucursal.toString() : ""}
           options={[
-            { value: "todas", label: "Todas las sucursales" },
-            { value: "centro", label: "Sucursal Centro" },
-            { value: "norte", label: "Sucursal Norte" },
+            { value: "", label: "Todas las sucursales" },
+            { value: "1", label: "Sucursal Centro" },
+            { value: "2", label: "Sucursal Norte" },
           ]}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSucursal(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
         />
       </div>
 

@@ -14,10 +14,12 @@ namespace Back.Repositories.Interfaces
             DateTime fechaHasta,
             int? idSucursal = null);
 
-        Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync();
-    // ... otros métodos existentes (como el de cadetes)
-    // Contrato para obtener el ranking de facturación
-        Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync();
+        Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7, int? idSucursal = null);
+        
+        /// <summary>
+        /// Obtiene ranking de facturación con filtros opcionales de días y sucursal
+        /// </summary>
+        Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null);
     }
 
     
