@@ -274,7 +274,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
 
             {/* --- RESUMEN ECONÓMICO CON PRODUCTOS --- */}
             <div>
-              <p className="text-sm font-bold text-gray-900 mb-2">Resumen Económico</p>
+              <p className="text-sm font-bold text-gray-900 mb-2">Resumen De Productos</p>
               <div className="bg-gray-50 p-3 rounded-lg space-y-2">
                 {loadingData ? (
                   <p className="text-center text-xs text-gray-400 py-2">Cargando productos...</p>
