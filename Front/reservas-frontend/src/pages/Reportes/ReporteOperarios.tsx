@@ -15,12 +15,18 @@ const ReporteOperarios = () => {
     const [datos, setDatos] = useState<ReporteOperario[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState('7');
-    const [sucursal, setSucursal] = useState('');
+    const [idSucursal, setIdSucursal] = useState<number | null>(null);
 
     const fetchDatos = useCallback(async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({ dias: periodo, idSucursal: sucursal });
+            const params = new URLSearchParams({ dias: periodo });
+            
+            // Solo agregar idSucursal si no es null y es mayor a 0
+            if (idSucursal !== null && idSucursal > 0) {
+                params.append('idSucursal', idSucursal.toString());
+            }
+            
             const response = await fetch(`http://localhost:5000/api/Orders/reporte-tiempos-operarios?${params}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
@@ -33,7 +39,7 @@ const ReporteOperarios = () => {
         } finally {
             setLoading(false);
         }
-    }, [periodo, sucursal]);
+    }, [periodo, idSucursal]);
 
     useEffect(() => { fetchDatos(); }, [fetchDatos]);
 
@@ -68,8 +74,8 @@ const ReporteOperarios = () => {
                     <MapPin size={20} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
                     <span className="text-gray-500 font-medium text-sm">Sucursal:</span>
                     <select 
-                        value={sucursal} 
-                        onChange={(e) => setSucursal(e.target.value)} 
+                        value={idSucursal !== null ? idSucursal.toString() : ""} 
+                        onChange={(e) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))} 
                         className="flex-1 bg-transparent font-bold text-sm outline-none appearance-none cursor-pointer text-gray-700"
                     >
                         <option value="">Todas las sucursales</option>

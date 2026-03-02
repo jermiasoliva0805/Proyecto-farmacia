@@ -52,12 +52,14 @@ namespace Back.Controllers
 
         }
 
-                [HttpGet("ranking-clientes")]
-        public async Task<IActionResult> GetRankingClientes()
+        [HttpGet("ranking-clientes")]
+        public async Task<IActionResult> GetRankingClientes(
+            [FromQuery] int dias = 7,
+            [FromQuery] int? idSucursal = null)
         {
             try 
             {
-                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync();
+                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync(dias, idSucursal);
                 return Ok(reporte);
             }
             catch (Exception ex) 
@@ -67,27 +69,29 @@ namespace Back.Controllers
         }
 
         [HttpGet("clientes-facturacion")]
-public async Task<ActionResult<List<ClienteFacturacionDTO>>> GetRankingFacturacion()
-{
-    try
-    {
-        // Llamamos al método que acabamos de crear en el repositorio
-        var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync();
-        
-        // Si no hay datos, devolvemos una lista vacía pero con status 200
-        if (reporte == null)
+        public async Task<ActionResult<List<ClienteFacturacionDTO>>> GetRankingFacturacion(
+            [FromQuery] int dias = 7,
+            [FromQuery] int? idSucursal = null)
         {
-            return Ok(new List<ClienteFacturacionDTO>());
-        }
+            try
+            {
+                // Llamamos al método que ahora acepta filtros
+                var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync(dias, idSucursal);
+                
+                // Si no hay datos, devolvemos una lista vacía pero con status 200
+                if (reporte == null)
+                {
+                    return Ok(new List<ClienteFacturacionDTO>());
+                }
 
-        return Ok(reporte);
-    }
-    catch (Exception ex)
-    {
-        // Es importante loguear el error por si algo falla en el servidor
-        return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
-    }
-}
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                // Es importante loguear el error por si algo falla en el servidor
+                return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
+            }
+        }
 
     }
 }

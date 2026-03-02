@@ -38,8 +38,12 @@ namespace Back.Controllers
         [HttpGet("reporte-tiempos-operarios")]
         public async Task<IActionResult> GetReporteTiempos([FromQuery] int dias = 7, [FromQuery] int? idSucursal = null)
         {
+            Console.WriteLine($"[CONTROLLER] GetReporteTiempos - Dias: {dias}, IdSucursal: {idSucursal}");
+            
             // Pasamos los filtros al repositorio
             var resultado = await _pedidoRepository.GetTiempoPromedioArmadoAsync(dias, idSucursal);
+            
+            Console.WriteLine($"[CONTROLLER] Resultado: {resultado?.Count ?? 0} operarios");
             
             if (resultado == null)
                 return Ok(new List<ReporteOperarioDTO>());

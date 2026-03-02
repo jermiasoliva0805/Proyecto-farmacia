@@ -107,44 +107,71 @@ namespace Back.Repositories
             Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} cadetes");
             return reporte;
         }
-        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync()
+        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7, int? idSucursal = null)
         {
-        return await _context.Pedidos
-        .Where(p => p.IDEstadoDePedido == 7) // RN: Solo pedidos con estado 'Entregado'
-        .Include(p => p.Cliente)
-        .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre })
-        .Select(g => new RankingClienteDTO
-        {
-            NombreCliente = g.Key.Nombre,
-            CantidadPedidos = g.Count(),
-            GastoTotal = g.Sum(p => p.Total),
-            TicketPromedio = g.Count() > 0 ? g.Sum(p => p.Total) / g.Count() : 0,
-            UltimaCompra = g.Max(p => p.Fecha)
-        })
-        .OrderByDescending(x => x.CantidadPedidos) // Orden descendente por volumen
-        .Take(10) // Top 10 según Metadata
-        .ToListAsync();
-}
+            // Regla de Negocio: Solo pedidos con estado 'Entregado'
+            const int ID_ESTADO_ENTREGADO = 7;
+            
+            // Calcular la fecha desde la cual filtrar
+            DateTime fechaDesde = DateTime.Now.AddDays(-dias);
 
-       public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync()
-{
-    // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
-    const int ID_ESTADO_ENTREGADO = 7;
+            var query = _context.Pedidos
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo entregados
+                .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
 
-    return await _context.Pedidos
-        .Include(p => p.Cliente) 
-        .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // <-- CORREGIDO: IDEstadoDePedido
-        .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre }) // <-- Agrupamos mejor por ID y Nombre
-        .Select(grupo => new ClienteFacturacionDTO
-        {
-            NombreCliente = grupo.Key.Nombre,
-            TotalFacturado = grupo.Sum(p => p.Total), 
-            CantidadPedidos = grupo.Count()
-        })
-        .OrderByDescending(c => c.TotalFacturado) 
-        .Take(10) 
-        .ToListAsync();
-}
+            // Agregar filtro de sucursal si viene especificado
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            return await query
+                .Include(p => p.Cliente)
+                .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre })
+                .Select(g => new RankingClienteDTO
+                {
+                    NombreCliente = g.Key.Nombre,
+                    CantidadPedidos = g.Count(),
+                    GastoTotal = g.Sum(p => p.Total),
+                    TicketPromedio = g.Count() > 0 ? g.Sum(p => p.Total) / g.Count() : 0,
+                    UltimaCompra = g.Max(p => p.Fecha)
+                })
+                .OrderByDescending(x => x.CantidadPedidos) // Orden descendente por volumen
+                .Take(10) // Top 10 según Metadata
+                .ToListAsync();
+        }
+
+       public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null)
+       {
+           // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
+           const int ID_ESTADO_ENTREGADO = 7;
+           
+           // Calcular la fecha desde la cual filtrar
+           DateTime fechaDesde = DateTime.Now.AddDays(-dias);
+
+           var query = _context.Pedidos
+               .Include(p => p.Cliente)
+               .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo entregados
+               .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
+
+           // Agregar filtro de sucursal si viene especificado
+           if (idSucursal.HasValue && idSucursal.Value > 0)
+           {
+               query = query.Where(p => p.IDSucursal == idSucursal.Value);
+           }
+
+           return await query
+               .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre }) // Agrupamos por ID y Nombre
+               .Select(grupo => new ClienteFacturacionDTO
+               {
+                   NombreCliente = grupo.Key.Nombre,
+                   TotalFacturado = grupo.Sum(p => p.Total), 
+                   CantidadPedidos = grupo.Count()
+               })
+               .OrderByDescending(c => c.TotalFacturado) 
+               .Take(10) 
+               .ToListAsync();
+       }
         
     }
     

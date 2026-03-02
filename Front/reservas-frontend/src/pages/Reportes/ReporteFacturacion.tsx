@@ -9,14 +9,14 @@ export const ReporteFacturacion = () => {
     const [datos, setDatos] = useState<ClienteFacturacionDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
-    const [sucursal, setSucursal] = useState("todas");
+    const [idSucursal, setIdSucursal] = useState<number | null>(null);
 
    useEffect(() => {
     const cargarData = async () => {
         try {
             setLoading(true);
-            // IMPORTANTE: Pasamos las dos variables de estado aquí
-            const res = await getRankingClientesFacturacion(periodo, sucursal);
+            // Pasamos las dos variables de estado aquí
+            const res = await getRankingClientesFacturacion(periodo, idSucursal);
             setDatos(res);
         } catch (error) {
             console.error("Error al cargar facturación:", error);
@@ -25,7 +25,7 @@ export const ReporteFacturacion = () => {
         }
     };
     cargarData();
-}, [periodo, sucursal]); // <--- Esto detecta cuando cambias el selector y recarga
+}, [periodo, idSucursal]); // Esto detecta cuando cambias el selector y recarga
 
     const totalGeneral = datos.reduce((acc, curr) => acc + curr.totalFacturado, 0);
     const promedioGeneral = datos.length > 0 ? totalGeneral / datos.length : 0;
@@ -61,13 +61,13 @@ export const ReporteFacturacion = () => {
                 <Selector
                     icon={<MapPin size={18} />}
                     label="Sucursal:"
-                    value={sucursal}
+                    value={idSucursal !== null ? idSucursal.toString() : ""}
                     options={[
-                        { value: "todas", label: "Todas las sucursales" },
-                        { value: "centro", label: "Sucursal Centro" },
-                        { value: "norte", label: "Sucursal Norte" },
+                        { value: "", label: "Todas las sucursales" },
+                        { value: "1", label: "Sucursal Centro" },
+                        { value: "2", label: "Sucursal Norte" },
                     ]}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSucursal(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
             </div>
 

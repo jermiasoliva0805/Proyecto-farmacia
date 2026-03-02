@@ -156,6 +156,9 @@ namespace Back.Repositories
             DateTime fechaInicioFiltro = DateTime.Now.AddDays(-dias);
             const int UMBRAL_MINUTOS = 30; // Definido para el análisis de eficiencia
 
+            Console.WriteLine($"[REPO DEBUG] GetTiempoPromedioArmadoAsync - Dias: {dias}, IdSucursal: {idSucursal}");
+            Console.WriteLine($"[REPO DEBUG] FechaInicio Filtro: {fechaInicioFiltro:yyyy-MM-dd}");
+
             var query = _context.HistorialesDeEstados
                 .Include(h => h.Usuario)
                 .Include(h => h.Pedido)
@@ -165,10 +168,12 @@ namespace Back.Repositories
 
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
-                query = query.Where(h => h.Pedido.IDSucursal == idSucursal.Value);
+                Console.WriteLine($"[REPO DEBUG] Aplicando filtro de sucursal: {idSucursal.Value}");
+                query = query.Where(h => h.Pedido != null && h.Pedido.IDSucursal == idSucursal.Value);
             }
 
             var historiales = await query.ToListAsync();
+            Console.WriteLine($"[REPO DEBUG] Total historiales encontrados: {historiales.Count}");
 
             var reporte = historiales
                 .GroupBy(h => h.IDPedido)
@@ -178,8 +183,8 @@ namespace Back.Repositories
                     Inicio = g.Where(h => h.IDEstadoDePedido == 2).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
                     Fin = g.Where(h => h.IDEstadoDePedido == 4).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
                     NombreCompleto = g.Where(h => h.Usuario != null)
-                                    .Select(h => $"{h.Usuario.Nombre} {h.Usuario.Apellido}")
-                                    .FirstOrDefault()
+                                    .Select(h => h.Usuario != null ? $"{h.Usuario.Nombre} {h.Usuario.Apellido}" : null)
+                                    .FirstOrDefault(n => !string.IsNullOrEmpty(n))
                 })
                 .Where(x => x.Inicio != default && x.Fin != default && !string.IsNullOrEmpty(x.NombreCompleto))
                 .Select(x => new 
@@ -194,7 +199,7 @@ namespace Back.Repositories
                     int dentro = g.Count(x => x.Minutos <= UMBRAL_MINUTOS);
                     return new ReporteOperarioDTO
                     {
-                        NombreOperario = g.Key,
+                        NombreOperario = g.Key ?? string.Empty,
                         PedidosTotales = totales, // Antes era TotalPedidosArmados
                         DentroUmbral = dentro,
                         FueraUmbral = totales - dentro,
@@ -205,6 +210,7 @@ namespace Back.Repositories
                 .OrderByDescending(r => r.PorcentajeEficiencia)
                 .ToList();
 
+            Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} operarios");
             return reporte;
         }
     }

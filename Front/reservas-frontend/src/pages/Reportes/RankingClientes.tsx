@@ -8,13 +8,13 @@ export const RankingClientes: React.FC = () => {
     const [ranking, setRanking] = useState<RankingClienteDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
-    const [sucursal, setSucursal] = useState("todas");
+    const [idSucursal, setIdSucursal] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchDatos = async () => {
             try {
                 setLoading(true);
-                const data = await getRankingClientes();
+                const data = await getRankingClientes(periodo, idSucursal);
                 setRanking(data);
             } catch (error) {
                 console.error("Error al cargar ranking:", error);
@@ -23,7 +23,7 @@ export const RankingClientes: React.FC = () => {
             }
         };
         fetchDatos();
-    }, [periodo, sucursal]);
+    }, [periodo, idSucursal]);
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
 
@@ -56,13 +56,13 @@ export const RankingClientes: React.FC = () => {
                 <Selector
                     icon={<MapPin size={18} />}
                     label="Sucursal:"
-                    value={sucursal}
+                    value={idSucursal !== null ? idSucursal.toString() : ""}
                     options={[
-                        { value: "todas", label: "Todas las sucursales" },
-                        { value: "centro", label: "Sucursal Centro" },
-                        { value: "norte", label: "Sucursal Norte" },
+                        { value: "", label: "Todas las sucursales" },
+                        { value: "1", label: "Sucursal Centro" },
+                        { value: "2", label: "Sucursal Norte" },
                     ]}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSucursal(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
             </div>
 
