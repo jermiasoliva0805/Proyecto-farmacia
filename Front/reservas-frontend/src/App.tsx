@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar'; 
+import { Navbar } from './components/layout/Navbar'; 
 
 // Importación de Páginas
 import { Login } from './pages/Login';
@@ -18,14 +19,19 @@ import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
 
-// Componente Layout para mantener el Sidebar a la izquierda
+// Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar isOpen={true} />
-      <main className="flex-1 lg:ml-64 p-8">
-        <Outlet />
-      </main>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex pt-16">
+        <Sidebar isOpen={sidebarOpen} />
+        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
