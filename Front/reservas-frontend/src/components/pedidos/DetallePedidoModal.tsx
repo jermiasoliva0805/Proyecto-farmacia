@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, Printer, History, Ban, Calendar } from 'lucide-react';
 import { OrderSummaryDTO } from '../../types/pedido.types';
 import { Badge } from '../common/Badge';
@@ -20,6 +20,30 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
   const [selectedTracking, setSelectedTracking] = useState<OrderTrackingDTO | null>(null);
   const [modalTrackingOpen, setModalTrackingOpen] = useState(false);
   const [loadingTracking, setLoadingTracking] = useState(false);
+
+  // --- NUEVOS ESTADOS PARA PRODUCTOS ---
+  const [fullData, setFullData] = useState<PrintData | null>(null);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // Cargar detalles cuando se abre el modal
+  useEffect(() => {
+    if (isOpen && pedido) {
+      const cargarDetalles = async () => {
+        setLoadingData(true);
+        try {
+          const data = await getPrintData(pedido.idPedido);
+          setFullData(data);
+        } catch (err) {
+          console.error("Error al cargar productos:", err);
+        } finally {
+          setLoadingData(false);
+        }
+      };
+      cargarDetalles();
+    } else {
+      setFullData(null);
+    }
+  }, [isOpen, pedido]);
 
   if (!isOpen || !pedido) return null;
 
@@ -52,8 +76,8 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
     }
   };
 
-const buildPrintHTML = (data: PrintData) => {
-    const lineSubtotals = (Array.isArray(data.productos) ? data.productos : []).map((p: PrintData['productos'][number]) => {
+  const buildPrintHTML = (data: PrintData) => {
+    const lineSubtotals = (Array.isArray(data.productos) ? data.productos : []).map((p: any) => {
       const desc = p.descuento ?? 0;
       const sub = p.subtotal != null ? p.subtotal : p.cantidad * p.precioUnitario - desc;
       return { subtotal: sub, descuento: desc };
@@ -94,7 +118,6 @@ const buildPrintHTML = (data: PrintData) => {
             .totals-row { display:flex; justify-content:space-between; font-size:12px; margin:4px 0; }
             .totals-row.total { font-weight:800; border-top:1px dashed var(--border); padding-top:6px; }
             
-            /* --- SECCIÓN DE FIRMAS UNIFORME --- */
             .signatures-container { margin-top: 30px; }
             .signature-block { 
               display: grid; 
@@ -201,6 +224,7 @@ const buildPrintHTML = (data: PrintData) => {
       </html>
     `;
   };
+
   const handleImprimirHoja = async () => {
     try {
       const data = await getPrintData(pedido.idPedido);
@@ -248,20 +272,31 @@ const buildPrintHTML = (data: PrintData) => {
               <div><p className="text-gray-500">Sucursal</p><p className="font-semibold">Casa Central</p></div>
             </div>
 
+            {/* --- RESUMEN ECONÓMICO CON PRODUCTOS --- */}
             <div>
               <p className="text-sm font-bold text-gray-900 mb-2">Resumen Económico</p>
-              <div className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
-                <p className="text-sm font-medium">Items del pedido</p>
-                <p className="text-sm font-bold">${pedido.total.toFixed(2)}</p>
+              <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                {loadingData ? (
+                  <p className="text-center text-xs text-gray-400 py-2">Cargando productos...</p>
+                ) : fullData ? (
+                  fullData.productos.map((prod, idx) => (
+                    <div key={idx} className="flex justify-between items-center border-b border-gray-200 pb-1 last:border-0">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-bold text-blue-600">{prod.cantidad}x</span> {prod.productoNombre}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm font-medium">Items del pedido</p>
+                )}
               </div>
               <div className="mt-4 pt-2 border-t flex justify-between items-center text-blue-600">
                 <p className="font-bold">Total del Pedido</p>
-                <p className="text-lg font-bold">${pedido.total.toFixed(2)}</p>
+                <p className="text-lg font-bold">{formatCurrency(pedido.total)}</p>
               </div>
             </div>
 
             <div className="space-y-2 pt-4">
-              {/* Acciones para todos los roles permitidos */}
               {(esAdmin || esOperario || esCadete) && (
                 <div className="grid grid-cols-1 gap-2">
                   <button onClick={handleImprimirHoja} className="flex items-center justify-center gap-2 border p-2 rounded-lg text-sm font-medium hover:bg-gray-50">
@@ -274,7 +309,6 @@ const buildPrintHTML = (data: PrintData) => {
                 </div>
               )}
 
-              {/* Botón de Cancelar: Comentado lógicamente para el Administrador */}
               {esAdmin && (
                 <div className="pt-2 border-t">
                   <button 
