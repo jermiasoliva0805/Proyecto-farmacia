@@ -34,7 +34,6 @@ namespace Back.Controllers
 
         // Reporte 1: Rendimiento de Operarios (Tiempos de Armado RF6.4)
         // Ahora acepta parámetros opcionales por QueryString
-        [Authorize(Roles = "Administrador")]
         [HttpGet("reporte-tiempos-operarios")]
         public async Task<IActionResult> GetReporteTiempos([FromQuery] int dias = 7, [FromQuery] int? idSucursal = null)
         {
