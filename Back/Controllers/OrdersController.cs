@@ -128,7 +128,7 @@ namespace Back.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (id != changeStatusDto.IDPedido) return BadRequest(new { message = "El ID no coincide." });
 
-            var resultado = await _pedidoRepository.ActualizarEstadoPedidoAsync(changeStatusDto);
+            var resultado = await _statusService.CambiarEstadoAsync(changeStatusDto);
             if (!resultado) return BadRequest(new { message = "Cambio de estado rechazado por lógica de negocio." });
 
             var pedidoActualizado = await _pedidoRepository.GetByIdAsync(id);
