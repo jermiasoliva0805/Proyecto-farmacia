@@ -83,16 +83,16 @@ namespace Back.Data
             // 6. CLIENTES (Ampliados a 10 para reportes detallados)
             var clientes = new List<Cliente>
             {
-                new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@gmail.com", Telefono = "3512345678" },
-                new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "San Martin 500", Mail = "maria@gmail.com", Telefono = "3517654321" },
-                new Cliente { Nombre = "Carlos", Apellido = "Rodriguez", DNI = "31789456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Av. Velez Sarsfield 1200", Mail = "carlos@gmail.com", Telefono = "3518765432" },
-                new Cliente { Nombre = "Ana", Apellido = "Martinez", DNI = "33456789", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Ituzaingo 450", Mail = "ana@gmail.com", Telefono = "3519876543" },
-                new Cliente { Nombre = "Roberto", Apellido = "Lopez", DNI = "34567890", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Colon 600", Mail = "robert@gmail.com", Telefono = "3514444555" },
-                new Cliente { Nombre = "Gabriela", Apellido = "Sanchez", DNI = "35678901", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Ruta Nacional 9 Km 10", Mail = "gabriela@gmail.com", Telefono = "3516666777" },
-                new Cliente { Nombre = "Fernando", Apellido = "Diaz", DNI = "36789012", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Hipólito Irigoyen 800", Mail = "fernando@gmail.com", Telefono = "3517777888" },
-                new Cliente { Nombre = "Alejandra", Apellido = "Torres", DNI = "37890123", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Paseo Sobremonte 350", Mail = "alejandra@gmail.com", Telefono = "3518888999" },
-                new Cliente { Nombre = "Jorge", Apellido = "Castro", DNI = "38901234", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle General Paz 950", Mail = "jorge@gmail.com", Telefono = "3519999000" },
-                new Cliente { Nombre = "Patricia", Apellido = "Flores", DNI = "39012345", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Maipú 1100", Mail = "patricia@gmail.com", Telefono = "3510101010" }
+                new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Belgrano 800", Mail = "aguallende457@gmail.com", Telefono = "3512345678" },
+                new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "San Martin 500", Mail = "aguallende457@gmail.com", Telefono = "3517654321" },
+                new Cliente { Nombre = "Carlos", Apellido = "Rodriguez", DNI = "31789456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Av. Velez Sarsfield 1200", Mail = "aguallende457@gmail.com", Telefono = "3518765432" },
+                new Cliente { Nombre = "Ana", Apellido = "Martinez", DNI = "33456789", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Ituzaingo 450", Mail = "aguallende457@gmail.com", Telefono = "3519876543" },
+                new Cliente { Nombre = "Roberto", Apellido = "Lopez", DNI = "34567890", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Colon 600", Mail = "aguallende457@gmail.com", Telefono = "3514444555" },
+                new Cliente { Nombre = "Gabriela", Apellido = "Sanchez", DNI = "35678901", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Ruta Nacional 9 Km 10", Mail = "aguallende457@gmail.com", Telefono = "3516666777" },
+                new Cliente { Nombre = "Fernando", Apellido = "Diaz", DNI = "36789012", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Hipólito Irigoyen 800", Mail = "aguallende457@gmail.com", Telefono = "3517777888" },
+                new Cliente { Nombre = "Alejandra", Apellido = "Torres", DNI = "37890123", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Paseo Sobremonte 350", Mail = "aguallende457@gmail.com", Telefono = "3518888999" },
+                new Cliente { Nombre = "Jorge", Apellido = "Castro", DNI = "38901234", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle General Paz 950", Mail = "aguallende457@gmail.com", Telefono = "3519999000" },
+                new Cliente { Nombre = "Patricia", Apellido = "Flores", DNI = "39012345", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Maipú 1100", Mail = "aguallende457@gmail.com", Telefono = "3510101010" }
             };
             context.Clientes.AddRange(clientes);
             context.SaveChanges();
