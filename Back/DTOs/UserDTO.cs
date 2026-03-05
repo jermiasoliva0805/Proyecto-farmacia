@@ -4,6 +4,7 @@ namespace Back.DTOs
 {
     public class UserDTO
     {
+        public int IDUsuario { get; set; }
         public int Id { get; set; }
         public string Usuario { get; set; }
 

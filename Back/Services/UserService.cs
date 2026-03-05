@@ -82,10 +82,15 @@ namespace Back.Services
 
             // 2. Actualizar campos
             // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
-            // Como UpdateUserDTO NO tiene el campo 'Contraseña', la contraseña actual NO se toca.
             _mapper.Map(updateDto, usuarioExistente);
 
-            // 3. Guardar cambios
+            // 3. Si se proporciona una nueva contraseña, hashearla
+            if (!string.IsNullOrEmpty(updateDto.Contraseña))
+            {
+                usuarioExistente.Contraseña = BCrypt.Net.BCrypt.HashPassword(updateDto.Contraseña);
+            }
+
+            // 4. Guardar cambios
             return await _userRepository.UpdateAsync(usuarioExistente);
         }
 

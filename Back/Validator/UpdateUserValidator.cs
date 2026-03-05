@@ -7,26 +7,37 @@ namespace Back.Validators
     {
         public UpdateUserValidator()
         {
-            RuleFor(x => x.IDUsuario)
-                .GreaterThan(0).WithMessage("ID de usuario inválido.");
-
+            // Validaciones opcionales para actualización
+            // Los campos pueden venir nulos/vacíos
+            
             RuleFor(x => x.Nombre)
-                .NotEmpty().WithMessage("El nombre es obligatorio.");
+                .MaximumLength(100).WithMessage("El nombre no puede exceder 100 caracteres.")
+                .When(x => !string.IsNullOrEmpty(x.Nombre));
+
+            RuleFor(x => x.Apellido)
+                .MaximumLength(100).WithMessage("El apellido no puede exceder 100 caracteres.")
+                .When(x => !string.IsNullOrEmpty(x.Apellido));
 
             RuleFor(x => x.UsuarioNombre)
-                .NotEmpty().WithMessage("El nombre de usuario es obligatorio.");
+                .Length(3, 50).WithMessage("El usuario debe tener entre 3 y 50 caracteres.")
+                .When(x => !string.IsNullOrEmpty(x.UsuarioNombre));
 
             RuleFor(x => x.Mail)
-                .NotEmpty().WithMessage("El correo es obligatorio.")
-                .EmailAddress();
+                .EmailAddress().WithMessage("El correo debe tener un formato válido.")
+                .When(x => !string.IsNullOrEmpty(x.Mail));
+
+            RuleFor(x => x.Contraseña)
+                .MinimumLength(6).WithMessage("La contraseña debe tener al menos 6 caracteres.")
+                .When(x => !string.IsNullOrEmpty(x.Contraseña));
 
             RuleFor(x => x.Rol)
-                .NotEmpty()
                 .Must(rol => rol == "Administrador" || rol == "Operario" || rol == "Cadete")
-                .WithMessage("Rol inválido.");
+                .WithMessage("Rol inválido.")
+                .When(x => !string.IsNullOrEmpty(x.Rol));
 
             RuleFor(x => x.IDSucursal)
-                .GreaterThan(0).WithMessage("Sucursal inválida.");
+                .GreaterThan(0).WithMessage("Sucursal inválida.")
+                .When(x => x.IDSucursal.HasValue);
         }
     }
 }
