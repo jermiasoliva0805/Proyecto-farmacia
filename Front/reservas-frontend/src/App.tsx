@@ -18,6 +18,7 @@ import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
+import UsuariosPage from './pages/UsuariosPage'; 
 
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
@@ -98,11 +99,10 @@ function App() {
               path="/usuarios"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <div>Página de Usuarios</div> 
+                  <UsuariosPage /> {/* <--- Aquí reemplazamos el div por tu nueva página */}
                 </ProtectedRoute>
               }
             />
-
             {/* OPERARIO */}
            {/* Dashboard Operario */}
 <Route
