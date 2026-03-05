@@ -33,6 +33,13 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.CantidadProducto))
                 .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Categoria));
 
+            // --- Mapeos de Sucursales ---
+            CreateMap<Sucursal, SucursalDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IDSucursal))
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.NombreSucursal))
+                .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Dirección))
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Teléfono));
+
             // --- Mapeos de Creación de Pedidos ---
             CreateMap<CreateOrderDTO, Pedido>();
             CreateMap<OrderDetailDTO, DetalleDePedido>();
@@ -76,6 +83,13 @@ namespace Back.Mappings
             CreateMap<Pedido, OrderSummaryDTO>()
                 .ForMember(dest => dest.IDEstadoDePedido, opt => opt.MapFrom(src => src.IDEstadoDePedido))
                 .ForMember(dest => dest.EstadoNombre, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado));
+
+            // --- Mapeos de Creación de Pedidos ---
+            CreateMap<CreateOrderDTO, Pedido>()
+                .ForMember(dest => dest.IDLocalidad, opt => opt.Ignore()) // Se obtiene del Cliente o del DTO
+                .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
+            
+            CreateMap<OrderDetailDTO, DetalleDePedido>();
         }
     }
 }

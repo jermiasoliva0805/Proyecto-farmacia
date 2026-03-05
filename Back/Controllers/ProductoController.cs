@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Back.Services.Interfaces;
 using Back.DTOs;
+using AutoMapper;
 
 namespace Back.Controllers
 {
@@ -9,10 +10,12 @@ namespace Back.Controllers
     public class ProductosController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly IMapper _mapper;
 
-        public ProductosController(IProductService productService)
+        public ProductosController(IProductService productService, IMapper mapper)
         {
             _productService = productService;
+            _mapper = mapper;
         }
 
         // GET: api/productos
@@ -22,7 +25,8 @@ namespace Back.Controllers
         {
             // Devuelve ProductDTO mapeados desde los productos cargados del CSV
             var productos = await _productService.GetAllProductsAsync();
-            return Ok(productos);
+            var productosDTO = _mapper.Map<IEnumerable<ProductDTO>>(productos);
+            return Ok(productosDTO);
         }
     }
 }

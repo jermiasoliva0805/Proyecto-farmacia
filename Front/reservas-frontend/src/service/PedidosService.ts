@@ -119,11 +119,33 @@ export const pedidosService = {
 
     async createOrder(orderData: any): Promise<any> {
         try {
-            const response = await api.post('/Orders', orderData);
+            // Normalizar los nombres de propiedades (convertir camelCase a PascalCase)
+            const detalles = (orderData.Detalles || orderData.detalles || []).map((d: any) => ({
+                IDProducto: d.IDProducto || d.idProducto,
+                Cantidad: d.Cantidad || d.cantidad,
+                PrecioUnitario: d.PrecioUnitario || d.precioUnitario
+            }));
+
+            const payload = {
+                IDCliente: orderData.IDCliente || orderData.idCliente,
+                IDSucursal: orderData.IDSucursal || orderData.idSucursal,
+                IDUsuario: orderData.IDUsuario || orderData.idUsuario,
+                FormaDePago: orderData.FormaDePago || orderData.formaDePago,
+                NombreCliente: orderData.NombreCliente,
+                Telefono: orderData.Telefono,
+                Email: orderData.Email,
+                Direccion: orderData.Direccion,
+                PuntoRetiro: orderData.PuntoRetiro,
+                Detalles: detalles
+            };
+
+            console.log('📤 Enviando al backend:', payload);
+            const response = await api.post('/Orders', payload);
             return response.data;
         } catch (error: any) {
             console.error("Error al crear pedido:", error.response?.data || error.message);
             throw error;
         }
     }
+
 };

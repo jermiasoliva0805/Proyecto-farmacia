@@ -14,7 +14,7 @@ import { SeguimientoPedidos } from './pages/SeguimientoPedidos';
 import { AsignarOperarioPage } from './pages/AsignarOperario';
 import { AsignarCadetePage } from './pages/AsignarCadete';
 import OrderFormPage from './pages/orders/OrderFormPage';
-import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el Panel único
+import { PanelReportes } from './pages/Reportes/PanelReportes';
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
@@ -57,7 +57,27 @@ function App() {
               }
             />
             
-            {/* RUTA ÚNICA DE REPORTES (Aquí dentro están tus pestañas) */}
+            {/* CREAR NUEVO PEDIDO */}
+            <Route
+              path="/pedidos/nuevo"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <OrderFormPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GESTIÓN DE PEDIDOS */}
+            <Route
+              path="/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* RUTA ÚNICA DE REPORTES */}
             <Route
               path="/reportes"
               element={
@@ -104,25 +124,23 @@ function App() {
             />
 
             {/* OPERARIO */}
-           {/* Dashboard Operario */}
-<Route
-  path="/dashboard/operario"
-  element={
-    <ProtectedRoute allowedRoles={['Operario']}>
-      <DashboardOperario />
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/dashboard/operario"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <DashboardOperario />
+                </ProtectedRoute>
+              }
+            />
 
-{/* Mis Pedidos Operario - RUTA SEPARADA */}
-<Route
-  path="/mis-pedidos"
-  element={
-    <ProtectedRoute allowedRoles={['Operario']}>
-      <MisPedidosOperario />
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/mis-pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <MisPedidosOperario />
+                </ProtectedRoute>
+              }
+            />
 
             {/* CADETE */}
             <Route
@@ -134,7 +152,6 @@ function App() {
               }
             />
 
-            {/* RUTAS DE CADETE MOVIDAS AQUÍ ADENTRO PARA QUE MUESTREN EL SIDEBAR */}
             <Route
               path="/entregas"
               element={
@@ -152,9 +169,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* ----------------------------------------------------------- */}
 
-          </Route> {/* <--- ESTE ES EL CIERRE DEL LAYOUT QUE AHORA ENVUELVE TODO */}
+          </Route>
 
           {/* --- ERRORES Y REDIRECCIONES --- */}
           <Route path="/unauthorized" element={<div>No autorizado</div>} />

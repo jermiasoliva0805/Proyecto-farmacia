@@ -29,10 +29,12 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     const [selected, setSelected] = useState<Option | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const filteredOptions = options.filter(opt =>
-        opt.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (opt.subtext && opt.subtext.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredOptions = options.filter(opt => {
+        const optLabel = String(opt.label || '').toLowerCase();
+        const optSubtext = opt.subtext ? String(opt.subtext).toLowerCase() : '';
+        const term = searchTerm.toLowerCase();
+        return optLabel.includes(term) || optSubtext.includes(term);
+    });
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -79,9 +81,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     </div>
                     <div className="max-h-60 overflow-y-auto">
                         {filteredOptions.length > 0 ? (
-                            filteredOptions.map(opt => (
+                            filteredOptions.map((opt, index) => (
                                 <div
-                                    key={opt.id}
+                                    key={`${opt.id}-${index}`}
                                     className="p-3 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-50 last:border-0"
                                     onClick={(e) => {
                                         e.stopPropagation();
