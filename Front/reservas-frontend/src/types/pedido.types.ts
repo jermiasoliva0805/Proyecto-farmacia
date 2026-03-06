@@ -10,9 +10,11 @@ export interface OrderSummaryDTO {
     fechaEntregaEstimada: string;
     estaDemorado: boolean;
     fechaEntregaReal?: string;
-    // ✅ Agregado para vincular los productos del catálogo
     detalles?: OrderDetailDTO[];
     intentosEntregaFallida: number;
+    // ✅ CU25: Para detectar si ya inició el armado
+    fechaInicioArmado?: string;
+    fechaFinArmado?: string;
 }
 
 export interface OrderDetailDTO {
