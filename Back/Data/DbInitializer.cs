@@ -15,10 +15,10 @@ namespace Back.Data
 
             // 1. MOTIVOS DE CANCELACIÓN
             context.MotivosCancelacion.AddRange(
-                new MotivoCancelacion { Nombre = "Arrepentimiento" },
-                new MotivoCancelacion { Nombre = "Falta de stock" },
-                new MotivoCancelacion { Nombre = "Error en el pago" },
-                new MotivoCancelacion { Nombre = "Dirección incorrecta" }
+                new MotivoCancelacion { Nombre = "Arrepentimiento", Activo = true },
+                new MotivoCancelacion { Nombre = "Falta de stock", Activo = true },
+                new MotivoCancelacion { Nombre = "Error en el pago", Activo = true },
+                new MotivoCancelacion { Nombre = "Dirección incorrecta", Activo = true }
             );
             context.SaveChanges();
 

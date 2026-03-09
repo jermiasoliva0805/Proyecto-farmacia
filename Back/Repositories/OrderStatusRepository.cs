@@ -16,22 +16,32 @@ namespace Back.Repositories
 
         public async Task<bool> ActualizarEstadoAsync(HistorialDeEstados nuevoHistorial, Pedido pedidoActualizado = null)
         {
-            var pedido = pedidoActualizado ?? await _context.Pedidos.FindAsync(nuevoHistorial.IDPedido);
-            if (pedido == null) return false;
-
-            // Actualizar el estado del pedido
-            pedido.IDEstadoDePedido = nuevoHistorial.IDEstadoDePedido;
-
-            // Si se proporciona un pedido actualizado, guardar todos los cambios (intentos, fecha real, etc.)
-            if (pedidoActualizado != null)
+            try
             {
-                _context.Entry(pedido).State = EntityState.Modified;
+                var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.IDPedido == nuevoHistorial.IDPedido);
+                if (pedido == null) return false;
+
+                // Actualizar el estado del pedido
+                pedido.IDEstadoDePedido = nuevoHistorial.IDEstadoDePedido;
+                pedido.EstadoActual = "Cancelado";
+
+                // Si se proporciona un pedido actualizado, copiar campos importantes
+                if (pedidoActualizado != null)
+                {
+                    pedido.MotivoCancelacionId = pedidoActualizado.MotivoCancelacionId;
+                    pedido.JustificacionCancelacion = pedidoActualizado.JustificacionCancelacion;
+                }
+
+                _context.Pedidos.Update(pedido);
+                _context.HistorialesDeEstados.Add(nuevoHistorial);
+
+                return await _context.SaveChangesAsync() > 0;
             }
-
-            // Nombre de la tabla según tu AppDbContext: HistorialesDeEstados
-            _context.HistorialesDeEstados.Add(nuevoHistorial);
-
-            return await _context.SaveChangesAsync() > 0;
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error en ActualizarEstadoAsync: {ex.Message}");
+                throw;
+            }
         }
     }
 }

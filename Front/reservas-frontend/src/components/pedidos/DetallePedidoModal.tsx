@@ -8,6 +8,7 @@ import { trackingService } from '../../service/trackingService';
 import { OrderTrackingDTO } from '../../types/tracking.types';
 import { getPrintData, type PrintData } from '../../service/orderService';
 import { useAuth } from '../../context/AuthContext';
+import { CancelarPedidoModal } from './CancelarPedidoModal';
 
 interface Props {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
   const [selectedTracking, setSelectedTracking] = useState<OrderTrackingDTO | null>(null);
   const [modalTrackingOpen, setModalTrackingOpen] = useState(false);
   const [loadingTracking, setLoadingTracking] = useState(false);
+  const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
 
   // --- NUEVOS ESTADOS PARA PRODUCTOS ---
   const [fullData, setFullData] = useState<PrintData | null>(null);
@@ -309,13 +311,13 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 </div>
               )}
 
-              {esAdmin && (
+              {esAdmin && ![7, 9, 10].includes(pedido.idEstadoDePedido) && (
                 <div className="pt-2 border-t">
                   <button 
-                    disabled 
-                    className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-bold bg-gray-200 text-gray-400 cursor-not-allowed"
+                    onClick={() => setModalCancelarOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition"
                   >
-                    <Ban className="w-4 h-4" /> Cancelar Pedido (Proximamente)
+                    <Ban className="w-4 h-4" /> Cancelar Pedido
                   </button>
                 </div>
               )}
@@ -339,6 +341,18 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
             </div>
           </div>
         </Modal>
+      )}
+
+      {pedido && (
+        <CancelarPedidoModal 
+          isOpen={modalCancelarOpen}
+          onClose={() => setModalCancelarOpen(false)}
+          pedidoId={pedido.idPedido}
+          onCancelarSuccess={() => {
+            // Actualizar la lista o cerrar el modal principal
+            onClose();
+          }}
+        />
       )}
     </>
   );

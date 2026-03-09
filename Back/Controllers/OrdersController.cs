@@ -1,4 +1,4 @@
-﻿using Back.DTOs;
+using Back.DTOs;
 using Back.Services.Interfaces;
 using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,18 +17,21 @@ namespace Back.Controllers
         private readonly IOrderStatusService _statusService;
         private readonly ITrackingService _trackingService;
         private readonly IPedidoRepository _pedidoRepository;
-        private readonly IOrderService _orderService;  // ← AGREGADO
+        private readonly IOrderService _orderService;
+        private readonly ICancellationService _cancellationService;
 
         public OrdersController(
             IOrderStatusService statusService,
             ITrackingService trackingService,
             IPedidoRepository pedidoRepository,
-            IOrderService orderService)  // ← AGREGADO
+            IOrderService orderService,
+            ICancellationService cancellationService)
         {
             _statusService = statusService;
             _trackingService = trackingService;
             _pedidoRepository = pedidoRepository;
-            _orderService = orderService;  // ← AGREGADO
+            _orderService = orderService;
+            _cancellationService = cancellationService;
         }
 
         // ==========================================
