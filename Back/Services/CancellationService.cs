@@ -223,7 +223,7 @@ namespace Back.Services
                 var historial = new HistorialDeEstados
                 {
                     IDPedido = pedido.IDPedido,
-                    IDEstadoDePedido = 10,
+                    IDEstadoDePedido = 9,
                     IDUsuario = int.Parse(usuarioId),
                     fecha_hora_inicio = DateTime.Now,
                     Observaciones = observacionHistorial

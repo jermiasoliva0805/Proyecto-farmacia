@@ -20,7 +20,7 @@ namespace Back.Repositories
             if (pedido == null) return;
 
             // Actualizar campos del pedido
-            pedido.IDEstadoDePedido = 10; // Estado "Cancelado"
+            pedido.IDEstadoDePedido = 9; // Estado "Cancelado"
             pedido.EstadoActual = "Cancelado";
             
             if (motivoCancelacionId.HasValue && motivoCancelacionId.Value > 0)

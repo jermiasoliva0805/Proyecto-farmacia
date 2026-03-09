@@ -248,18 +248,18 @@ namespace Back.Services
         {
             var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
-            // No se puede cancelar si ya está entregado (7) o ya cancelado (10)
-            if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 10)
+            // No se puede cancelar si ya está entregado (7) o ya cancelado (9)
+            if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 9)
                 return false;
 
-            pedido.IDEstadoDePedido = 10; // Estado Cancelado
+            pedido.IDEstadoDePedido = 9; // Estado Cancelado
             pedido.MotivoCancelacionId = dto.MotivoCancelacionId;
             pedido.JustificacionCancelacion = dto.Justificacion;
 
             var historial = new HistorialDeEstados
             {
                 IDPedido = pedido.IDPedido,
-                IDEstadoDePedido = 10,
+                IDEstadoDePedido = 9,
                 IDUsuario = userId, // El ID del Admin/Operario que cancela
                 fecha_hora_inicio = DateTime.Now,
                 // Registramos el ID del motivo y la justificación en las observaciones
@@ -306,17 +306,17 @@ namespace Back.Services
         {
             var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
-            if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 10)
+            if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 9)
                 return false;
 
-            pedido.IDEstadoDePedido = 10;
+            pedido.IDEstadoDePedido = 9;
             pedido.MotivoCancelacionId = dto.MotivoCancelacionId;
             pedido.JustificacionCancelacion = dto.Justificacion;
 
             var historial = new HistorialDeEstados
             {
                 IDPedido = pedido.IDPedido,
-                IDEstadoDePedido = 10,
+                IDEstadoDePedido = 9,
                 IDUsuario = pedido.IDUsuario, // Usuario responsable registrado
                 fecha_hora_inicio = DateTime.Now,
                 Observaciones = $"Cancelación. Motivo ID: {dto.MotivoCancelacionId}. Justificación: {dto.Justificacion ?? "Sin detalle."}"
