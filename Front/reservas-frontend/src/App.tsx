@@ -73,7 +73,7 @@ function App() {
               path="/pedidos"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <DashboardAdmin />
+                  <OrderFormPage />
                 </ProtectedRoute>
               }
             />
@@ -146,7 +146,14 @@ function App() {
 
 
             {/* Mis Pedidos Operario - RUTA SEPARADA */}
-
+            <Route
+              path="/mis-pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <MisPedidosOperario />
+                </ProtectedRoute>
+              }
+            />
 
             {/* CADETE */}
             <Route

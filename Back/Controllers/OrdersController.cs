@@ -7,6 +7,7 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Back.Controllers
 {
@@ -17,67 +18,44 @@ namespace Back.Controllers
         private readonly IOrderStatusService _statusService;
         private readonly ITrackingService _trackingService;
         private readonly IPedidoRepository _pedidoRepository;
-        private readonly IOrderService _orderService;
         private readonly ICancellationService _cancellationService;
+        private readonly IOrderService _orderService;
 
         public OrdersController(
             IOrderStatusService statusService,
             ITrackingService trackingService,
             IPedidoRepository pedidoRepository,
-            IOrderService orderService,
-            ICancellationService cancellationService)
+            ICancellationService cancellationService,
+            IOrderService orderService)
         {
             _statusService = statusService;
             _trackingService = trackingService;
             _pedidoRepository = pedidoRepository;
-            _orderService = orderService;
             _cancellationService = cancellationService;
+            _orderService = orderService;
         }
 
         // ==========================================
-        // SECCIÓN DE CREACIÓN DE PEDIDOS (NUEVA)
+        // CREACIÓN DE PEDIDOS
         // ==========================================
 
         /// <summary>
-        /// Crea un nuevo pedido con sus detalles (productos).
-        /// Endpoint: POST /api/orders
-        /// Requiere: Cliente, Sucursal, Usuario, Forma de Pago, y lista de productos
+        /// Crea un nuevo pedido con sus detalles
         /// </summary>
-        [Authorize]
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDTO createOrderDto)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDTO orderDto)
         {
-            // Validación básica del DTO
-            if (!ModelState.IsValid)
-                return BadRequest(new { message = "Datos inválidos", errors = ModelState.Values.SelectMany(v => v.Errors) });
-
-            // Validación: Si no hay IDCliente, debe haber datos del cliente nuevo
-            if (!createOrderDto.IDCliente.HasValue || createOrderDto.IDCliente <= 0)
-            {
-                if (string.IsNullOrEmpty(createOrderDto.NombreCliente) || 
-                    string.IsNullOrEmpty(createOrderDto.Telefono) ||
-                    string.IsNullOrEmpty(createOrderDto.Email))
-                {
-                    return BadRequest(new { message = "Si es cliente nuevo, proporciona Nombre, Teléfono y Email" });
-                }
-            }
-
-            // Validación de detalles
-            if (createOrderDto.Detalles == null || !createOrderDto.Detalles.Any())
-                return BadRequest(new { message = "Debes agregar al menos un producto al pedido" });
-
             try
             {
-                // Llamar al servicio para crear el pedido
-                int pedidoId = await _orderService.CreateOrderAsync(createOrderDto);
+                if (orderDto == null)
+                    return BadRequest(new { message = "El cuerpo de la solicitud no puede estar vacío." });
 
-                // Retornar respuesta exitosa con el ID del pedido creado
-                return CreatedAtAction(nameof(GetSeguimiento), new { id = pedidoId }, 
-                    new { 
-                        message = "Pedido creado exitosamente",
-                        pedidoId = pedidoId,
-                        fechaCreacion = DateTime.Now
-                    });
+                if (orderDto.Detalles == null || !orderDto.Detalles.Any())
+                    return BadRequest(new { message = "El pedido debe incluir al menos un producto." });
+
+                var pedidoId = await _orderService.CreateOrderAsync(orderDto);
+                return Ok(new { pedidoId = pedidoId, message = "Pedido creado exitosamente." });
             }
             catch (ArgumentException ex)
             {
@@ -85,11 +63,7 @@ namespace Back.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new 
-                { 
-                    message = "Error al crear el pedido",
-                    detail = ex.Message 
-                });
+                return StatusCode(500, new { message = $"Error al crear el pedido: {ex.Message}" });
             }
         }
 
@@ -98,11 +72,21 @@ namespace Back.Controllers
         // ==========================================
 
         // Reporte 1: Rendimiento de Operarios (Tiempos de Armado RF6.4)
+        // Ahora acepta parámetros opcionales por QueryString
         [HttpGet("reporte-tiempos-operarios")]
         public async Task<IActionResult> GetReporteTiempos([FromQuery] int dias = 7, [FromQuery] int? idSucursal = null)
         {
-            // Tu implementación actual...
-            return Ok(new List<ReporteOperarioDTO>());
+            Console.WriteLine($"[CONTROLLER] GetReporteTiempos - Dias: {dias}, IdSucursal: {idSucursal}");
+            
+            // Pasamos los filtros al repositorio
+            var resultado = await _pedidoRepository.GetTiempoPromedioArmadoAsync(dias, idSucursal);
+            
+            Console.WriteLine($"[CONTROLLER] Resultado: {resultado?.Count ?? 0} operarios");
+            
+            if (resultado == null)
+                return Ok(new List<ReporteOperarioDTO>());
+
+            return Ok(resultado);
         }
 
         // Reporte 2: Consulta General de Pedidos Filtrados
@@ -194,13 +178,53 @@ namespace Back.Controllers
         [HttpPost("cancelar")]
         public async Task<IActionResult> CancelarPedido([FromBody] CancelarPedidoDTO dto)
         {
-            if (dto == null || dto.PedidoId <= 0 || dto.MotivoCancelacionId <= 0)
-                return BadRequest(new { message = "Datos de cancelación inválidos." });
+            try
+            {
+                if (dto == null)
+                    return BadRequest(new { message = "El cuerpo de la solicitud no puede estar vacío." });
 
-            var resultado = await _statusService.CancelarPedidoAsync(dto);
-            if (!resultado) return BadRequest(new { message = "No se pudo cancelar el pedido. Verifique el estado actual." });
-            
-            return Ok(new { message = "El pedido ha sido cancelado exitosamente." });
+                if (dto.PedidoId <= 0)
+                    return BadRequest(new { message = "Pedido ID inválido." });
+
+                if (dto.MotivoCancelacionId <= 0)
+                    return BadRequest(new { message = "Debe seleccionar un motivo de cancelación." });
+
+                if (string.IsNullOrEmpty(dto.UsuarioId))
+                    return BadRequest(new { message = "Usuario ID no identificado." });
+
+                var (success, message) = await _cancellationService.CancelarPedidoAsync(dto, dto.UsuarioId);
+
+                if (!success)
+                    return BadRequest(new { message = message });
+
+                return Ok(new { message = message, success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error en CancelarPedido: {ex}");
+                return BadRequest(new { message = $"Error al procesar la cancelación: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene todos los motivos de cancelación disponibles
+        /// </summary>
+        [HttpGet("motivos-cancelacion")]
+        public async Task<IActionResult> GetMotivosCancelacion()
+        {
+            var motivos = await _cancellationService.ObtenerMotivosCancelacionAsync();
+            return Ok(motivos);
+        }
+
+        /// <summary>
+        /// Valida si un pedido puede ser cancelado
+        /// </summary>
+        [Authorize]
+        [HttpGet("{id}/puede-cancelarse")]
+        public async Task<IActionResult> ValidarCancelacion(int id)
+        {
+            var (canCancel, reason) = await _cancellationService.ValidarCancelacionAsync(id);
+            return Ok(new { canCancel = canCancel, reason = reason });
         }
 
         // ==========================================
