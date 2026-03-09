@@ -7,6 +7,7 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Back.Controllers
 {
@@ -17,15 +18,18 @@ namespace Back.Controllers
         private readonly IOrderStatusService _statusService;
         private readonly ITrackingService _trackingService;
         private readonly IPedidoRepository _pedidoRepository;
+        private readonly ICancellationService _cancellationService;
 
         public OrdersController(
             IOrderStatusService statusService,
             ITrackingService trackingService,
-            IPedidoRepository pedidoRepository)
+            IPedidoRepository pedidoRepository,
+            ICancellationService cancellationService)
         {
             _statusService = statusService;
             _trackingService = trackingService;
             _pedidoRepository = pedidoRepository;
+            _cancellationService = cancellationService;
         }
 
         // ==========================================
@@ -139,13 +143,53 @@ namespace Back.Controllers
         [HttpPost("cancelar")]
         public async Task<IActionResult> CancelarPedido([FromBody] CancelarPedidoDTO dto)
         {
-            if (dto == null || dto.PedidoId <= 0 || dto.MotivoCancelacionId <= 0)
-                return BadRequest(new { message = "Datos de cancelación inválidos." });
+            try
+            {
+                if (dto == null)
+                    return BadRequest(new { message = "El cuerpo de la solicitud no puede estar vacío." });
 
-            var resultado = await _statusService.CancelarPedidoAsync(dto);
-            if (!resultado) return BadRequest(new { message = "No se pudo cancelar el pedido. Verifique el estado actual." });
-            
-            return Ok(new { message = "El pedido ha sido cancelado exitosamente." });
+                if (dto.PedidoId <= 0)
+                    return BadRequest(new { message = "Pedido ID inválido." });
+
+                if (dto.MotivoCancelacionId <= 0)
+                    return BadRequest(new { message = "Debe seleccionar un motivo de cancelación." });
+
+                if (string.IsNullOrEmpty(dto.UsuarioId))
+                    return BadRequest(new { message = "Usuario ID no identificado." });
+
+                var (success, message) = await _cancellationService.CancelarPedidoAsync(dto, dto.UsuarioId);
+
+                if (!success)
+                    return BadRequest(new { message = message });
+
+                return Ok(new { message = message, success = true });
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Error en CancelarPedido: {ex}");
+                return BadRequest(new { message = $"Error al procesar la cancelación: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene todos los motivos de cancelación disponibles
+        /// </summary>
+        [HttpGet("motivos-cancelacion")]
+        public async Task<IActionResult> GetMotivosCancelacion()
+        {
+            var motivos = await _cancellationService.ObtenerMotivosCancelacionAsync();
+            return Ok(motivos);
+        }
+
+        /// <summary>
+        /// Valida si un pedido puede ser cancelado
+        /// </summary>
+        [Authorize]
+        [HttpGet("{id}/puede-cancelarse")]
+        public async Task<IActionResult> ValidarCancelacion(int id)
+        {
+            var (canCancel, reason) = await _cancellationService.ValidarCancelacionAsync(id);
+            return Ok(new { canCancel = canCancel, reason = reason });
         }
 
         // ==========================================
