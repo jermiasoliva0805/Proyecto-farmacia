@@ -21,5 +21,9 @@ namespace Back.DTOs
 
         // Campo adicional que ya tenías para marcar demora
         public bool EstaDemorado { get; set; }
+
+        // ✅ CU25: Fechas de armado para detectar si ya inició
+        public string? FechaInicioArmado { get; set; }
+        public string? FechaFinArmado { get; set; }
     }
 }

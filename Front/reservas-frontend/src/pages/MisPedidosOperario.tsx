@@ -5,7 +5,7 @@ import { useAuth } from '@context/AuthContext';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { DetallePedidoModal } from '../components/pedidos/DetallePedidoModal';
-import { Eye, LayoutGrid, List } from 'lucide-react';
+import { Eye, LayoutGrid, List, PlayCircle } from 'lucide-react';
 
 const MisPedidosOperario = () => {
     const { user } = useAuth();
@@ -49,13 +49,35 @@ const MisPedidosOperario = () => {
         try {
             setLoading(true);
             const data = await pedidosService.getPedidosByRol('Operario', user!.id);
-            // Filtramos para que solo vea lo que tiene que preparar (excluimos listos)
-            const pendientes = data.filter(p => p.estadoNombre !== 'Listo para despachar');
+            // ✅ Mostrar solo Estado 2 (Preparar pedido) 
+            // - Con FechaInicioArmado null: Muestra botón "Iniciar Armado"
+            // - Con FechaInicioArmado lleno: Solo visualización (está en Kanban)
+            const pendientes = data.filter(p => p.idEstadoDePedido === 2);
             setPedidos(pendientes);
         } catch (error) {
             console.error('Error al cargar pedidos del operario:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // --- FUNCIÓN PARA CU25: Iniciar Armado (Estado 1→2) ---
+    // En este momento comienza a contar el tiempo para los reportes RF6.4
+    const handleCambiarEstado = async (idPedido: number, nuevoEstadoId: number) => {
+        try {
+            await pedidosService.cambiarEstado({
+                idPedido: idPedido,
+                idNuevoEstado: nuevoEstadoId,
+                idUsuario: user!.id,
+                observaciones: "Iniciando armado de pedido - Cronómetro activado ⏱"
+            });
+            
+            window.alert("✅ Armado iniciado. El pedido ha pasado al Kanban para gestionarlo.");
+            console.log(`[CU25] Pedido ${idPedido} - Tiempo de armado: INICIADO`);
+            loadPedidos(); 
+        } catch (error) {
+            console.error("Error al cambiar estado:", error);
+            window.alert("❌ No se pudo iniciar el armado.");
         }
     };
 
@@ -71,7 +93,10 @@ const MisPedidosOperario = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
-                        <h1 className="text-2xl font-bold text-gray-900">Mis Pedidos Asignados</h1>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Pedidos Pendientes de Armado</h1>
+                            <p className="text-xs text-gray-500 mt-1">CU25 - Haz clic en "Iniciar Armado" para comenzar. El tiempo se registrará automáticamente.</p>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
@@ -128,12 +153,25 @@ const MisPedidosOperario = () => {
                                         </td>
                                         <td className="p-4 text-gray-600 font-mono">${pedido.total?.toFixed(2)}</td>
                                         <td className="p-4 text-right">
-                                            <button 
-                                                onClick={() => { setSelectedPedido(pedido); setModalDetalleOpen(true); }}
-                                                className="text-blue-600 hover:text-blue-800 font-bold flex items-center justify-end gap-1 ml-auto"
-                                            >
-                                                <Eye className="w-4 h-4" /> Ver detalle
-                                            </button>
+                                            <div className="flex items-center justify-end gap-3">
+                                                {/* Botón para CU25: Iniciar Armado (Estado 1 → 2) */}
+                                                {/* Solo mostrar si: Estado=2 Y aún no ha iniciado (FechaInicioArmado = null) */}
+                                                {pedido.idEstadoDePedido === 2 && !pedido.fechaInicioArmado && (
+                                                    <button 
+                                                        onClick={() => handleCambiarEstado(pedido.idPedido, 2)}
+                                                        className="flex items-center gap-1 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                                                    >
+                                                        <PlayCircle className="w-4 h-4" /> Iniciar Armado
+                                                    </button>
+                                                )}
+
+                                                <button 
+                                                    onClick={() => { setSelectedPedido(pedido); setModalDetalleOpen(true); }}
+                                                    className="text-blue-600 hover:text-blue-800 font-bold flex items-center justify-end gap-1"
+                                                >
+                                                    <Eye className="w-4 h-4" /> Ver detalle
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

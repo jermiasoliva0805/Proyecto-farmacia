@@ -75,11 +75,12 @@ namespace Back.Repositories
                     EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
                     ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
-                    // --- para que cadete en dashboard sume pedidos entregados por dia. ---
                     FechaEntregaReal = p.FechaEntregaReal, 
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
-                    FechaEntregaEstimada = p.FechaEntregaEstimada
-                    // ---------------------------
+                    FechaEntregaEstimada = p.FechaEntregaEstimada,
+                    // ✅ CU25: Incluir fechas de armado para detectar si ya inició
+                    FechaInicioArmado = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
+                    FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
                 })
                 .ToListAsync();
         }
