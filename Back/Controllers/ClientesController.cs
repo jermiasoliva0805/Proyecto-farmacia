@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Back.Services.Interfaces;
+using Back.DTOs;
+using AutoMapper;
 
 namespace Back.Controllers
 {
@@ -8,10 +10,12 @@ namespace Back.Controllers
     public class ClientesController : ControllerBase
     {
         private readonly IClientService _clientService;
+        private readonly IMapper _mapper;
 
-        public ClientesController(IClientService clientService)
+        public ClientesController(IClientService clientService, IMapper mapper)
         {
             _clientService = clientService;
+            _mapper = mapper;
         }
 
         // GET: api/clientes
@@ -21,7 +25,8 @@ namespace Back.Controllers
         {
             // Usamos el nombre exacto de tu Service: GetAllClientsAsync
             var clientes = await _clientService.GetAllClientsAsync();
-            return Ok(clientes);
+            var clientesDto = _mapper.Map<IEnumerable<ClientDTO>>(clientes);
+            return Ok(clientesDto);
         }
     }
 }

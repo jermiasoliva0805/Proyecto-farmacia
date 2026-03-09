@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             { path: '/asignar-operario', icon: Users, label: 'Asignar Operarios' },
             { path: '/asignar-cadete', icon: MapPin, label: 'Asignar Cadetes' },
             { path: '/seguimiento', icon: ClipboardList, label: 'Seguimiento' },
-            { path: '/reportes', icon: BarChart3, label: 'Reportes' }, // Único acceso a reportes
+            { path: '/reportes', icon: BarChart3, label: 'Reportes' },
             { path: '/usuarios', icon: Users, label: 'Usuarios' },
         ],
         Operario: [
@@ -48,7 +48,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         ],
     };
 
-    // Obtenemos el rol del usuario, por defecto Administrador para evitar errores
     const userRole = (user?.rol as UserRole) || 'Administrador';
     const currentMenu = menuItems[userRole] || [];
 

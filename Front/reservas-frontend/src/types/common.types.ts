@@ -1,29 +1,27 @@
 export interface ClientDTO {
-    id: number;
+    id: number;                // IDCliente
     nombre: string;
     apellido: string;
-    dni: string;
-    email: string;
-    telefono: string;
-    idLocalidad: number;
-    nombreLocalidad: string;
+    dni?: string;
+    email?: string;
+    telefono?: string;
+    idLocalidad?: number;
 }
 
 export interface ProductDTO {
-    id: number;
-    nombre: string;
-    descripcion: string;
-    precio: number;
-    stock: number;
-    categoria: string;
+    id: number;                // IDProducto del backend
+    nombre: string;            // NombreProducto
+    descripcion: string;       // Descripcion
+    precio: number;            // PrecioProducto (decimal en backend)
+    stock: number;             // CantidadProducto
+    categoria: string;         // Categoria
 }
-
 export interface LocalidadDTO {
     id: number;
     nombre: string;
+    provincia: string;
     codigoPostal: string;
 }
-
 export interface EstadoPedido {
     id: number;
     nombre: string;

@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-
-
 namespace Back.DTOs
 {
     public class CreateOrderDTO
     {
-        [Required]
-        public int IDCliente { get; set; }
+        // IDCliente es opcional porque el cliente puede ser nuevo
+        public int? IDCliente { get; set; }
 
         [Required]
         public int IDSucursal { get; set; }
@@ -17,6 +15,17 @@ namespace Back.DTOs
 
         [Required]
         public string FormaDePago { get; set; }
+
+        // Nuevos campos para datos de envío
+        public string? NombreCliente { get; set; }
+        
+        public string? Direccion { get; set; }
+        
+        public string? Telefono { get; set; }
+        
+        public string? Email { get; set; }
+        
+        public string? PuntoRetiro { get; set; }
 
         // Aquí van los detalles del pedido (RF17)
         public List<OrderDetailDTO> Detalles { get; set; } = new List<OrderDetailDTO>();

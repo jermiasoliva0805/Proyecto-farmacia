@@ -14,7 +14,7 @@ import { SeguimientoPedidos } from './pages/SeguimientoPedidos';
 import { AsignarOperarioPage } from './pages/AsignarOperario';
 import { AsignarCadetePage } from './pages/AsignarCadete';
 import OrderFormPage from './pages/orders/OrderFormPage';
-import { PanelReportes } from './pages/Reportes/PanelReportes'; // Importamos el Panel único
+import { PanelReportes } from './pages/Reportes/PanelReportes';
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
@@ -58,7 +58,27 @@ function App() {
               }
             />
             
-            {/* RUTA ÚNICA DE REPORTES (Aquí dentro están tus pestañas) */}
+            {/* CREAR NUEVO PEDIDO */}
+            <Route
+              path="/pedidos/nuevo"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <OrderFormPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GESTIÓN DE PEDIDOS */}
+            <Route
+              path="/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Administrador']}>
+                  <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* RUTA ÚNICA DE REPORTES */}
             <Route
               path="/reportes"
               element={
@@ -114,15 +134,19 @@ function App() {
               }
             />
 
-            {/* Mis Pedidos Operario - RUTA SEPARADA */}
+            {/* OPERARIO */}
             <Route
-              path="/mis-pedidos"
+              path="/dashboard/operario"
               element={
                 <ProtectedRoute allowedRoles={['Operario']}>
-                  <MisPedidosOperario />
+                  <DashboardOperario />
                 </ProtectedRoute>
               }
             />
+
+
+            {/* Mis Pedidos Operario - RUTA SEPARADA */}
+
 
             {/* CADETE */}
             <Route
