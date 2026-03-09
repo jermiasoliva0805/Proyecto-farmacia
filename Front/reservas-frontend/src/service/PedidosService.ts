@@ -112,11 +112,22 @@ export const pedidosService = {
         const payload = {
             IDPedido: data.idPedido,
             IDNuevoEstado: data.idNuevoEstado,
-            IDUsuario: data.idUsuario
+            IDUsuario: data.idUsuario,
+            Observaciones: data.observaciones // ✅ Incluida para auditoría
         };
         await api.put(`/Orders/${data.idPedido}/estado`, payload);
+        
     },
-
+    // Agregamos una función específica para el CU25 (Proceso de Armado)
+    async iniciarPreparacion(idPedido: number, idUsuario: number): Promise<void> {
+    return this.cambiarEstado({
+        idPedido: idPedido,
+        idNuevoEstado: 2, // Según tu estadoMap: 'Preparar pedido'
+        idUsuario: idUsuario,
+        observaciones: "El operario ha comenzado a armar el paquete."
+    });
+    },
+    
     async createOrder(orderData: any): Promise<any> {
         try {
             const response = await api.post('/Orders', orderData);

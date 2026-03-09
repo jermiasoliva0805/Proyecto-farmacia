@@ -146,15 +146,44 @@ namespace Back.Services
             var pedido = await _orderRepository.GetByIdWithClienteAsync(changeStatusDto.IDPedido);
             if (pedido == null) return false;
 
-            // REGLA: Permite cambios si está "En camino" (6) o si está fallida (8) intentando nuevamente
-            // Estado 6: Primer intento
-            // Estado 8: Reintentos después de falla
-            if (pedido.IDEstadoDePedido != 6 && pedido.IDEstadoDePedido != 8) return false;
+            // === VALIDACIÓN DE TRANSICIONES DE ESTADO ===
+            // CU25: Operario: 1 (Sin preparar) -> 2 (Preparando)
+            // CU25: Operario: 2 (Preparando) -> 4 (Listo para despachar)
+            // CU25: Operario: 2 -> 2 (Solo registrar inicio de armado)
+            // Cadete: 6 (En camino) -> 7 (Entregado) o 8 (Entrega fallida)
+            
+            bool transicionValida = false;
+            
+            // Operario asignado pasando de Sin preparar a Preparar
+            if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
+                transicionValida = true;
+            // ✅ CU25: Operario registrando que inicia armado (2→2, solo actualiza FechaInicioArmado)
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2)
+                transicionValida = true;
+            // Operario finalizando preparación
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
+                transicionValida = true;
+            // Cadete entregando o fallando entrega
+            else if ((pedido.IDEstadoDePedido == 6 || pedido.IDEstadoDePedido == 8) && 
+                     (changeStatusDto.IDNuevoEstado == 7 || changeStatusDto.IDNuevoEstado == 8))
+                transicionValida = true;
+
+            if (!transicionValida) return false;
 
             int estadoFinal = changeStatusDto.IDNuevoEstado;
             int? intentoEntrega = null;
 
-            if (changeStatusDto.IDNuevoEstado == 7)
+            // ✅ CU25: Cuando operario inicia armado (1→2), guardar FechaInicioArmado
+            if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
+            {
+                pedido.FechaInicioArmado = DateTime.Now;
+            }
+            // ✅ CU25: Cuando operario finaliza armado (2→4), guardar FechaFinArmado
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
+            {
+                pedido.FechaFinArmado = DateTime.Now;
+            }
+            else if (changeStatusDto.IDNuevoEstado == 7)
             {
                 pedido.FechaEntregaReal = DateTime.Now;
                 pedido.HoraEntregaReal = DateTime.Now.TimeOfDay;
@@ -171,7 +200,7 @@ namespace Back.Services
                 {
                     estadoFinal = 9;
                     pedido.IDEstadoDePedido = 9;
-                    pedido.EstadoActual = "Cancelado";
+                    pedido.EstadoActual = "Cancelado automáticamente";
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
                 }
                 else
@@ -182,7 +211,9 @@ namespace Back.Services
             }
             else
             {
+                // ✅ NUEVA: Actualizar ambos IDEstadoDePedido y EstadoActual consistentemente
                 pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
+                pedido.EstadoActual = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
             }
 
             var nuevoHistorial = new HistorialDeEstados

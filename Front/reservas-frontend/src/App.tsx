@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar'; 
-import { Navbar } from './components/layout/Navbar'; 
+import { Navbar } from './components/layout/Navbar';
 
 // Importación de Páginas
 import { Login } from './pages/Login';
@@ -99,30 +99,30 @@ function App() {
               path="/usuarios"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <UsuariosPage /> {/* <--- Aquí reemplazamos el div por tu nueva página */}
+                  <UsuariosPage />
                 </ProtectedRoute>
               }
             />
+            
             {/* OPERARIO */}
-           {/* Dashboard Operario */}
-<Route
-  path="/dashboard/operario"
-  element={
-    <ProtectedRoute allowedRoles={['Operario']}>
-      <DashboardOperario />
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="/dashboard/operario"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <DashboardOperario />
+                </ProtectedRoute>
+              }
+            />
 
-{/* Mis Pedidos Operario - RUTA SEPARADA */}
-<Route
-  path="/mis-pedidos"
-  element={
-    <ProtectedRoute allowedRoles={['Operario']}>
-      <MisPedidosOperario />
-    </ProtectedRoute>
-  }
-/>
+            {/* Mis Pedidos Operario - RUTA SEPARADA */}
+            <Route
+              path="/mis-pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <MisPedidosOperario />
+                </ProtectedRoute>
+              }
+            />
 
             {/* CADETE */}
             <Route
@@ -134,7 +134,6 @@ function App() {
               }
             />
 
-            {/* RUTAS DE CADETE MOVIDAS AQUÍ ADENTRO PARA QUE MUESTREN EL SIDEBAR */}
             <Route
               path="/entregas"
               element={
@@ -152,9 +151,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* ----------------------------------------------------------- */}
 
-          </Route> {/* <--- ESTE ES EL CIERRE DEL LAYOUT QUE AHORA ENVUELVE TODO */}
+          </Route>
 
           {/* --- ERRORES Y REDIRECCIONES --- */}
           <Route path="/unauthorized" element={<div>No autorizado</div>} />
