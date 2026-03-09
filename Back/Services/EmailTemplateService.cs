@@ -116,6 +116,7 @@ namespace Back.Services
                       (intentoEntrega.HasValue ? $" Este es el intento {intentoEntrega.Value} de {intentosMax}." : ""),
                       "Intento de Entrega Fallido",
                       red),
+                9 => ("Pedido Cancelado - Entregas Fallidas", $"Tu pedido {pedidoCodigo} ha sido cancelado debido a múltiples intentos fallidos de entrega.", "Cancelado Automáticamente", darkRed),
                 10 => ("Pedido Cancelado", $"Tu pedido {pedidoCodigo} ha sido cancelado.", "Pedido Cancelado", darkRed),
                 _ => ("Pedido Recibido", $"Hemos recibido tu pedido {pedidoCodigo} correctamente.", "Pedido Recibido", gray)
             };
@@ -135,6 +136,7 @@ namespace Back.Services
                      (intentoEntrega.HasValue
                         ? $"Este es el intento {intentoEntrega.Value} de {intentosMax}. Intentaremos nuevamente en las próximas horas."
                         : "Intentaremos nuevamente en las próximas horas."),
+                9 => $"Lamentamos informarte que tu pedido {pedidoCodigo} ha sido cancelado automáticamente debido a que no fue posible completar la entrega después de 3 intentos.",
                 10 => $"Tu pedido {pedidoCodigo} ha sido cancelado.",
                 _ => $"Tu pedido está en cola y pronto comenzaremos a prepararlo. Te mantendremos informado sobre su progreso."
             };
@@ -151,6 +153,7 @@ namespace Back.Services
                 6 => "Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.",
                 7 => "Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.",
                 8 => "Por favor, asegúrate de estar disponible o contáctanos para coordinar una nueva entrega.",
+                9 => "Si deseas reintentar la entrega o tienes alguna pregunta, por favor contáctanos de inmediato.",
                 10 => "Si no solicitaste esta cancelación, por favor contáctanos para revisar tu caso.",
                 _ => "Te mantendremos informado sobre el progreso de tu pedido."
             };

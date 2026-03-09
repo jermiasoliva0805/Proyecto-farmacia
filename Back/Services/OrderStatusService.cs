@@ -46,7 +46,7 @@ namespace Back.Services
                 Observaciones = "Admin asignó operario para la preparación del pedido."
             };
 
-            var resultado = await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
 
             // Notificación por email
             if (resultado)
@@ -103,7 +103,7 @@ namespace Back.Services
                 Observaciones = "Admin asignó cadete. Pedido en camino al domicilio."
             };
 
-            var resultado = await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
 
             // Notificación por email
             if (resultado)
@@ -146,21 +146,80 @@ namespace Back.Services
             var pedido = await _orderRepository.GetByIdWithClienteAsync(changeStatusDto.IDPedido);
             if (pedido == null) return false;
 
-            // REGLA: Finaliza solo si está "En camino" (6)
-            if (pedido.IDEstadoDePedido != 6) return false;
+            // === VALIDACIÓN DE TRANSICIONES DE ESTADO ===
+            // CU25: Operario: 1 (Sin preparar) -> 2 (Preparando)
+            // CU25: Operario: 2 (Preparando) -> 4 (Listo para despachar)
+            // CU25: Operario: 2 -> 2 (Solo registrar inicio de armado)
+            // Cadete: 6 (En camino) -> 7 (Entregado) o 8 (Entrega fallida)
+            
+            bool transicionValida = false;
+            
+            // Operario asignado pasando de Sin preparar a Preparar
+            if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
+                transicionValida = true;
+            // ✅ CU25: Operario registrando que inicia armado (2→2, solo actualiza FechaInicioArmado)
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2)
+                transicionValida = true;
+            // Operario finalizando preparación
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
+                transicionValida = true;
+            // Cadete entregando o fallando entrega
+            else if ((pedido.IDEstadoDePedido == 6 || pedido.IDEstadoDePedido == 8) && 
+                     (changeStatusDto.IDNuevoEstado == 7 || changeStatusDto.IDNuevoEstado == 8))
+                transicionValida = true;
 
-            if (changeStatusDto.IDNuevoEstado == 7)
+            if (!transicionValida) return false;
+
+            int estadoFinal = changeStatusDto.IDNuevoEstado;
+            int? intentoEntrega = null;
+
+            // ✅ CU25: Cuando operario inicia armado (1→2), guardar FechaInicioArmado
+            if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
+            {
+                pedido.FechaInicioArmado = DateTime.Now;
+            }
+            // ✅ CU25: Cuando operario finaliza armado (2→4), guardar FechaFinArmado
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
+            {
+                pedido.FechaFinArmado = DateTime.Now;
+            }
+            else if (changeStatusDto.IDNuevoEstado == 7)
             {
                 pedido.FechaEntregaReal = DateTime.Now;
                 pedido.HoraEntregaReal = DateTime.Now.TimeOfDay;
+                pedido.IntentosEntregaFallida = 0; // Resetear intentos si se entrega exitosamente
             }
+            else if (changeStatusDto.IDNuevoEstado == 8)
+            {
+                // Manejar lógica de intentos fallidos
+                pedido.IntentosEntregaFallida++;
+                intentoEntrega = pedido.IntentosEntregaFallida;
 
-            pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
+                // Si supera 3 intentos, cambiar a estado 9 (Cancelado automáticamente)
+                if (pedido.IntentosEntregaFallida >= 3)
+                {
+                    estadoFinal = 9;
+                    pedido.IDEstadoDePedido = 9;
+                    pedido.EstadoActual = "Cancelado automáticamente";
+                    pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
+                }
+                else
+                {
+                    pedido.IDEstadoDePedido = 8;
+                    pedido.EstadoActual = "Entrega fallida";
+                }
+            }
+            else
+            {
+                // ✅ NUEVA: Actualizar ambos IDEstadoDePedido y EstadoActual consistentemente
+                pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
+                pedido.EstadoActual = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
+            }
 
             var nuevoHistorial = new HistorialDeEstados
             {
                 IDPedido = pedido.IDPedido,
-                IDEstadoDePedido = changeStatusDto.IDNuevoEstado,
+                IDEstadoDePedido = estadoFinal,
                 IDUsuario = changeStatusDto.IDUsuario,
                 fecha_hora_inicio = DateTime.Now,
                 Observaciones = changeStatusDto.IDNuevoEstado == 8
@@ -168,7 +227,8 @@ namespace Back.Services
                                 : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete.")
             };
 
-            var resultado = await _repository.ActualizarEstadoAsync(nuevoHistorial);
+            // Pasar el pedido actualizado al repositorio para que guarde todos los cambios
+            var resultado = await _repository.ActualizarEstadoAsync(nuevoHistorial, pedido);
 
             // Envío automático de mail al cliente si el cambio de estado fue exitoso
             if (resultado)
@@ -177,35 +237,37 @@ namespace Back.Services
                 var nombreCliente = pedido.Cliente != null
                     ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
                     : "Cliente";
-                var estadoDescripcion = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
+                
+                // Usar el estado final para la descripción (puede ser 9 si fueron 3 intentos fallidos)
+                var estadoDescripcion = ObtenerDescripcionEstado(estadoFinal);
 
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
                     {
-                        // Para Entrega Fallida (8) puedes pasar intentoEntrega si lo manejas; aquí va null por defecto
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
                             estadoDescripcion,
                             pedido.IDPedido,
-                            changeStatusDto.IDNuevoEstado,
+                            estadoFinal,
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
-                            intentoEntrega: null, // coloca el intento real si tienes esa lógica
+                            intentoEntrega: intentoEntrega, // Pasar el número de intento si es entrega fallida
                             intentosMax: 3
                         );
+                        Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
                     catch (Exception ex)
                     {
                         // Log y no romper la petición
-                        Console.WriteLine($"Error enviando mail: {ex.Message}");
+                        Console.WriteLine($"[ERROR] Error enviando mail: {ex.Message}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Aviso: El pedido no tiene email de cliente cargado, no se envió notificación.");
+                    Console.WriteLine($"[ADVERTENCIA] El pedido {pedido.IDPedido} no tiene email de cliente cargado, no se envió notificación.");
                 }
             }
 
@@ -222,6 +284,8 @@ namespace Back.Services
                 return false;
 
             pedido.IDEstadoDePedido = 10; // Estado Cancelado
+            pedido.MotivoCancelacionId = dto.MotivoCancelacionId;
+            pedido.JustificacionCancelacion = dto.Justificacion;
 
             var historial = new HistorialDeEstados
             {
@@ -233,7 +297,7 @@ namespace Back.Services
                 Observaciones = $"Cancelación (Motivo ID: {dto.MotivoCancelacionId}). Justificación: {dto.Justificacion ?? "Sin justificación adicional."}"
             };
 
-            var resultado = await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
 
             // Notificación por email
             if (resultado)
@@ -289,7 +353,7 @@ namespace Back.Services
                 Observaciones = $"Cancelación. Motivo ID: {dto.MotivoCancelacionId}. Justificación: {dto.Justificacion ?? "Sin detalle."}"
             };
 
-            var resultado = await _repository.ActualizarEstadoAsync(historial);
+            var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
 
             // Notificación por email
             if (resultado)
@@ -338,6 +402,7 @@ namespace Back.Services
                 6 => "En camino",
                 7 => "Entregado",
                 8 => "Entrega fallida",
+                9 => "Cancelado automáticamente",
                 10 => "Cancelado",
                 _ => "Desconocido"
             };

@@ -30,6 +30,10 @@ namespace Back.Models
         // Nuevo: contador de intentos de entrega fallida
         public int IntentosEntregaFallida { get; set; } = 0;
 
+        // ✅ CU25: Registro de tiempo de armado (Opción 1)
+        public DateTime? FechaInicioArmado { get; set; } // Cuándo el operario clickea "Iniciar Armado"
+        public DateTime? FechaFinArmado { get; set; }   // Cuándo finaliza en Estado 4
+
         // Propiedades de Navegación (Relaciones)
         public Cliente Cliente { get; set; } = null!;
         public EstadoDePedido EstadoDePedido { get; set; } = null!;

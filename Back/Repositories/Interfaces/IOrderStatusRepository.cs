@@ -4,6 +4,6 @@ namespace Back.Repositories.Interfaces
 {
     public interface IOrderStatusRepository
     {
-        Task<bool> ActualizarEstadoAsync(HistorialDeEstados nuevoHistorial);
+        Task<bool> ActualizarEstadoAsync(HistorialDeEstados nuevoHistorial, Pedido pedidoActualizado = null);
     }
 }

@@ -11,6 +11,10 @@ namespace Back.Validators
                 .NotEmpty().WithMessage("El nombre es obligatorio.")
                 .MaximumLength(100).WithMessage("El nombre no puede exceder los 100 caracteres.");
 
+            RuleFor(x => x.Apellido)
+                .NotEmpty().WithMessage("El apellido es obligatorio.")
+                .MaximumLength(100).WithMessage("El apellido no puede exceder los 100 caracteres.");
+
             RuleFor(x => x.UsuarioNombre)
                 .NotEmpty().WithMessage("El nombre de usuario es obligatorio.")
                 .Length(3, 50).WithMessage("El usuario debe tener entre 3 y 50 caracteres.");

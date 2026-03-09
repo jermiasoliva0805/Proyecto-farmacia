@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar'; 
-import { Navbar } from './components/layout/Navbar'; 
+import { Navbar } from './components/layout/Navbar';
 
 // Importación de Páginas
 import { Login } from './pages/Login';
@@ -18,6 +18,7 @@ import { PanelReportes } from './pages/Reportes/PanelReportes';
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
+import UsuariosPage from './pages/UsuariosPage'; 
 
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
@@ -118,7 +119,17 @@ function App() {
               path="/usuarios"
               element={
                 <ProtectedRoute allowedRoles={['Administrador']}>
-                  <div>Página de Usuarios</div> 
+                  <UsuariosPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* OPERARIO */}
+            <Route
+              path="/dashboard/operario"
+              element={
+                <ProtectedRoute allowedRoles={['Operario']}>
+                  <DashboardOperario />
                 </ProtectedRoute>
               }
             />
@@ -133,14 +144,9 @@ function App() {
               }
             />
 
-            <Route
-              path="/mis-pedidos"
-              element={
-                <ProtectedRoute allowedRoles={['Operario']}>
-                  <MisPedidosOperario />
-                </ProtectedRoute>
-              }
-            />
+
+            {/* Mis Pedidos Operario - RUTA SEPARADA */}
+
 
             {/* CADETE */}
             <Route
