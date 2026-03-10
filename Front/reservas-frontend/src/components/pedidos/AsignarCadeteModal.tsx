@@ -3,6 +3,7 @@ import { Modal } from '@components/common/Modal';
 import { Button } from '@components/common/Button';
 import { Select } from '@components/common/Select';
 import { Alert } from '@components/common/Alert';
+import { useAuth } from '../../context/AuthContext';
 import { usuariosService } from '../../service/usuariosService';
 import { pedidosService } from '../../service/PedidosService';
 import { UserDTO } from '../../types/auth.types';
@@ -21,6 +22,7 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
     pedido,
     onSuccess,
 }) => {
+    const { user } = useAuth();
     const [cadetes, setCadetes] = useState<UserDTO[]>([]);
     const [selectedCadete, setSelectedCadete] = useState<string>('');
     const [loading, setLoading] = useState(false);
@@ -53,7 +55,8 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
         setLoading(true);
 
         try {
-            // RF19: Asignar Cadete (Preparado -> Despachado)
+            // RF19: Asignar Cadete (Preparado -> Despachando)
+            // El backend ya cambia de 4→5, no necesitamos segundo llamado
             await pedidosService.asignarCadete({
                 pedidoId: pedido.idPedido,
                 cadeteId: parseInt(selectedCadete),

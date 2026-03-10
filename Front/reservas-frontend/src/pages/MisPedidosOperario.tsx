@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@components/layout/DashboardLayout';
 import { Alert } from '@components/common/Alert';
+import { TableroKanban } from '@components/kanban/TableroKanban';
 import { useAuth } from '@context/AuthContext';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
@@ -49,11 +50,30 @@ const MisPedidosOperario = () => {
         try {
             setLoading(true);
             const data = await pedidosService.getPedidosByRol('Operario', user!.id);
-            // ✅ Mostrar solo Estado 2 (Preparar pedido) 
-            // - Con FechaInicioArmado null: Muestra botón "Iniciar Armado"
-            // - Con FechaInicioArmado lleno: Solo visualización (está en Kanban)
-            const pendientes = data.filter(p => p.idEstadoDePedido === 2);
-            setPedidos(pendientes);
+            
+            // Obtener fecha de hoy
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            
+            // Si vista es Tabla: mostrar solo Estado 2 (Preparar pedido) de HOY
+            // Si vista es Kanban: mostrar Estados 2, 3 siempre, pero 4 solo de HOY
+            if (view === 'tabla') {
+                const pendientes = data.filter(p => {
+                    const fechaPedido = new Date(p.fecha);
+                    fechaPedido.setHours(0, 0, 0, 0);
+                    return p.idEstadoDePedido === 2 && fechaPedido.getTime() === hoy.getTime();
+                });
+                setPedidos(pendientes);
+            } else {
+                const enProceso = data.filter(p => {
+                    const fechaPedido = new Date(p.fecha);
+                    fechaPedido.setHours(0, 0, 0, 0);
+                    if ([2, 3].includes(p.idEstadoDePedido)) return true;
+                    if (p.idEstadoDePedido === 4 && fechaPedido.getTime() === hoy.getTime()) return true;
+                    return false;
+                });
+                setPedidos(enProceso);
+            }
         } catch (error) {
             console.error('Error al cargar pedidos del operario:', error);
         } finally {
@@ -83,7 +103,7 @@ const MisPedidosOperario = () => {
 
     useEffect(() => {
         if (user?.id) loadPedidos();
-    }, [user?.id]);
+    }, [user?.id, view]);
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
@@ -106,7 +126,10 @@ const MisPedidosOperario = () => {
                         >
                             <List className="w-4 h-4" /> Tabla
                         </button>
-                        <button disabled className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                        <button 
+                            onClick={() => setView('kanban')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'kanban' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
                             <LayoutGrid className="w-4 h-4" /> Kanban
                         </button>
                     </div>
@@ -117,8 +140,8 @@ const MisPedidosOperario = () => {
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
                     </div>
                 ) : pedidos.length === 0 ? (
-                    <Alert type="info">No tienes pedidos pendientes de preparación.</Alert>
-                ) : (
+                    <Alert type="info">No tienes pedidos en esta vista.</Alert>
+                ) : view === 'tabla' ? (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50 text-gray-500 font-semibold uppercase text-[11px]">
@@ -154,8 +177,6 @@ const MisPedidosOperario = () => {
                                         <td className="p-4 text-gray-600 font-mono">${pedido.total?.toFixed(2)}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-3">
-                                                {/* Botón para CU25: Iniciar Armado (Estado 1 → 2) */}
-                                                {/* Solo mostrar si: Estado=2 Y aún no ha iniciado (FechaInicioArmado = null) */}
                                                 {pedido.idEstadoDePedido === 2 && !pedido.fechaInicioArmado && (
                                                     <button 
                                                         onClick={() => handleCambiarEstado(pedido.idPedido, 2)}
@@ -177,6 +198,20 @@ const MisPedidosOperario = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                            <h2 className="text-lg font-bold">Tablero Kanban - Pedidos en Progreso</h2>
+                            <p className="text-blue-100 text-sm">Estados: Preparar (2) • Demorado (3) • Listo (4)</p>
+                        </div>
+                        <div className="p-4">
+                            <TableroKanban 
+                                pedidos={pedidos}
+                                onUpdate={loadPedidos}
+                                usuarioId={user?.id}
+                            />
+                        </div>
                     </div>
                 )}
             </div>

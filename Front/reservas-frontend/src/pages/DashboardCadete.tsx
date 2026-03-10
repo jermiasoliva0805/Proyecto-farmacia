@@ -73,7 +73,7 @@ export const DashboardCadete: React.FC = () => {
         return colors[name.length % colors.length];
     };
 
-    const pedidosEnCamino = pedidos.filter(p => p.estadoNombre === 'En camino');
+    const pedidosEnCamino = pedidos.filter(p => [5, 6].includes(p.idEstadoDePedido)); // Despachando + En camino
 
     const entregadosHoyCount = pedidos.filter(p => {
         if (p.estadoNombre !== 'Entregado') return false;
@@ -93,9 +93,9 @@ export const DashboardCadete: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white border-2 border-amber-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
-                            <p className="text-amber-600 text-sm font-medium mb-1">En Camino</p>
+                            <p className="text-amber-600 text-sm font-medium mb-1">En Ruta</p>
                             <h3 className="text-4xl font-bold mb-2 text-amber-900">{pedidosEnCamino.length}</h3>
-                            <p className="text-gray-500 text-xs">Entregas pendientes ahora</p>
+                            <p className="text-gray-500 text-xs">Entregas pendientes (Despachando + En Camino)</p>
                         </div>
                         <div className="absolute right-4 top-4 bg-amber-100/50 p-3 rounded-xl backdrop-blur-sm">
                             <Truck className="w-6 h-6 text-amber-600" />
@@ -126,11 +126,11 @@ export const DashboardCadete: React.FC = () => {
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <MapPin className="w-5 h-5 text-amber-500" /> 
-                                <h2 className="text-xl font-bold text-gray-900">Pedidos en Camino</h2>
+                                <h2 className="text-xl font-bold text-gray-900">Entregas Activas</h2>
                             </div>
 
                             {pedidosEnCamino.length === 0 ? (
-                                <Alert type="info">No tienes pedidos en ruta actualmente.</Alert>
+                                <Alert type="info">No tienes entregas asignadas actualmente.</Alert>
                             ) : (
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {pedidosEnCamino.map((pedido) => (
@@ -183,7 +183,7 @@ export const DashboardCadete: React.FC = () => {
 
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8">
                             <div className="p-6 border-b border-gray-100">
-                                <h2 className="text-lg font-bold text-gray-800">Historial de Entregas</h2>
+                                <h2 className="text-lg font-bold text-gray-800">Entregas Finalizadas</h2>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -197,7 +197,7 @@ export const DashboardCadete: React.FC = () => {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {pedidos
-                                            .filter(p => p.estadoNombre !== 'En camino')
+                                            .filter(p => [7, 8, 9].includes(p.idEstadoDePedido))
                                             .map((pedido) => (
                                                 <tr key={pedido.idPedido} className="hover:bg-gray-50">
                                                     <td className="p-4 font-medium text-gray-700">#{pedido.idPedido}</td>

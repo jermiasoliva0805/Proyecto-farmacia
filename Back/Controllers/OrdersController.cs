@@ -128,7 +128,7 @@ namespace Back.Controllers
         // SECCIÓN ADMINISTRADOR: ASIGNACIÓN
         // ==========================================
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize]
         [HttpPatch("asignar-operario")]
         public async Task<IActionResult> AsignarOperario([FromBody] AssignOperatorDTO dto)
         {
@@ -142,7 +142,7 @@ namespace Back.Controllers
             return Ok(new { message = "Operario asignado exitosamente." });
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize]
         [HttpPatch("asignar-cadete")]
         public async Task<IActionResult> AsignarCadete([FromBody] AssignDeliveryDTO dto)
         {
