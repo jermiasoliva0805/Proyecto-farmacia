@@ -136,10 +136,10 @@ export const CancelarPedidoModal: React.FC<Props> = ({
       }
 
       const payload = {
-        pedidoId: pedidoId,
-        motivoCancelacionId: selectedMotivo,
-        justificacion: justificacion.trim() || '',
-        usuarioId: user?.id ? String(user.id) : '1'
+        PedidoId: pedidoId,
+        MotivoCancelacionId: selectedMotivo,
+        Justificacion: justificacion.trim() || '',
+        UsuarioId: user?.id ? String(user.id) : '1'
       };
 
       console.log('Enviando cancelación:', payload);

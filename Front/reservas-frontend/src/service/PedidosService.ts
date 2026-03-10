@@ -161,6 +161,16 @@ export const pedidosService = {
             console.error("Error al crear pedido:", error.response?.data || error.message);
             throw error;
         }
+    },
+
+    async cancelarPedido(data: any): Promise<void> {
+        const payload = {
+            PedidoId: data.idPedido,
+            MotivoCancelacionId: data.motivoCancelacionId || 1, // Por defecto motivo genérico
+            Justificacion: data.justificacion || data.observaciones || '',
+            UsuarioId: String(data.idUsuario)
+        };
+        await api.post('/Orders/cancelar', payload);
     }
 
 };

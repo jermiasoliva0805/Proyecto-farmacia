@@ -63,15 +63,8 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
         setIsLoadingPedidoId(pedidoId);
 
         try {
-            // Llamar al backend con el motivo
-            await pedidosService.cambiarEstado({
-                idPedido: pedidoId,
-                idNuevoEstado: 9, // Cancelado
-                idUsuario: usuarioId || user?.id || 0,
-                observaciones: `Cancelado por: ${motivo}`
-            });
-
-            // Actualizar estado localmente
+            // El modal ya canceló el pedido, solo refrescar datos desde servidor
+            // y actualizar estado local
             const nuevaListaPedidos = pedidosLocal.map(p => {
                 if (p.idPedido === pedidoId) {
                     return {
@@ -96,11 +89,11 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             setOperacionCancelacionPendiente(false);
 
         } catch (error: any) {
-            console.error('Error al cancelar pedido:', error);
+            console.error('Error al procesar cancelación:', error);
             
             const mensajeError = error.response?.data?.message || 
                                  error.response?.data?.title ||
-                                 'Error al cancelar el pedido';
+                                 'Error al procesar la cancelación';
             
             showToast('error', mensajeError);
         } finally {
