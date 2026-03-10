@@ -105,7 +105,11 @@ export const pedidosService = {
     },
 
     async asignarCadete(data: AssignDeliveryDTO): Promise<void> {
-        await api.patch('/Orders/asignar-cadete', data);
+        const payload = {
+            PedidoId: data.pedidoId,
+            CadeteId: data.cadeteId
+        };
+        await api.patch('/Orders/asignar-cadete', payload);
     },
 
     async cambiarEstado(data: ChangeOrderStatusDTO): Promise<void> {

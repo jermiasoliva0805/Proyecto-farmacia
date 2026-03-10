@@ -166,7 +166,7 @@ function App() {
             />
 
             <Route
-              path="/entregas"
+              path="/mis-entregas"
               element={
                 <ProtectedRoute allowedRoles={['Cadete']}>
                   <MisEntregas />

@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         ],
         Cadete: [
             { path: '/dashboard/cadete', icon: LayoutDashboard, label: 'Dashboard' },
-            { path: '/entregas', icon: MapPin, label: 'Mis Entregas' },
+            { path: '/mis-entregas', icon: MapPin, label: 'Mis Entregas' },
             { path: '/intentos-fallidos', icon: FileText, label: 'Entregas Fallidas' },
         ],
     };

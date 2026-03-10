@@ -7,6 +7,7 @@ import { AsignarOperarioModal } from '@components/pedidos/AsignarOperarioModal';
 import { AsignarCadeteModal } from '@components/pedidos/AsignarCadeteModal';
 import { DetallePedidoModal } from '@components/pedidos/DetallePedidoModal';
 import { OrderFilters } from '@components/orders/OrderFilters';
+import { TableroKanban } from '@components/kanban/TableroKanban';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
@@ -40,6 +41,7 @@ export const DashboardAdmin: React.FC = () => {
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
 
     const [stats, setStats] = useState({ activos: 0, demorados: 0, entregados: 0, cancelados: 0 });
+    const [viewMode, setViewMode] = useState<'tabla' | 'kanban'>('tabla');
 
     useEffect(() => { 
         loadDashboardData(); 
@@ -272,12 +274,41 @@ export const DashboardAdmin: React.FC = () => {
                             </div>
                         </div>
 
-                       {/* Tabla General Estilo Imagen */}
+                       {/* Tablero/Tabla Pedidos con Toggle - CU03 */}
 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div className="p-6 bg-blue-600 text-white">
-        <h2 className="text-lg font-bold">Todos los Pedidos</h2>
-        <p className="text-blue-100 text-sm">Gestiona y monitorea todos los pedidos en tiempo real</p>
+    {/* Header con Tabs */}
+    <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center">
+        <div>
+            <h2 className="text-lg font-bold">Gestión de Pedidos</h2>
+            <p className="text-blue-100 text-sm">Visualiza y gestiona todos tus pedidos</p>
+        </div>
+        {/* Tabs */}
+        <div className="flex gap-2 bg-blue-700 p-1 rounded-lg">
+            <button
+                onClick={() => setViewMode('tabla')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
+                    viewMode === 'tabla'
+                        ? 'bg-white text-blue-600 shadow-md'
+                        : 'text-blue-100 hover:text-white'
+                }`}
+            >
+                📊 Tabla
+            </button>
+            <button
+                onClick={() => setViewMode('kanban')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
+                    viewMode === 'kanban'
+                        ? 'bg-white text-blue-600 shadow-md'
+                        : 'text-blue-100 hover:text-white'
+                }`}
+            >
+                📋 Kanban
+            </button>
+        </div>
     </div>
+
+    {/* VISTA TABLA */}
+    {viewMode === 'tabla' && (
     <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
@@ -331,8 +362,19 @@ export const DashboardAdmin: React.FC = () => {
             </tbody>
         </table>
     </div>
+    )}
+
+    {/* VISTA KANBAN */}
+    {viewMode === 'kanban' && (
+    <div className="p-4">
+        <TableroKanban 
+            pedidos={pedidos}
+            onUpdate={loadDashboardData}
+        />
+    </div>
+    )}
 </div>
-{/* CIERRES DE SEGURIDAD */}
+
                     </>
                 )}
             </div>

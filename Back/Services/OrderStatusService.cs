@@ -82,25 +82,25 @@ namespace Back.Services
             return resultado;
         }
 
-        // 2. ASIGNAR CADETE (ADMIN) - Pasa de Listo para despachar (4) a En camino (6)
+        // 2. ASIGNAR CADETE (ADMIN) - Pasa de Listo para despachar (4) a Despachando (5)
         public async Task<bool> AsignarCadeteAsync(AssignDeliveryDTO dto)
         {
             // Trae Cliente para poder enviar correo
             var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
 
-            // El pedido debe estar en 4 (Listo para despachar) para pasar a 6 (En camino)
+            // El pedido debe estar en 4 (Listo para despachar) para pasar a 5 (Despachando)
             if (pedido == null || pedido.IDEstadoDePedido != 4) return false;
 
-            pedido.IDEstadoDePedido = 6; // En camino
+            pedido.IDEstadoDePedido = 5; // Despachando
             pedido.IDUsuario = dto.CadeteId;
 
             var historial = new HistorialDeEstados
             {
                 IDPedido = pedido.IDPedido,
-                IDEstadoDePedido = 6,
+                IDEstadoDePedido = 5,
                 IDUsuario = dto.CadeteId,
                 fecha_hora_inicio = DateTime.Now,
-                Observaciones = "Admin asignó cadete. Pedido en camino al domicilio."
+                Observaciones = "Cadete asignado. Pedido en despachando."
             };
 
             var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
@@ -112,7 +112,7 @@ namespace Back.Services
                 var nombreCliente = pedido.Cliente != null
                     ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
                     : "Cliente";
-                var estadoDescripcion = ObtenerDescripcionEstado(6);
+                var estadoDescripcion = ObtenerDescripcionEstado(5);
 
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
@@ -123,7 +123,7 @@ namespace Back.Services
                             nombreCliente,
                             estadoDescripcion,
                             pedido.IDPedido,
-                            6,                                  // En camino
+                            5,                                  // Despachando
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP"
@@ -131,7 +131,7 @@ namespace Back.Services
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error enviando mail (En camino): {ex.Message}");
+                        Console.WriteLine($"Error enviando mail (Despachando): {ex.Message}");
                     }
                 }
             }
@@ -151,11 +151,15 @@ namespace Back.Services
             // CU25: Operario: 2 (Preparando) -> 4 (Listo para despachar)
             // CU25: Operario: 2 -> 2 (Solo registrar inicio de armado)
             // Cadete: 6 (En camino) -> 7 (Entregado) o 8 (Entrega fallida)
+            // Admin: Cualquier estado -> 9 (Cancelado)
             
             bool transicionValida = false;
             
+            // CANCELACIÓN: Admin puede cancelar desde cualquier estado excepto terminales (7=Entregado, 9=Cancelado)
+            if (changeStatusDto.IDNuevoEstado == 9 && pedido.IDEstadoDePedido != 7 && pedido.IDEstadoDePedido != 9)
+                transicionValida = true;
             // Operario asignado pasando de Sin preparar a Preparar
-            if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
+            else if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
                 transicionValida = true;
             // ✅ CU25: Operario registrando que inicia armado (2→2, solo actualiza FechaInicioArmado)
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2)
@@ -163,9 +167,10 @@ namespace Back.Services
             // Operario finalizando preparación
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
                 transicionValida = true;
-            // Cadete entregando o fallando entrega
-            else if ((pedido.IDEstadoDePedido == 6 || pedido.IDEstadoDePedido == 8) && 
-                     (changeStatusDto.IDNuevoEstado == 7 || changeStatusDto.IDNuevoEstado == 8))
+            // Cadete: Transiciones permitidas para entregas
+            // 5 (Despachando) → 6 (En camino), reintentando desde 8 (Fallo)
+            else if ((pedido.IDEstadoDePedido == 5 || pedido.IDEstadoDePedido == 6 || pedido.IDEstadoDePedido == 8) && 
+                     (changeStatusDto.IDNuevoEstado == 6 || changeStatusDto.IDNuevoEstado == 7 || changeStatusDto.IDNuevoEstado == 8))
                 transicionValida = true;
 
             if (!transicionValida) return false;
