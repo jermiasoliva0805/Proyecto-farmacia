@@ -1,6 +1,7 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { OrderSummaryDTO } from '../../types/pedido.types';
+import { useAuth } from '../../context/AuthContext';
 import { AlertTriangle, Loader, Clock } from 'lucide-react';
 
 interface KanbanCardProps {
@@ -18,6 +19,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
     isLoadingPedido,
     mostrarAlertaDemora
 }) => {
+    const { user } = useAuth();
+    
     // Formatear total como moneda
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('es-AR', {
@@ -39,7 +42,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                         ${isDragging || snapshot.isDragging ? 'shadow-2xl scale-105 opacity-90 bg-blue-50' : 'hover:shadow-lg'}
                         ${isLoadingPedido ? 'opacity-50' : ''}
                         ${mostrarAlertaDemora ? 'border-l-4 border-orange-500' : ''}
-                        ${!pedido.fechaInicioArmado ? 'border-l-4 border-amber-500' : ''}
+                        ${user?.rol === 'Operario' && !pedido.fechaInicioArmado ? 'border-l-4 border-amber-500' : ''}
+                        ${pedido.idEstadoDePedido === 8 && pedido.intentosEntregaFallida >= 3 ? 'border-l-4 border-red-600' : ''}
+                        ${pedido.idEstadoDePedido === 5 && pedido.intentosEntregaFallida > 0 ? 'border-l-4 border-yellow-500' : ''}
                     `}
                     style={provided.draggableProps.style}
                 >
@@ -63,7 +68,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
-                                {!pedido.fechaInicioArmado && (
+                                {user?.rol === 'Operario' && !pedido.fechaInicioArmado && (
                                     <Clock className="w-5 h-5 text-amber-500 flex-shrink-0" title="Armado no iniciado" />
                                 )}
                                 {mostrarAlertaDemora && (
@@ -72,18 +77,18 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                             </div>
                         </div>
 
-                        {/* Indicador de estado del armado */}
-                        {!pedido.fechaInicioArmado && (
+                        {/* Indicador de estado del armado - Solo para Operarios */}
+                        {user?.rol === 'Operario' && !pedido.fechaInicioArmado && (
                             <div className="bg-amber-50 rounded p-2 text-xs text-amber-700 border border-amber-200">
                                 ⏱ Armado no iniciado - Presiona "Comenzar armado" en la tabla
                             </div>
                         )}
-                        {pedido.fechaInicioArmado && !pedido.fechaFinArmado && (
+                        {user?.rol === 'Operario' && pedido.fechaInicioArmado && !pedido.fechaFinArmado && (
                             <div className="bg-blue-50 rounded p-2 text-xs text-blue-700 border border-blue-200">
                                 ✓ Armado en progreso desde {new Date(pedido.fechaInicioArmado).toLocaleTimeString('es-AR')}
                             </div>
                         )}
-                        {pedido.fechaFinArmado && (
+                        {user?.rol === 'Operario' && pedido.fechaFinArmado && (
                             <div className="bg-green-50 rounded p-2 text-xs text-green-700 border border-green-200">
                                 ✓ Armado completado
                             </div>
@@ -117,10 +122,40 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                             </p>
                         )}
 
-                        {/* Intentos fallidos */}
-                        {pedido.intentosEntregaFallida > 0 && (
-                            <div className="bg-red-50 rounded p-1 text-xs text-red-600">
-                                ⚠️ {pedido.intentosEntregaFallida} intento(s) fallido(s)
+                        {/* Indicador de reintento para Cadetes */}
+                        {pedido.idEstadoDePedido === 8 && (
+                            <div className="bg-blue-50 rounded p-2 text-xs text-blue-700 border border-blue-200">
+                                💡 Arrastra a "En camino" para reintentar la entrega
+                            </div>
+                        )}
+
+                        {/* Indicador de intentos previos fallidos (cuando está en Despachando pero ya tuvo fallos) */}
+                        {pedido.idEstadoDePedido === 5 && pedido.intentosEntregaFallida > 0 && (
+                            <div className={`rounded p-2 text-xs border ${
+                                pedido.intentosEntregaFallida >= 2 
+                                    ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                                {pedido.intentosEntregaFallida >= 2 ? (
+                                    <>⚠️ Reintento #{pedido.intentosEntregaFallida + 1} - Última oportunidad antes de cancelar</>
+                                ) : (
+                                    <>↩️ Reintentando entrega... ({pedido.intentosEntregaFallida} intento(s) fallido(s))</>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Indicador de intentos fallidos (solo cuando está realmente en estado 8) */}
+                        {pedido.idEstadoDePedido === 8 && pedido.intentosEntregaFallida > 0 && (
+                            <div className={`rounded p-2 text-xs border ${
+                                pedido.intentosEntregaFallida >= 3 
+                                    ? 'bg-red-50 text-red-700 border-red-300' 
+                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            }`}>
+                                {pedido.intentosEntregaFallida >= 3 ? (
+                                    <>🚫 LÍMITE: {pedido.intentosEntregaFallida}/3 intentos. Se cancelará automáticamente</>
+                                ) : (
+                                    <>⚠️ {pedido.intentosEntregaFallida}/{3} intento(s) fallido(s) - {3 - pedido.intentosEntregaFallida} reintentos disponibles</>
+                                )}
                             </div>
                         )}
                     </div>
