@@ -183,6 +183,11 @@ namespace Back.Services
             {
                 pedido.FechaInicioArmado = DateTime.Now;
             }
+            // ✅ CU25: Cuando operario presiona "Comenzar armado" (2→2), guardar FechaInicioArmado si no existe
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2 && !pedido.FechaInicioArmado.HasValue)
+            {
+                pedido.FechaInicioArmado = DateTime.Now;
+            }
             // ✅ CU25: Cuando operario finaliza armado (2→4), guardar FechaFinArmado
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
             {

@@ -177,6 +177,12 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             return;
         }
 
+        // Validación 4: Para Operarios - Debe haber presionado "Comenzar armado" antes de cambiar estados
+        if (user?.rol === 'Operario' && !pedido.fechaInicioArmado) {
+            showToast('error', `⚠️ Debes presionar "Comenzar armado" antes de cambiar estados. Vuelve a la vista Tabla para iniciarlo.`);
+            return;
+        }
+
         // ========== CASO ESPECIAL: CANCELACIÓN CON MOTIVO ==========
         // Si se arrastra al estado 9 (Cancelado), mostrar modal para pedir motivo
         if (estadoDestinoId === 9) {

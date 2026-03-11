@@ -1,7 +1,7 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { OrderSummaryDTO } from '../../types/pedido.types';
-import { AlertTriangle, Loader } from 'lucide-react';
+import { AlertTriangle, Loader, Clock } from 'lucide-react';
 
 interface KanbanCardProps {
     pedido: OrderSummaryDTO;
@@ -39,6 +39,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                         ${isDragging || snapshot.isDragging ? 'shadow-2xl scale-105 opacity-90 bg-blue-50' : 'hover:shadow-lg'}
                         ${isLoadingPedido ? 'opacity-50' : ''}
                         ${mostrarAlertaDemora ? 'border-l-4 border-orange-500' : ''}
+                        ${!pedido.fechaInicioArmado ? 'border-l-4 border-amber-500' : ''}
                     `}
                     style={provided.draggableProps.style}
                 >
@@ -61,10 +62,32 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                                     {new Date(pedido.fecha).toLocaleDateString('es-AR')}
                                 </p>
                             </div>
-                            {mostrarAlertaDemora && (
-                                <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                            )}
+                            <div className="flex items-center gap-2">
+                                {!pedido.fechaInicioArmado && (
+                                    <Clock className="w-5 h-5 text-amber-500 flex-shrink-0" title="Armado no iniciado" />
+                                )}
+                                {mostrarAlertaDemora && (
+                                    <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                                )}
+                            </div>
                         </div>
+
+                        {/* Indicador de estado del armado */}
+                        {!pedido.fechaInicioArmado && (
+                            <div className="bg-amber-50 rounded p-2 text-xs text-amber-700 border border-amber-200">
+                                ⏱ Armado no iniciado - Presiona "Comenzar armado" en la tabla
+                            </div>
+                        )}
+                        {pedido.fechaInicioArmado && !pedido.fechaFinArmado && (
+                            <div className="bg-blue-50 rounded p-2 text-xs text-blue-700 border border-blue-200">
+                                ✓ Armado en progreso desde {new Date(pedido.fechaInicioArmado).toLocaleTimeString('es-AR')}
+                            </div>
+                        )}
+                        {pedido.fechaFinArmado && (
+                            <div className="bg-green-50 rounded p-2 text-xs text-green-700 border border-green-200">
+                                ✓ Armado completado
+                            </div>
+                        )}
 
                         {/* Cliente */}
                         <div>
@@ -86,7 +109,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                         </div>
 
                         {/* Info de entrega estimada */}
-                        {pedido.fechaEntregaEstimada && (
+                        {pedido.fechaEntregaEstimada && 
+                         !pedido.fechaEntregaEstimada.startsWith('0001') &&
+                         new Date(pedido.fechaEntregaEstimada).getFullYear() > 1900 && (
                             <p className="text-xs text-blue-600">
                                 Entrega: {new Date(pedido.fechaEntregaEstimada).toLocaleDateString('es-AR')}
                             </p>
