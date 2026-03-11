@@ -74,3 +74,28 @@ export interface ClienteFacturacionDTO {
     cantidadPedidos: number;
     ticketPromedio: number;
 }
+
+export interface FaseProcesoDTO {
+    nombre: string;
+    tiempoPromedio: number;
+    color: string;
+}
+
+export interface TiemposProcesoDTO {
+    fases: FaseProcesoDTO[];
+    puntoCritico: string;
+    tiempoPuntoCritico: number;
+    eficienciaDespacho: number;
+    totalPedidos: number;
+    detalles: DetalleTiempoProcesoDTO[];
+}
+
+export interface DetalleTiempoProcesoDTO {
+    idPedido: number;
+    espera: number;
+    preparacion: number;
+    despacho: number;
+    viaje: number;
+    estadoFinal: string;
+    esAlertaDespacho: boolean;
+}
