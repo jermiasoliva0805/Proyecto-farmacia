@@ -16,6 +16,7 @@ export const ReporteProductos = () => {
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const [clickedIndex, setClickedIndex] = useState<number | null>(null);
 
     useEffect(() => {
         const cargarData = async () => {
@@ -34,6 +35,24 @@ export const ReporteProductos = () => {
 
     const totalUnidades = datos.reduce((acc, curr) => acc + curr.unidadesVendidas, 0);
     const productoTop = datos.length > 0 ? datos[0] : null;
+
+    // Calcular posición del tooltip basado en la porción del pastel
+    const calcularPosicionTooltip = (index: number) => {
+        let startAngle = 0;
+        for (let i = 0; i < index; i++) {
+            startAngle += (pieData[i].value / totalUnidades) * 360;
+        }
+        const endAngle = startAngle + (pieData[index].value / totalUnidades) * 360;
+        const midAngle = (startAngle + endAngle) / 2;
+        const radians = (midAngle * Math.PI) / 180;
+        
+        // Posición a 200px del centro en la dirección del midAngle
+        const radius = 200;
+        const x = Math.cos(radians) * radius;
+        const y = Math.sin(radians) * radius;
+        
+        return { x, y };
+    };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de productos...</p>;
 
@@ -117,37 +136,94 @@ export const ReporteProductos = () => {
                 {/* Gráfico de Pastel */}
                 <Card className="p-6">
                     <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Distribución Porcentual</h3>
-                    <ResponsiveContainer width="100%" height={450}>
-                        <PieChart>
-                            <Pie
-                                data={pieData}
-                                cx="50%"
-                                cy="50%"
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                                onMouseEnter={(_, index) => setActiveIndex(index)}
-                                onMouseLeave={() => setActiveIndex(null)}
-                                activeIndex={activeIndex}
-                                activeShape={{
-                                    outerRadius: 100,
-                                    filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.3))'
-                                }}
-                            >
-                                {pieData.map((entry, index) => (
-                                    <Cell 
-                                        key={`cell-${index}`} 
-                                        fill={entry.fill}
+                    <div className="flex gap-8 relative">
+                        {/* Gráfico */}
+                        <div className="flex-1 relative">
+                            <ResponsiveContainer width="100%" height={700}>
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={150}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
+                                        {pieData.map((entry, index) => (
+                                            <Cell 
+                                                key={`cell-${index}`} 
+                                                fill={entry.fill}
+                                                onClick={() => setClickedIndex(clickedIndex === index ? null : index)}
+                                                onMouseEnter={() => !clickedIndex && setActiveIndex(index)}
+                                                onMouseLeave={() => !clickedIndex && setActiveIndex(null)}
+                                                style={{
+                                                    filter: (clickedIndex === index || activeIndex === index) ? 'drop-shadow(0 0 8px rgba(0,0,0,0.3))' : 'none',
+                                                    transition: 'filter 0.3s ease, transform 0.3s ease',
+                                                    cursor: 'pointer',
+                                                    transform: (clickedIndex === index || activeIndex === index) ? 'scale(1.1)' : 'scale(1)',
+                                                    transformOrigin: '50% 50%'
+                                                }}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip 
+                                        formatter={(value) => `${value} unidades`}
+                                        labelFormatter={(label) => `Producto: ${label}`}
+                                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                                     />
-                                ))}
-                            </Pie>
-                            <Tooltip 
-                                formatter={(value) => `${value} unidades`}
-                                labelFormatter={(label) => `Producto: ${label}`}
-                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                                </PieChart>
+                            </ResponsiveContainer>
+                            
+                            {/* Tooltip flotante al clickear */}
+                            {clickedIndex !== null && (
+                                (() => {
+                                    const pos = calcularPosicionTooltip(clickedIndex);
+                                    return (
+                                        <div 
+                                            className="absolute bg-white border-2 border-blue-500 rounded-lg px-4 py-3 shadow-lg text-sm font-semibold text-gray-700 z-50 whitespace-nowrap"
+                                            style={{
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div 
+                                                    className="w-3 h-3 rounded-full"
+                                                    style={{ backgroundColor: COLORS[clickedIndex % COLORS.length] }}
+                                                />
+                                                {datos[clickedIndex]?.nombreProducto}: {datos[clickedIndex]?.unidadesVendidas} unidades
+                                            </div>
+                                        </div>
+                                    );
+                                })()
+                            )}
+                        </div>
+
+                        {/* Leyenda */}
+                        <div className="w-64 flex flex-col justify-center gap-2">
+                            {datos.map((producto, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-all cursor-pointer ${
+                                        clickedIndex === index ? 'bg-blue-50 border border-blue-200' : ''
+                                    }`}
+                                    onClick={() => setClickedIndex(clickedIndex === index ? null : index)}
+                                    onMouseEnter={() => !clickedIndex && setActiveIndex(index)}
+                                    onMouseLeave={() => !clickedIndex && setActiveIndex(null)}
+                                >
+                                    <div
+                                        className="w-4 h-4 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-700 truncate">{producto.nombreProducto}</p>
+                                        <p className="text-xs text-gray-500">{producto.porcentaje.toFixed(1)}%</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </Card>
             </div>
 
