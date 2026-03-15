@@ -1,4 +1,5 @@
 using Back.Repositories.Interfaces;
+using Back.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_farmacia.DTOs;
 using System;
@@ -90,6 +91,28 @@ namespace Back.Controllers
             {
                 // Es importante loguear el error por si algo falla en el servidor
                 return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
+            }
+        }
+
+        [HttpGet("top-productos")]
+        public async Task<ActionResult<List<TopProductosDTO>>> GetTop10Productos(
+            [FromQuery] int dias = 7,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias, idSucursal);
+                
+                if (reporte == null)
+                {
+                    return Ok(new List<TopProductosDTO>());
+                }
+
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de productos", error = ex.Message });
             }
         }
 

@@ -20,6 +20,11 @@ namespace Back.Repositories.Interfaces
         /// Obtiene ranking de facturación con filtros opcionales de días y sucursal
         /// </summary>
         Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null);
+
+        /// <summary>
+        /// Obtiene el top 10 de productos más vendidos
+        /// </summary>
+        Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null);
     }
 
     
