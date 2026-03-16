@@ -28,7 +28,7 @@ namespace Back.Repositories
                 .ToListAsync();
         }
 
-        public async Task<int> CreateOrderAsync(Pedido pedido)
+        public async Task<int> CreateOrderAsync(Pedido pedido, int idUsuario)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -45,12 +45,26 @@ namespace Back.Repositories
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
 
+                // ✅ Crear historial DESPUÉS de que el pedido está guardado (así tiene ID)
+                var historialInicial = new HistorialDeEstados
+                {
+                    IDPedido = pedido.IDPedido,
+                    IDEstadoDePedido = 1, // "Sin preparar"
+                    IDUsuario = idUsuario,
+                    fecha_hora_inicio = DateTime.Now,
+                    Observaciones = "Pedido recibido e ingresado al sistema."
+                };
+
+                _context.HistorialesDeEstados.Add(historialInicial);
+                await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
                 return pedido.IDPedido;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                Console.WriteLine($"[OrderRepository] Error al crear pedido: {ex.Message}");
                 throw;
             }
         }
