@@ -105,3 +105,36 @@ export interface ReporteCancelacionesPorMotivoDTO {
     principalMotivo: string;
     detalleMotivos: CancelacionPorMotivoDTO[];
 }
+
+export interface TopProductosDTO {
+    idProducto: number;
+    nombreProducto: string;
+    unidadesVendidas: number;
+    porcentaje: number;
+    precioPromedio: number;
+}
+
+export interface FaseProcesoDTO {
+    nombre: string;
+    tiempoPromedio: number;
+    color: string;
+}
+
+export interface TiemposProcesoDTO {
+    fases: FaseProcesoDTO[];
+    puntoCritico: string;
+    tiempoPuntoCritico: number;
+    eficienciaDespacho: number;
+    totalPedidos: number;
+    detalles: DetalleTiempoProcesoDTO[];
+}
+
+export interface DetalleTiempoProcesoDTO {
+    idPedido: number;
+    espera: number;
+    preparacion: number;
+    despacho: number;
+    viaje: number;
+    estadoFinal: string;
+    esAlertaDespacho: boolean;
+}
