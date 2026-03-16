@@ -41,8 +41,8 @@ export const ReporteCancelados = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Pedidos Cancelados (RF6.2)</h1>
-                    <p className="text-sm text-gray-500">Visualiza la cantidad total de pedidos cancelados y motivos</p>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Pedidos Cancelados</h1>
+                    <p className="text-sm text-gray-500">Visualiza la cantidad total de pedidos cancelados por intentos de entrega fallida</p>
                 </div>
                 <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
                     Exportar Reporte
@@ -102,21 +102,14 @@ export const ReporteCancelados = () => {
                 />
             </div>
 
-            {/* Detalle por motivo */}
-            {reporte.detallePorMotivo.length > 0 && (
-                <Card className="p-6">
-                    <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Resumen</h3>
-                    <div className="text-center py-8">
-                        <p className="text-gray-600 font-medium">El reporte muestra el total de pedidos cancelados del sistema.</p>
-                    </div>
-                </Card>
-            )}
-
-            {reporte.detallePorMotivo.length === 0 && (
-                <div className="text-center py-12">
-                    <p className="text-gray-500 font-medium">No hay pedidos cancelados en este periodo</p>
-                </div>
-            )}
+            {/* Información adicional */}
+            <Card className="p-6">
+                <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Información</h3>
+                <p className="text-gray-600 text-sm">
+                    Este reporte muestra los pedidos cancelados <strong>automáticamente después de 3 intentos de entrega fallida</strong>.
+                    Para ver cancelaciones manuales por motivo, ir a "Cancelaciones por Motivo".
+                </p>
+            </Card>
         </div>
     );
 };

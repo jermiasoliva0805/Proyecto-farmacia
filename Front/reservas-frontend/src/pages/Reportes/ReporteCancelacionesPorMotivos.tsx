@@ -48,8 +48,8 @@ export const ReporteCancelacionesPorMotivos = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Pedidos Cancelados por Motivo</h1>
-                    <p className="text-sm text-gray-500">Análisis de motivos de cancelación y entregas fallidas</p>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Cancelaciones por Motivo</h1>
+                    <p className="text-sm text-gray-500">Análisis de motivos de <strong>cancelación manual</strong> realizada por el encargado</p>
                 </div>
                 <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
                     Exportar Reporte

@@ -183,16 +183,19 @@ namespace Back.Repositories
             // Establecer fechas por defecto si no se proporcionan
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
+            
+            // Asegurar que 'hasta' incluya todo el día (23:59:59)
+            hasta = hasta.AddDays(1).AddSeconds(-1);
 
-            // Obtener todos los pedidos en el rango (usaremos esto para calcular el porcentaje)
+            // Obtener todos los pedidos creados en el rango
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
             
-            // Obtener pedidos cancelados
+            // Obtener pedidos cancelados AUTOMÁTICAMENTE (3 intentos fallidos - NO tienen motivo)
             var queryCancelados = _context.Pedidos
-                .Include(p => p.MotivoCancelacion)
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.MotivoCancelacionId == null)  // Sin motivo = auto-cancelado
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
@@ -214,17 +217,8 @@ namespace Back.Repositories
             // Suma del monto total cancelado
             var montoTotal = pedidosCancelados.Sum(p => p.Total);
 
-            // Agrupar por motivo de cancelación
-            var detallesPorMotivo = pedidosCancelados
-                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
-                .Select(g => new DetalleCancelacionDTO
-                {
-                    MotivoCancelacion = g.Key,
-                    Cantidad = g.Count(),
-                    PorcentajeDelTotal = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m
-                })
-                .OrderByDescending(d => d.Cantidad)
-                .ToList();
+            // Reporte simple sin motivos (estos no tienen motivos)
+            var detallesPorMotivo = new List<DetalleCancelacionDTO>();
 
             return new ReportePedidosCanceladosDTO
             {
@@ -245,16 +239,20 @@ namespace Back.Repositories
             // Establecer fechas por defecto
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
+            
+            // Asegurar que 'hasta' incluya todo el día (23:59:59)
+            hasta = hasta.AddDays(1).AddSeconds(-1);
 
-            // Obtener todos los pedidos en el rango
+            // Obtener todos los pedidos creados en el rango
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
-            // Obtener pedidos cancelados
+            // Obtener pedidos cancelados MANUALMENTE por el admin (tienen motivo expl\u00edcito asignado)
             var queryCancelados = _context.Pedidos
                 .Include(p => p.MotivoCancelacion)
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.MotivoCancelacionId != null)  // Solo cancelaciones manuales
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
@@ -267,20 +265,20 @@ namespace Back.Repositories
 
             var totalPedidos = await queryTodosPedidos.CountAsync();
             var pedidosCancelados = await queryCancelados.ToListAsync();
-            
             var totalCancelados = pedidosCancelados.Count;
+
             var porcentajeCancelacion = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
             var ingresosPerdidos = pedidosCancelados.Sum(p => p.Total);
 
             // Obtener principal motivo
             var principalMotivo = pedidosCancelados
-                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
+                .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .OrderByDescending(g => g.Count())
                 .FirstOrDefault()?.Key ?? "N/A";
 
             // Detalles por motivo
             var detalleMotivos = pedidosCancelados
-                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
+                .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .Select(g => new CancelacionPorMotivoDTO
                 {
                     Motivo = g.Key,
