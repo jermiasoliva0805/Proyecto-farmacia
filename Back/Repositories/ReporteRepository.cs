@@ -234,6 +234,73 @@ namespace Back.Repositories
                 DetallePorMotivo = detallesPorMotivo
             };
         }
+
+        public async Task<ReporteCancelacionesPorMotivoDTO> GetReporteCancelacionesPorMotivoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null)
+        {
+            const int ID_ESTADO_CANCELADO = 9;
+
+            // Establecer fechas por defecto
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+            var hasta = fechaHasta ?? DateTime.Now;
+
+            // Obtener todos los pedidos en el rango
+            var queryTodosPedidos = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Obtener pedidos cancelados
+            var queryCancelados = _context.Pedidos
+                .Include(p => p.MotivoCancelacion)
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Aplicar filtro de sucursal
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
+                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var totalPedidos = await queryTodosPedidos.CountAsync();
+            var pedidosCancelados = await queryCancelados.ToListAsync();
+            
+            var totalCancelados = pedidosCancelados.Count;
+            var porcentajeCancelacion = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
+            var ingresosPerdidos = pedidosCancelados.Sum(p => p.Total);
+
+            // Obtener principal motivo
+            var principalMotivo = pedidosCancelados
+                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault()?.Key ?? "N/A";
+
+            // Detalles por motivo
+            var detalleMotivos = pedidosCancelados
+                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
+                .Select(g => new CancelacionPorMotivoDTO
+                {
+                    Motivo = g.Key,
+                    Cantidad = g.Count(),
+                    Porcentaje = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m,
+                    MontoPerdido = g.Sum(p => p.Total)
+                })
+                .OrderByDescending(d => d.Cantidad)
+                .ToList();
+
+            return new ReporteCancelacionesPorMotivoDTO
+            {
+                TotalPedidos = totalPedidos,
+                TotalCancelados = totalCancelados,
+                PorcentajeCancelacion = porcentajeCancelacion,
+                IngresosPerdidos = ingresosPerdidos,
+                PrincipalMotivo = principalMotivo,
+                DetalleMotivos = detalleMotivos
+            };
+        }
         
     }
     

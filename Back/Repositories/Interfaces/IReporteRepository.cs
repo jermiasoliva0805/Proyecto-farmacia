@@ -25,7 +25,15 @@ namespace Back.Repositories.Interfaces
         /// Obtiene el reporte de cantidad de pedidos cancelados (RF6.2)
         /// </summary>
         Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
-            DateTime? fechaDesde = null, 
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
+
+        /// <summary>
+        /// Obtiene el reporte de pedidos cancelados por motivos (RF6.11)
+        /// </summary>
+        Task<ReporteCancelacionesPorMotivoDTO> GetReporteCancelacionesPorMotivoAsync(
+            DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
             int? idSucursal = null);
     }

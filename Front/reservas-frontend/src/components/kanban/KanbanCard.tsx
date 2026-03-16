@@ -69,7 +69,9 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                             </div>
                             <div className="flex items-center gap-2">
                                 {user?.rol === 'Operario' && !pedido.fechaInicioArmado && (
-                                    <Clock className="w-5 h-5 text-amber-500 flex-shrink-0" title="Armado no iniciado" />
+                                    <div title="Armado no iniciado">
+                                        <Clock className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                                    </div>
                                 )}
                                 {mostrarAlertaDemora && (
                                     <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0" />

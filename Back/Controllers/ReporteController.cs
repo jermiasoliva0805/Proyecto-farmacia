@@ -111,5 +111,22 @@ namespace Back.Controllers
             }
         }
 
+        [HttpGet("cancelaciones-por-motivo")]
+        public async Task<ActionResult<ReporteCancelacionesPorMotivoDTO>> GetCancelacionesPorMotivo(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de cancelaciones por motivo", error = ex.Message });
+            }
+        }
+
     }
 }

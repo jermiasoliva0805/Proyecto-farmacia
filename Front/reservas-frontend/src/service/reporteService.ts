@@ -1,6 +1,6 @@
 import { api } from './api'; 
 // Importamos tu DTO desde el archivo donde están los otros
-import { ClienteFacturacionDTO, RankingClienteDTO, ReportePedidosCanceladosDTO } from '../types/pedido.types'; 
+import { ClienteFacturacionDTO, RankingClienteDTO, ReportePedidosCanceladosDTO, ReporteCancelacionesPorMotivoDTO } from '../types/pedido.types'; 
 
 export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
     try {
@@ -71,6 +71,36 @@ export const getPedidosCancelados = async (
         return response.data;
     } catch (error) {
         console.error("Error al obtener reporte de pedidos cancelados", error);
+        throw error;
+    }
+};
+
+export const getCancelacionesPorMotivo = async (
+    fechaDesde?: string,
+    fechaHasta?: string,
+    idSucursal: number | null = null
+): Promise<ReporteCancelacionesPorMotivoDTO> => {
+    try {
+        const params: any = {};
+        
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+        
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+        
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+        
+        const response = await api.get<ReporteCancelacionesPorMotivoDTO>('/reporte/cancelaciones-por-motivo', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de cancelaciones por motivo", error);
         throw error;
     }
 };

@@ -3,7 +3,8 @@ import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
 import { RankingClientes } from './RankingClientes';
 import { ReporteFacturacion } from './ReporteFacturacion';
-import { ReporteCancelados } from './ReporteCancelados'; 
+import { ReporteCancelados } from './ReporteCancelados';
+import { ReporteCancelacionesPorMotivos } from './ReporteCancelacionesPorMotivos'; 
 
 export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
@@ -58,6 +59,15 @@ export const PanelReportes = () => {
                 >
                     Pedidos Cancelados
                 </button>
+
+                <button
+                    onClick={() => setTabActiva('motivosCancelacion')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'motivosCancelacion' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Cancelaciones por Motivo
+                </button>
             </div>
 
             {/* Contenido Dinámico */}
@@ -67,6 +77,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'ranking' && <RankingClientes />}
                 {tabActiva === 'facturacion' && <ReporteFacturacion />}
                 {tabActiva === 'cancelados' && <ReporteCancelados />}
+                {tabActiva === 'motivosCancelacion' && <ReporteCancelacionesPorMotivos />}
             </div>
         </div>
     );
