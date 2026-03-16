@@ -1,123 +1,142 @@
-using Back.Data;
-using Back.DTOs;
-using Back.Models;
-using Back.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Proyecto_farmacia.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Back.Repositories
-{
-    public class ReporteRepository : IReporteRepository
-    {
-        private readonly AppDbContext _context;
-
-        public ReporteRepository(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
-            DateTime fechaDesde, 
-            DateTime fechaHasta,
+        public async Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
             int? idSucursal = null)
         {
-            var inicio = fechaDesde.Date;
-            var fin = fechaHasta.Date.AddDays(1).AddTicks(-1);
+            const int ID_ESTADO_CANCELADO = 9;
 
-            Console.WriteLine($"[REPO DEBUG] Rango: {inicio:yyyy-MM-dd} a {fin:yyyy-MM-dd}");
+            // Establecer fechas por defecto si no se proporcionan
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+            var hasta = fechaHasta ?? DateTime.Now;
 
-            // Obtener TODOS los pedidos en el rango (sin filtro de cadete primero)
-            var todosLosPedidos = await _context.Pedidos
-                .Include(p => p.Usuario)
-                .Where(p => p.Fecha >= inicio && p.Fecha <= fin)
-                .ToListAsync();
+            // Asegurar que 'hasta' incluya todo el día (23:59:59)
+            hasta = hasta.AddDays(1).AddSeconds(-1);
 
-            Console.WriteLine($"[REPO DEBUG] Total pedidos en rango: {todosLosPedidos.Count}");
+            // Obtener todos los pedidos creados en el rango
+            var queryTodosPedidos = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
 
-            // Ver qué roles hay
-            var rolesUnicos = todosLosPedidos
-                .Where(p => p.Usuario != null)
-                .Select(p => p.Usuario.Rol)
-                .Distinct()
-                .ToList();
+            // Obtener pedidos cancelados AUTOMÁTICAMENTE (3 intentos fallidos - NO tienen motivo)
+            var queryCancelados = _context.Pedidos
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.MotivoCancelacionId == null)  // Sin motivo = auto-cancelado
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
 
-            Console.WriteLine($"[REPO DEBUG] Roles únicos encontrados: {string.Join(", ", rolesUnicos)}");
-
-            // Filtrar por sucursal si viene
+            // Aplicar filtro de sucursal si es necesario
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
-                todosLosPedidos = todosLosPedidos
-                    .Where(p => p.IDSucursal == idSucursal.Value)
-                    .ToList();
-
-                Console.WriteLine($"[REPO DEBUG] Pedidos después filtro sucursal: {todosLosPedidos.Count}");
+                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
+                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            // Filtrar solo los que tienen usuario con rol Cadete
-            var pedidosCadete = todosLosPedidos
-                .Where(p => p.Usuario != null && 
-                            p.Usuario.Rol != null && 
-                            p.Usuario.Rol.Trim().ToLower() == "cadete")  // ← Comparación case-insensitive
-                .ToList();
+            // Contar totales
+            var totalPedidos = await queryTodosPedidos.CountAsync();
+            var pedidosCancelados = await queryCancelados.ToListAsync();
+            var totalCancelados = pedidosCancelados.Count;
 
-            Console.WriteLine($"[REPO DEBUG] Pedidos de cadetes: {pedidosCadete.Count}");
+            // Calcular porcentaje
+            var porcentaje = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
 
-            if (pedidosCadete.Count == 0)
+            // Suma del monto total cancelado
+            var montoTotal = pedidosCancelados.Sum(p => p.Total);
+
+            // Reporte simple sin motivos (estos no tienen motivos)
+            var detallesPorMotivo = new List<DetalleCancelacionDTO>();
+
+            return new ReportePedidosCanceladosDTO
             {
-                Console.WriteLine("[REPO DEBUG] ⚠️ No hay pedidos de cadetes!");
-                return new List<EntregaPorCadeteDTO>();
+                TotalPedidosCancelados = totalCancelados,
+                PorcentajeDelTotal = porcentaje,
+                MontoTotalCancelado = montoTotal,
+                DetallePorMotivo = detallesPorMotivo
+            };
+        }
+
+        public async Task<ReporteCancelacionesPorMotivoDTO> GetReporteCancelacionesPorMotivoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null)
+        {
+            const int ID_ESTADO_CANCELADO = 9;
+
+            // Establecer fechas por defecto
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+            var hasta = fechaHasta ?? DateTime.Now;
+
+            // Asegurar que 'hasta' incluya todo el día (23:59:59)
+            hasta = hasta.AddDays(1).AddSeconds(-1);
+
+            // Obtener todos los pedidos creados en el rango
+            var queryTodosPedidos = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Obtener pedidos cancelados MANUALMENTE por el admin (tienen motivo explícito asignado)
+            var queryCancelados = _context.Pedidos
+                .Include(p => p.MotivoCancelacion)
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.MotivoCancelacionId != null)  // Solo cancelaciones manuales
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Aplicar filtro de sucursal
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
+                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            // Agrupar y calcular
-            var reporte = pedidosCadete
-                .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre, p.Usuario.Apellido })
-                .Select(g =>
+            var totalPedidos = await queryTodosPedidos.CountAsync();
+            var pedidosCancelados = await queryCancelados.ToListAsync();
+            var totalCancelados = pedidosCancelados.Count;
+
+            var porcentajeCancelacion = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
+            var ingresosPerdidos = pedidosCancelados.Sum(p => p.Total);
+
+            // Obtener principal motivo
+            var principalMotivo = pedidosCancelados
+                .GroupBy(p => p.MotivoCancelacion!.Nombre)
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault()?.Key ?? "N/A";
+
+            // Detalles por motivo
+            var detalleMotivos = pedidosCancelados
+                .GroupBy(p => p.MotivoCancelacion!.Nombre)
+                .Select(g => new CancelacionPorMotivoDTO
                 {
-                    var pedidosGrupo = g.ToList();
-                    var totalAsignados = pedidosGrupo.Count;
-                    var entregados = pedidosGrupo.Count(p => p.IDEstadoDePedido == 7);
-                    var fallidos = pedidosGrupo.Count(p => p.IDEstadoDePedido == 8 || p.IDEstadoDePedido == 9);
-                    var recaudado = pedidosGrupo
-                        .Where(p => p.IDEstadoDePedido == 7)
-                        .Sum(p => p.Total);
-
-                    var porcentaje = totalAsignados > 0 
-                        ? (entregados * 100.0 / totalAsignados) 
-                        : 0;
-
-                    Console.WriteLine($"[REPO DEBUG] Cadete: {g.Key.Nombre} {g.Key.Apellido} - Pedidos: {totalAsignados}, Entregados: {entregados}");
-
-                    return new EntregaPorCadeteDTO
-                    {
-                        IDCadete = g.Key.IDUsuario,
-                        NombreCadete = $"{g.Key.Nombre} {g.Key.Apellido}",
-                        TotalPedidosAsignados = totalAsignados,
-                        EntregasExitosas = entregados,
-                        EntregasFallidas = fallidos,
-                        TotalRecaudado = recaudado,
-                        PorcentajeEfectividad = porcentaje
-                    };
+                    Motivo = g.Key,
+                    Cantidad = g.Count(),
+                    Porcentaje = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m,
+                    MontoPerdido = g.Sum(p => p.Total)
                 })
-                .OrderBy(c => c.NombreCadete)
+                .OrderByDescending(d => d.Cantidad)
                 .ToList();
 
-            Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} cadetes");
-            return reporte;
+            return new ReporteCancelacionesPorMotivoDTO
+            {
+                TotalPedidos = totalPedidos,
+                TotalCancelados = totalCancelados,
+                PorcentajeCancelacion = porcentajeCancelacion,
+                IngresosPerdidos = ingresosPerdidos,
+                PrincipalMotivo = principalMotivo,
+                DetalleMotivos = detalleMotivos
+            };
         }
-        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7, int? idSucursal = null)
+
+        public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
         {
-            // Regla de Negocio: Solo pedidos con estado 'Entregado'
+            // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
             const int ID_ESTADO_ENTREGADO = 7;
-            
+
             // Calcular la fecha desde la cual filtrar
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
 
             var query = _context.Pedidos
-                .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo entregados
+                .Include(p => p.Detalles)
+                .ThenInclude(d => d.Producto)
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo pedidos entregados
                 .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
 
             // Agregar filtro de sucursal si viene especificado
@@ -126,99 +145,31 @@ namespace Back.Repositories
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            return await query
-                .Include(p => p.Cliente)
-                .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre })
-                .Select(g => new RankingClienteDTO
+            // Obtener todos los pedidos relevantes
+            var pedidos = await query.ToListAsync();
+
+            // Procesar: agrupar detalles por producto e calcular estadísticas
+            var totalUnidades = pedidos
+                .SelectMany(p => p.Detalles)
+                .Sum(d => d.Cantidad);
+
+            var topProductos = pedidos
+                .SelectMany(p => p.Detalles)
+                .GroupBy(d => new { d.IDProducto, d.Producto.NombreProducto })
+                .Select(g => new TopProductosDTO
                 {
-                    NombreCliente = g.Key.Nombre,
-                    CantidadPedidos = g.Count(),
-                    GastoTotal = g.Sum(p => p.Total),
-                    TicketPromedio = g.Count() > 0 ? g.Sum(p => p.Total) / g.Count() : 0,
-                    UltimaCompra = g.Max(p => p.Fecha)
+                    IDProducto = g.Key.IDProducto,
+                    NombreProducto = g.Key.NombreProducto,
+                    UnidadesVendidas = g.Sum(d => d.Cantidad),
+                    Porcentaje = totalUnidades > 0 ? (g.Sum(d => d.Cantidad) * 100m) / totalUnidades : 0,
+                    PrecioPromedio = g.Count() > 0 ? g.Average(d => d.PrecioUnitario) : 0
                 })
-                .OrderByDescending(x => x.CantidadPedidos) // Orden descendente por volumen
-                .Take(10) // Top 10 según Metadata
-                .ToListAsync();
+                .OrderByDescending(p => p.UnidadesVendidas)
+                .Take(10)
+                .ToList();
+
+            return topProductos;
         }
-
-       public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null)
-       {
-           // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
-           const int ID_ESTADO_ENTREGADO = 7;
-           
-           // Calcular la fecha desde la cual filtrar
-           DateTime fechaDesde = DateTime.Now.AddDays(-dias);
-
-           var query = _context.Pedidos
-               .Include(p => p.Cliente)
-               .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo entregados
-               .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
-
-           // Agregar filtro de sucursal si viene especificado
-           if (idSucursal.HasValue && idSucursal.Value > 0)
-           {
-               query = query.Where(p => p.IDSucursal == idSucursal.Value);
-           }
-
-           return await query
-               .GroupBy(p => new { p.IDCliente, p.Cliente.Nombre }) // Agrupamos por ID y Nombre
-               .Select(grupo => new ClienteFacturacionDTO
-               {
-                   NombreCliente = grupo.Key.Nombre,
-                   TotalFacturado = grupo.Sum(p => p.Total), 
-                   CantidadPedidos = grupo.Count()
-               })
-               .OrderByDescending(c => c.TotalFacturado) 
-               .Take(10) 
-               .ToListAsync();
-       }
-
-       public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
-       {
-           // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
-           const int ID_ESTADO_ENTREGADO = 7;
-           
-           // Calcular la fecha desde la cual filtrar
-           DateTime fechaDesde = DateTime.Now.AddDays(-dias);
-
-           var query = _context.Pedidos
-               .Include(p => p.Detalles)
-               .ThenInclude(d => d.Producto)
-               .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo pedidos entregados
-               .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
-
-           // Agregar filtro de sucursal si viene especificado
-           if (idSucursal.HasValue && idSucursal.Value > 0)
-           {
-               query = query.Where(p => p.IDSucursal == idSucursal.Value);
-           }
-
-           // Obtener todos los pedidos relevantes
-           var pedidos = await query.ToListAsync();
-
-           // Procesar: agrupar detalles por producto e calcular estadísticas
-           var totalUnidades = pedidos
-               .SelectMany(p => p.Detalles)
-               .Sum(d => d.Cantidad);
-
-           var topProductos = pedidos
-               .SelectMany(p => p.Detalles)
-               .GroupBy(d => new { d.IDProducto, d.Producto.NombreProducto })
-               .Select(g => new TopProductosDTO
-               {
-                   IDProducto = g.Key.IDProducto,
-                   NombreProducto = g.Key.NombreProducto,
-                   UnidadesVendidas = g.Sum(d => d.Cantidad),
-                   Porcentaje = totalUnidades > 0 ? (g.Sum(d => d.Cantidad) * 100m) / totalUnidades : 0,
-                   PrecioPromedio = g.Count() > 0 ? g.Average(d => d.PrecioUnitario) : 0
-               })
-               .OrderByDescending(p => p.UnidadesVendidas)
-               .Take(10)
-               .ToList();
-
-           return topProductos;
-       }
 
         public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null)
         {
@@ -253,12 +204,12 @@ namespace Back.Repositories
 
             foreach (var pedido in pedidos)
             {
-                var historial = pedido.HistorialDeEstados == null 
-                    ? new List<HistorialDeEstados>() 
+                var historial = pedido.HistorialDeEstados == null
+                    ? new List<HistorialDeEstados>()
                     : pedido.HistorialDeEstados.OrderBy(h => h.fecha_hora_inicio).ToList();
 
                 Console.WriteLine($"[REPO DEBUG] Pedido #{pedido.IDPedido} (Estado actual: {pedido.IDEstadoDePedido}) - Historial entries: {historial.Count}");
-                
+
                 if (historial.Count > 0)
                 {
                     foreach (var h in historial)
@@ -313,8 +264,8 @@ namespace Back.Repositories
                 }
 
                 // Determinar el estado final
-                var estadoFinal = historial.Count > 0 
-                    ? (historial.Last().EstadoDePedido?.NombreEstado ?? "Desconocido") 
+                var estadoFinal = historial.Count > 0
+                    ? (historial.Last().EstadoDePedido?.NombreEstado ?? "Desconocido")
                     : "Sin historial";
 
                 // Agregar a detalles
@@ -379,7 +330,3 @@ namespace Back.Repositories
                 Detalles = detalles.OrderByDescending(d => d.Despacho).ToList()
             };
         }
-        
-    }
-    
-}

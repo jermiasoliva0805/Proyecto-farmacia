@@ -75,6 +75,37 @@ export interface ClienteFacturacionDTO {
     ticketPromedio: number;
 }
 
+export interface DetalleCancelacionDTO {
+    motivoCancelacion: string;
+    cantidad: number;
+    porcentajeDelTotal: number;
+}
+
+export interface ReportePedidosCanceladosDTO {
+    totalPedidosCancelados: number;
+    porcentajeDelTotal: number;
+    montoTotalCancelado: number;
+    detallePorMotivo: DetalleCancelacionDTO[];
+}
+
+export interface CancelacionPorMotivoDTO {
+    motivo: string;
+    cantidad: number;
+    porcentaje: number;
+    montoPerdido: number;
+}
+
+export interface ReporteCancelacionesPorMotivoDTO {
+    totalPedidos: number;
+    totalCancelados: number;
+    porcentajeCancelacion: number;
+    ingresosPerdidos: number;
+    entregasFallidas: number;
+    porcentajeEntregasFallidas: number;
+    principalMotivo: string;
+    detalleMotivos: CancelacionPorMotivoDTO[];
+}
+
 export interface TopProductosDTO {
     idProducto: number;
     nombreProducto: string;

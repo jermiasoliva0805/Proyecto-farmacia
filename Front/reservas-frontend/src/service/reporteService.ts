@@ -1,6 +1,13 @@
 import { api } from './api'; 
 // Importamos tu DTO desde el archivo donde están los otros
-import { ClienteFacturacionDTO, RankingClienteDTO, TopProductosDTO, TiemposProcesoDTO } from '../types/pedido.types';
+import {
+    ClienteFacturacionDTO,
+    RankingClienteDTO,
+    ReportePedidosCanceladosDTO,
+    ReporteCancelacionesPorMotivoDTO,
+    TopProductosDTO,
+    TiemposProcesoDTO
+} from '../types/pedido.types';
 
 export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
     try {
@@ -41,6 +48,66 @@ export const getRankingClientesFacturacion = async (periodo: string, idSucursal:
         return response.data;
     } catch (error) {
         console.error("Error al obtener ranking de facturación", error);
+        throw error;
+    }
+};
+
+export const getPedidosCancelados = async (
+    fechaDesde?: string,
+    fechaHasta?: string,
+    idSucursal: number | null = null
+): Promise<ReportePedidosCanceladosDTO> => {
+    try {
+        const params: any = {};
+        
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+        
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+        
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+        
+        const response = await api.get<ReportePedidosCanceladosDTO>('/reporte/pedidos-cancelados', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de pedidos cancelados", error);
+        throw error;
+    }
+};
+
+export const getCancelacionesPorMotivo = async (
+    fechaDesde?: string,
+    fechaHasta?: string,
+    idSucursal: number | null = null
+): Promise<ReporteCancelacionesPorMotivoDTO> => {
+    try {
+        const params: any = {};
+        
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+        
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+        
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+        
+        const response = await api.get<ReporteCancelacionesPorMotivoDTO>('/reporte/cancelaciones-por-motivo', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de cancelaciones por motivo", error);
         throw error;
     }
 };

@@ -20,7 +20,7 @@ namespace Back.Controllers
 
         [HttpGet("entregas-cadete")]
         public async Task<IActionResult> GetEntregasPorCadete(
-            [FromQuery] DateTime? fechaDesde = null, 
+            [FromQuery] DateTime? fechaDesde = null,
             [FromQuery] DateTime? fechaHasta = null,
             [FromQuery] int? idSucursal = null)
         {
@@ -38,7 +38,7 @@ namespace Back.Controllers
                 Console.WriteLine($"[CONTROLLER] Calculado hasta: {hasta}");
 
                 var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta, idSucursal);
-                
+
                 Console.WriteLine($"[CONTROLLER] Reporte devuelto: {reporte.Count} cadetes");
 
                 return Ok(reporte);
@@ -49,8 +49,6 @@ namespace Back.Controllers
                 Console.WriteLine($"[CONTROLLER] Stack: {ex.StackTrace}");
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
-
-
         }
 
         [HttpGet("ranking-clientes")]
@@ -58,12 +56,12 @@ namespace Back.Controllers
             [FromQuery] int dias = 7,
             [FromQuery] int? idSucursal = null)
         {
-            try 
+            try
             {
                 var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync(dias, idSucursal);
                 return Ok(reporte);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return BadRequest(new { message = "Error en ranking", error = ex.Message });
             }
@@ -78,7 +76,7 @@ namespace Back.Controllers
             {
                 // Llamamos al método que ahora acepta filtros
                 var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync(dias, idSucursal);
-                
+
                 // Si no hay datos, devolvemos una lista vacía pero con status 200
                 if (reporte == null)
                 {
@@ -94,6 +92,44 @@ namespace Back.Controllers
             }
         }
 
+        // ====== TU RAMA (ReportesNuevos2) ======
+
+        [HttpGet("pedidos-cancelados")]
+        public async Task<ActionResult<ReportePedidosCanceladosDTO>> GetPedidosCancelados(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de pedidos cancelados", error = ex.Message });
+            }
+        }
+
+        [HttpGet("cancelaciones-por-motivo")]
+        public async Task<ActionResult<ReporteCancelacionesPorMotivoDTO>> GetCancelacionesPorMotivo(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de cancelaciones por motivo", error = ex.Message });
+            }
+        }
+
+        // ====== MAIN ======
+
         [HttpGet("top-productos")]
         public async Task<ActionResult<List<TopProductosDTO>>> GetTop10Productos(
             [FromQuery] int dias = 7,
@@ -102,7 +138,7 @@ namespace Back.Controllers
             try
             {
                 var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias, idSucursal);
-                
+
                 if (reporte == null)
                 {
                     return Ok(new List<TopProductosDTO>());

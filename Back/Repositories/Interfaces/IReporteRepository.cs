@@ -10,16 +10,32 @@ namespace Back.Repositories.Interfaces
         /// en un rango de fechas determinado.
         /// </summary>
         Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
-            DateTime fechaDesde, 
+            DateTime fechaDesde,
             DateTime fechaHasta,
             int? idSucursal = null);
 
         Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7, int? idSucursal = null);
-        
+
         /// <summary>
         /// Obtiene ranking de facturación con filtros opcionales de días y sucursal
         /// </summary>
         Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null);
+
+        /// <summary>
+        /// Obtiene el reporte de cantidad de pedidos cancelados (RF6.2)
+        /// </summary>
+        Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
+
+        /// <summary>
+        /// Obtiene el reporte de pedidos cancelados por motivos (RF6.11)
+        /// </summary>
+        Task<ReporteCancelacionesPorMotivoDTO> GetReporteCancelacionesPorMotivoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
 
         /// <summary>
         /// Obtiene el top 10 de productos más vendidos
@@ -31,6 +47,4 @@ namespace Back.Repositories.Interfaces
         /// </summary>
         Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null);
     }
-
-    
 }
