@@ -174,6 +174,52 @@ namespace Back.Repositories
                .ToListAsync();
        }
 
+       public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
+       {
+           // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
+           const int ID_ESTADO_ENTREGADO = 7;
+           
+           // Calcular la fecha desde la cual filtrar
+           DateTime fechaDesde = DateTime.Now.AddDays(-dias);
+
+           var query = _context.Pedidos
+               .Include(p => p.Detalles)
+               .ThenInclude(d => d.Producto)
+               .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo pedidos entregados
+               .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
+
+           // Agregar filtro de sucursal si viene especificado
+           if (idSucursal.HasValue && idSucursal.Value > 0)
+           {
+               query = query.Where(p => p.IDSucursal == idSucursal.Value);
+           }
+
+           // Obtener todos los pedidos relevantes
+           var pedidos = await query.ToListAsync();
+
+           // Procesar: agrupar detalles por producto e calcular estadísticas
+           var totalUnidades = pedidos
+               .SelectMany(p => p.Detalles)
+               .Sum(d => d.Cantidad);
+
+           var topProductos = pedidos
+               .SelectMany(p => p.Detalles)
+               .GroupBy(d => new { d.IDProducto, d.Producto.NombreProducto })
+               .Select(g => new TopProductosDTO
+               {
+                   IDProducto = g.Key.IDProducto,
+                   NombreProducto = g.Key.NombreProducto,
+                   UnidadesVendidas = g.Sum(d => d.Cantidad),
+                   Porcentaje = totalUnidades > 0 ? (g.Sum(d => d.Cantidad) * 100m) / totalUnidades : 0,
+                   PrecioPromedio = g.Count() > 0 ? g.Average(d => d.PrecioUnitario) : 0
+               })
+               .OrderByDescending(p => p.UnidadesVendidas)
+               .Take(10)
+               .ToList();
+
+           return topProductos;
+       }
+
         public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null)
         {
             // Calcular la fecha desde la cual filtrar

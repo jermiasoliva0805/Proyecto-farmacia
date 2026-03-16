@@ -3,7 +3,8 @@ import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
 import { RankingClientes } from './RankingClientes';
 import { ReporteFacturacion } from './ReporteFacturacion';
-import { ReporteTiemposProceso } from './ReporteTiemposProceso'; 
+import { ReporteProductos } from './ReporteProductos';
+import { ReporteTiemposProceso } from './ReporteTiemposProceso';
 
 export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
@@ -51,6 +52,15 @@ export const PanelReportes = () => {
                 </button>
 
                 <button
+                    onClick={() => setTabActiva('productos')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'productos' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Top Productos
+                </button>
+
+                <button
                     onClick={() => setTabActiva('tiempos')}
                     className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
                         tabActiva === 'tiempos' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
@@ -66,6 +76,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'operarios' && <ReporteOperarios />}
                 {tabActiva === 'ranking' && <RankingClientes />}
                 {tabActiva === 'facturacion' && <ReporteFacturacion />}
+                {tabActiva === 'productos' && <ReporteProductos />}
                 {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
             </div>
         </div>

@@ -75,6 +75,14 @@ export interface ClienteFacturacionDTO {
     ticketPromedio: number;
 }
 
+export interface TopProductosDTO {
+    idProducto: number;
+    nombreProducto: string;
+    unidadesVendidas: number;
+    porcentaje: number;
+    precioPromedio: number;
+}
+
 export interface FaseProcesoDTO {
     nombre: string;
     tiempoPromedio: number;
