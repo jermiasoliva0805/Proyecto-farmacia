@@ -183,6 +183,11 @@ namespace Back.Services
             {
                 pedido.FechaInicioArmado = DateTime.Now;
             }
+            // ✅ CU25: Cuando operario presiona "Comenzar armado" (2→2), guardar FechaInicioArmado si no existe
+            else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2 && !pedido.FechaInicioArmado.HasValue)
+            {
+                pedido.FechaInicioArmado = DateTime.Now;
+            }
             // ✅ CU25: Cuando operario finaliza armado (2→4), guardar FechaFinArmado
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
             {
@@ -200,18 +205,21 @@ namespace Back.Services
                 pedido.IntentosEntregaFallida++;
                 intentoEntrega = pedido.IntentosEntregaFallida;
 
+                // ✅ SIEMPRE guardar el estado 8 en el historial (para que se vea la entrega fallida)
+                estadoFinal = 8;
+                
                 // Si supera 3 intentos, cambiar a estado 9 (Cancelado automáticamente)
                 if (pedido.IntentosEntregaFallida >= 3)
                 {
-                    estadoFinal = 9;
                     pedido.IDEstadoDePedido = 9;
                     pedido.EstadoActual = "Cancelado automáticamente";
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
                 }
                 else
                 {
-                    pedido.IDEstadoDePedido = 8;
-                    pedido.EstadoActual = "Entrega fallida";
+                    // ✅ NUEVO: El historial registra estado 8, pero el pedido vuelve a estado 5 para reintento
+                    pedido.IDEstadoDePedido = 5;
+                    pedido.EstadoActual = "Despachando";
                 }
             }
             else

@@ -7,7 +7,7 @@ namespace Back.Repositories.Interfaces
 {
     public interface IOrderRepository : IGenericRepository<Pedido>
     {
-        Task<int> CreateOrderAsync(Pedido pedido);
+        Task<int> CreateOrderAsync(Pedido pedido, int idUsuario);
         Task<Pedido> GetOrderWithDetailsAsync(int id);
 
         // Lista de pedidos por estado (resumidos)

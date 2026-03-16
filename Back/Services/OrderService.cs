@@ -61,19 +61,8 @@ namespace Back.Services
                 pedido.DireccionEntrega = orderDto.Direccion;
             }
 
-            // Lógica del Mandato: Registro inicial en el historial para trazabilidad
-            var historialInicial = new HistorialDeEstados
-            {
-                IDEstadoDePedido = 1, // "Sin preparar"
-                fecha_hora_inicio = DateTime.Now,
-                IDUsuario = orderDto.IDUsuario,
-                Observaciones = "Pedido recibido e ingresado al sistema."
-            };
-
-            pedido.HistorialDeEstados.Add(historialInicial);
-
-            // El repo maneja la transacción y el guardado de detalles (RF17)
-            return await _orderRepository.CreateOrderAsync(pedido);
+            // El repo maneja el registro en el historial (RF17)
+            return await _orderRepository.CreateOrderAsync(pedido, orderDto.IDUsuario);
         }
 
         public async Task<OrderTrackingDTO> GetOrderTrackingAsync(int id)

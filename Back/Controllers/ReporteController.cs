@@ -116,5 +116,20 @@ namespace Back.Controllers
             }
         }
 
+        [HttpGet("tiempos-proceso")]
+        public async Task<ActionResult<TiemposProcesoDTO>> GetReporteTiemposProceso(
+            [FromQuery] int dias = 7,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteTiemposProcesoAsync(dias, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de tiempos", error = ex.Message });
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 using Back.Data;
 using Back.DTOs;
+using Back.Models;
 using Back.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_farmacia.DTOs;
@@ -218,6 +219,166 @@ namespace Back.Repositories
 
            return topProductos;
        }
+
+        public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null)
+        {
+            // Calcular la fecha desde la cual filtrar
+            DateTime fechaDesde = DateTime.Now.AddDays(-dias);
+
+            // Obtener todos los pedidos en el rango con su historial de estados y relaciones
+            var query = _context.Pedidos
+                .Include(p => p.HistorialDeEstados)
+                    .ThenInclude(h => h.EstadoDePedido)
+                .Where(p => p.Fecha >= fechaDesde);
+
+            // Agregar filtro de sucursal si viene especificado
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var pedidos = await query.ToListAsync();
+
+            Console.WriteLine($"[REPO DEBUG] TiemposProceso - Total pedidos cargados: {pedidos.Count}");
+
+            // Calcular tiempos por fase para cada pedido
+            var detalles = new List<DetalleTiempoProcesoDTO>();
+            var tiemposPorFase = new Dictionary<string, List<double>>
+            {
+                { "Espera", new List<double>() },
+                { "Preparación", new List<double>() },
+                { "Despacho", new List<double>() },
+                { "Viaje", new List<double>() }
+            };
+
+            foreach (var pedido in pedidos)
+            {
+                var historial = pedido.HistorialDeEstados == null 
+                    ? new List<HistorialDeEstados>() 
+                    : pedido.HistorialDeEstados.OrderBy(h => h.fecha_hora_inicio).ToList();
+
+                Console.WriteLine($"[REPO DEBUG] Pedido #{pedido.IDPedido} (Estado actual: {pedido.IDEstadoDePedido}) - Historial entries: {historial.Count}");
+                
+                if (historial.Count > 0)
+                {
+                    foreach (var h in historial)
+                    {
+                        Console.WriteLine($"  → Estado ID: {h.IDEstadoDePedido}, Nombre: {h.EstadoDePedido?.NombreEstado ?? "NULL"}, Fecha: {h.fecha_hora_inicio:yyyy-MM-dd HH:mm:ss}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"  ⚠️ HISTORIAL VACÍO para pedido #{pedido.IDPedido}");
+                }
+
+                // Encontrar transiciones entre estados
+                var estado1 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 1);
+                var estado2 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 2);
+                var estado4 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 4);
+                var estado6 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 6);
+                var estado7 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 7);
+
+                // Calcular tiempos de cada fase
+                double espera = 0;
+                double preparacion = 0;
+                double despacho = 0;
+                double viaje = 0;
+
+                if (estado1 != null && estado2 != null)
+                {
+                    espera = (estado2.fecha_hora_inicio - estado1.fecha_hora_inicio).TotalMinutes;
+                    tiemposPorFase["Espera"].Add(espera);
+                    Console.WriteLine($"  ✓ Espera: {espera:F2} min");
+                }
+
+                if (estado2 != null && estado4 != null)
+                {
+                    preparacion = (estado4.fecha_hora_inicio - estado2.fecha_hora_inicio).TotalMinutes;
+                    tiemposPorFase["Preparación"].Add(preparacion);
+                    Console.WriteLine($"  ✓ Preparación: {preparacion:F2} min");
+                }
+
+                if (estado4 != null && estado6 != null)
+                {
+                    despacho = (estado6.fecha_hora_inicio - estado4.fecha_hora_inicio).TotalMinutes;
+                    tiemposPorFase["Despacho"].Add(despacho);
+                    Console.WriteLine($"  ✓ Despacho: {despacho:F2} min");
+                }
+
+                if (estado6 != null && estado7 != null)
+                {
+                    viaje = (estado7.fecha_hora_inicio - estado6.fecha_hora_inicio).TotalMinutes;
+                    tiemposPorFase["Viaje"].Add(viaje);
+                    Console.WriteLine($"  ✓ Viaje: {viaje:F2} min");
+                }
+
+                // Determinar el estado final
+                var estadoFinal = historial.Count > 0 
+                    ? (historial.Last().EstadoDePedido?.NombreEstado ?? "Desconocido") 
+                    : "Sin historial";
+
+                // Agregar a detalles
+                detalles.Add(new DetalleTiempoProcesoDTO
+                {
+                    IdPedido = pedido.IDPedido,
+                    Espera = espera,
+                    Preparacion = preparacion,
+                    Despacho = despacho,
+                    Viaje = viaje,
+                    EstadoFinal = estadoFinal,
+                    EsAlertaDespacho = despacho > 60 // Alerta si despacho > 60 minutos
+                });
+            }
+
+            // Calcular promedios por fase
+            var fases = new List<FaseProcesoDTO>
+            {
+                new FaseProcesoDTO
+                {
+                    Nombre = "Espera",
+                    TiempoPromedio = tiemposPorFase["Espera"].Count > 0 ? tiemposPorFase["Espera"].Average() : 0,
+                    Color = "#6366f1" // Indigo
+                },
+                new FaseProcesoDTO
+                {
+                    Nombre = "Preparación",
+                    TiempoPromedio = tiemposPorFase["Preparación"].Count > 0 ? tiemposPorFase["Preparación"].Average() : 0,
+                    Color = "#8b5cf6" // Violet
+                },
+                new FaseProcesoDTO
+                {
+                    Nombre = "Despacho",
+                    TiempoPromedio = tiemposPorFase["Despacho"].Count > 0 ? tiemposPorFase["Despacho"].Average() : 0,
+                    Color = "#a78bfa" // Lilac
+                },
+                new FaseProcesoDTO
+                {
+                    Nombre = "Viaje",
+                    TiempoPromedio = tiemposPorFase["Viaje"].Count > 0 ? tiemposPorFase["Viaje"].Average() : 0,
+                    Color = "#c4b5fd" // Light Violet
+                }
+            };
+
+            // Determinar punto crítico (la fase con mayor tiempo promedio)
+            var puntoCritico = fases.OrderByDescending(f => f.TiempoPromedio).First();
+
+            // Calcular eficiencia de despacho (% de pedidos con despacho < 30 min)
+            var eficienciaDespacho = detalles.Count > 0
+                ? (int)Math.Round((detalles.Count(d => d.Despacho < 30 && d.Despacho > 0) * 100.0) / detalles.Count)
+                : 0;
+
+            Console.WriteLine($"[REPO DEBUG] Resumen - Total: {pedidos.Count}, Detalles: {detalles.Count}, Punto Crítico: {puntoCritico.Nombre}");
+
+            return new TiemposProcesoDTO
+            {
+                Fases = fases,
+                PuntoCritico = puntoCritico.Nombre,
+                TiempoPuntoCritico = puntoCritico.TiempoPromedio,
+                EficienciaDespacho = eficienciaDespacho,
+                TotalPedidos = pedidos.Count,
+                Detalles = detalles.OrderByDescending(d => d.Despacho).ToList()
+            };
+        }
         
     }
     

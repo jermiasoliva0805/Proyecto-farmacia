@@ -1,6 +1,6 @@
 import { api } from './api'; 
 // Importamos tu DTO desde el archivo donde están los otros
-import { ClienteFacturacionDTO, RankingClienteDTO, TopProductosDTO } from '../types/pedido.types'; 
+import { ClienteFacturacionDTO, RankingClienteDTO, TopProductosDTO, TiemposProcesoDTO } from '../types/pedido.types';
 
 export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
     try {
@@ -62,6 +62,27 @@ export const getTop10Productos = async (periodo: string, idSucursal: number | nu
         return response.data;
     } catch (error) {
         console.error("Error al obtener top 10 productos", error);
+        throw error;
+    }
+};
+
+export const getReporteTiempos = async (periodo: string, idSucursal: number | null): Promise<TiemposProcesoDTO> => {
+    try {
+        const params: any = {
+            dias: parseInt(periodo)
+        };
+        
+        // Solo agregar idSucursal si es válido
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+        
+        const response = await api.get<TiemposProcesoDTO>('/reporte/tiempos-proceso', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de tiempos:", error);
         throw error;
     }
 };
