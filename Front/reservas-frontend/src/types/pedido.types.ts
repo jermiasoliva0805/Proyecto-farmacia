@@ -74,3 +74,16 @@ export interface ClienteFacturacionDTO {
     cantidadPedidos: number;
     ticketPromedio: number;
 }
+
+export interface DetalleCancelacionDTO {
+    motivoCancelacion: string;
+    cantidad: number;
+    porcentajeDelTotal: number;
+}
+
+export interface ReportePedidosCanceladosDTO {
+    totalPedidosCancelados: number;
+    porcentajeDelTotal: number;
+    montoTotalCancelado: number;
+    detallePorMotivo: DetalleCancelacionDTO[];
+}

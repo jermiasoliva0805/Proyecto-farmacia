@@ -205,21 +205,20 @@ namespace Back.Services
                 pedido.IntentosEntregaFallida++;
                 intentoEntrega = pedido.IntentosEntregaFallida;
 
-                // ✅ SIEMPRE guardar el estado 8 en el historial (para que se vea la entrega fallida)
-                estadoFinal = 8;
-                
                 // Si supera 3 intentos, cambiar a estado 9 (Cancelado automáticamente)
                 if (pedido.IntentosEntregaFallida >= 3)
                 {
                     pedido.IDEstadoDePedido = 9;
                     pedido.EstadoActual = "Cancelado automáticamente";
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
+                    estadoFinal = 9;  // ✅ Guardar estado 9 en el historial
                 }
                 else
                 {
-                    // ✅ NUEVO: El historial registra estado 8, pero el pedido vuelve a estado 5 para reintento
+                    // ✅ NUEVO: El historial registra estado 8, el pedido vuelve a estado 5 para reintento
                     pedido.IDEstadoDePedido = 5;
                     pedido.EstadoActual = "Despachando";
+                    estadoFinal = 8;  // Guardar estado 8 en el historial
                 }
             }
             else

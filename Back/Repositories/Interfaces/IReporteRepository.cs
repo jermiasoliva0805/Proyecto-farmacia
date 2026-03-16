@@ -20,6 +20,14 @@ namespace Back.Repositories.Interfaces
         /// Obtiene ranking de facturación con filtros opcionales de días y sucursal
         /// </summary>
         Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null);
+
+        /// <summary>
+        /// Obtiene el reporte de cantidad de pedidos cancelados (RF6.2)
+        /// </summary>
+        Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
+            DateTime? fechaDesde = null, 
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
     }
 
     

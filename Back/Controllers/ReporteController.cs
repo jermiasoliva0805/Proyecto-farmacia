@@ -1,6 +1,7 @@
 using Back.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_farmacia.DTOs;
+using Back.DTOs;
 using System;
 using System.Threading.Tasks;
 
@@ -90,6 +91,23 @@ namespace Back.Controllers
             {
                 // Es importante loguear el error por si algo falla en el servidor
                 return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
+            }
+        }
+
+        [HttpGet("pedidos-cancelados")]
+        public async Task<ActionResult<ReportePedidosCanceladosDTO>> GetPedidosCancelados(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de pedidos cancelados", error = ex.Message });
             }
         }
 

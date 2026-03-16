@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
 import { RankingClientes } from './RankingClientes';
-import { ReporteFacturacion } from './ReporteFacturacion'; 
+import { ReporteFacturacion } from './ReporteFacturacion';
+import { ReporteCancelados } from './ReporteCancelados'; 
 
 export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
@@ -12,7 +13,7 @@ export const PanelReportes = () => {
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de Reportes</h1>
 
             {/* Selectores de Pestaña - Sin iconos ni emojis */}
-            <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-2xl w-fit">
+            <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-2xl w-fit flex-wrap">
                 <button
                     onClick={() => setTabActiva('entregas')}
                     className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
@@ -48,6 +49,15 @@ export const PanelReportes = () => {
                 >
                     Clientes por Facturación
                 </button>
+
+                <button
+                    onClick={() => setTabActiva('cancelados')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'cancelados' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Pedidos Cancelados
+                </button>
             </div>
 
             {/* Contenido Dinámico */}
@@ -56,6 +66,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'operarios' && <ReporteOperarios />}
                 {tabActiva === 'ranking' && <RankingClientes />}
                 {tabActiva === 'facturacion' && <ReporteFacturacion />}
+                {tabActiva === 'cancelados' && <ReporteCancelados />}
             </div>
         </div>
     );

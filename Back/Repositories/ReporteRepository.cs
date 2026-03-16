@@ -172,6 +172,68 @@ namespace Back.Repositories
                .Take(10) 
                .ToListAsync();
        }
+
+        public async Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
+            DateTime? fechaDesde = null, 
+            DateTime? fechaHasta = null,
+            int? idSucursal = null)
+        {
+            const int ID_ESTADO_CANCELADO = 9;
+
+            // Establecer fechas por defecto si no se proporcionan
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+            var hasta = fechaHasta ?? DateTime.Now;
+
+            // Obtener todos los pedidos en el rango (usaremos esto para calcular el porcentaje)
+            var queryTodosPedidos = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+            
+            // Obtener pedidos cancelados
+            var queryCancelados = _context.Pedidos
+                .Include(p => p.MotivoCancelacion)
+                .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Aplicar filtro de sucursal si es necesario
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
+                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            // Contar totales
+            var totalPedidos = await queryTodosPedidos.CountAsync();
+            var pedidosCancelados = await queryCancelados.ToListAsync();
+            var totalCancelados = pedidosCancelados.Count;
+
+            // Calcular porcentaje
+            var porcentaje = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
+
+            // Suma del monto total cancelado
+            var montoTotal = pedidosCancelados.Sum(p => p.Total);
+
+            // Agrupar por motivo de cancelación
+            var detallesPorMotivo = pedidosCancelados
+                .GroupBy(p => p.MotivoCancelacion?.Nombre ?? "Sin especificar")
+                .Select(g => new DetalleCancelacionDTO
+                {
+                    MotivoCancelacion = g.Key,
+                    Cantidad = g.Count(),
+                    PorcentajeDelTotal = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m
+                })
+                .OrderByDescending(d => d.Cantidad)
+                .ToList();
+
+            return new ReportePedidosCanceladosDTO
+            {
+                TotalPedidosCancelados = totalCancelados,
+                PorcentajeDelTotal = porcentaje,
+                MontoTotalCancelado = montoTotal,
+                DetallePorMotivo = detallesPorMotivo
+            };
+        }
         
     }
     
