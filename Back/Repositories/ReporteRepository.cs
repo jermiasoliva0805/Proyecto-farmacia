@@ -29,6 +29,7 @@ namespace Back.Repositories
 
             var query = _context.Pedidos
                 .Include(p => p.Usuario)
+                .Where(p => p.Usuario.Rol == "Cadete") // Filtrar solo cadetes
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
                 .AsQueryable();
 
@@ -250,8 +251,8 @@ namespace Back.Repositories
 
         public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
         {
-            // Regla de Negocio: Solo pedidos con estado 'Entregado' (ID 7)
-            const int ID_ESTADO_ENTREGADO = 7;
+            // Regla de Negocio: Contar todos los productos de pedidos NO cancelados
+            const int ID_ESTADO_CANCELADO = 9;
             
             // Calcular la fecha desde la cual filtrar
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
@@ -259,7 +260,7 @@ namespace Back.Repositories
             var query = _context.Pedidos
                 .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
-                .Where(p => p.IDEstadoDePedido == ID_ESTADO_ENTREGADO) // Solo pedidos entregados
+                .Where(p => p.IDEstadoDePedido != ID_ESTADO_CANCELADO) // Excluir solo cancelados
                 .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
 
             // Agregar filtro de sucursal si viene especificado
