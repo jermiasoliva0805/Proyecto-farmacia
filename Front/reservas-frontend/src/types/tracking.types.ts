@@ -4,6 +4,8 @@ export interface TrackingHistoryItemDTO {
     responsable: string;
     motivoCancelacion?: string;
     observaciones?: string;
+    IntentosEntregaFallida?: number; // Número de intento fallido (1, 2, 3)
+    IntentosMax?: number; // Máximo de intentos permitidos
 }
 
 export interface OrderTrackingDTO {

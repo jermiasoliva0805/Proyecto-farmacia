@@ -42,11 +42,12 @@ namespace Back.Services
             string supportEmail = null,
             string brandCode = "FGP",
             int? intentoEntrega = null,
-            int intentosMax = 3)
+            int intentosMax = 3,
+            string trackingUrl = null)
         {
             var html = _templates.BuildOrderStatusHtml(
                 brandName, nombreCliente, estadoDescripcion, numeroPedido, idEstado,
-                supportEmail, brandCode, intentoEntrega, intentosMax);
+                supportEmail, brandCode, intentoEntrega, intentosMax, trackingUrl);
 
             var mail = new MailMessage
             {
@@ -58,6 +59,47 @@ namespace Back.Services
             mail.To.Add(destinatario);
 
             await Send(mail);
+        }
+
+        /// <summary>
+        /// Envía el email de confirmación de pedido con tracking link
+        /// </summary>
+        public async Task EnviarCorreoTrackingAsync(
+            string destinatario,
+            string nombreCliente,
+            int numeroPedido,
+            string trackingUrl,
+            string brandName = "Farmacia General Paz",
+            string supportEmail = "soporte@farmacia.com",
+            string brandCode = "FGP")
+        {
+            try
+            {
+                var html = _templates.BuildOrderTrackingWelcomeHtml(
+                    brandName,
+                    nombreCliente,
+                    numeroPedido,
+                    trackingUrl,
+                    brandCode,
+                    supportEmail);
+
+                var mail = new MailMessage
+                {
+                    From = new MailAddress(_smtpSettings.User, brandName),
+                    Subject = $"Pedido Confirmado #{numeroPedido:D6} - Sigue tu Compra",
+                    Body = html,
+                    IsBodyHtml = true
+                };
+                mail.To.Add(destinatario);
+
+                await Send(mail);
+                Console.WriteLine($"[EmailSender] Email de tracking enviado exitosamente a {destinatario} para el pedido #{numeroPedido}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EmailSender] Error al enviar email de tracking: {ex.Message}");
+                // No lanzar excepción para que el pedido se cree igualmente
+            }
         }
 
         private async Task Send(MailMessage mail)

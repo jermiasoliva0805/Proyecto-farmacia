@@ -13,17 +13,35 @@ namespace Back.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IMapper _mapper;
         private readonly EmailSender _emailSender;
+        private readonly IConfiguration _configuration;
 
         public OrderStatusService(
             IOrderStatusRepository repository,
             IOrderRepository orderRepository,
             IMapper mapper,
-            EmailSender emailSender)
+            EmailSender emailSender,
+            IConfiguration configuration)
         {
             _repository = repository;
             _orderRepository = orderRepository;
             _mapper = mapper;
             _emailSender = emailSender;
+            _configuration = configuration;
+        }
+
+        /// <summary>
+        /// Genera la URL de tracking para un pedido
+        /// </summary>
+        private string GenerarTrackingUrl(int pedidoId)
+        {
+            var baseUrl = _configuration["AppSettings:FrontendUrl"]
+                ?? Environment.GetEnvironmentVariable("FRONTEND_URL")
+                ?? "https://midominio.com";
+
+            if (baseUrl.EndsWith("/"))
+                baseUrl = baseUrl.TrimEnd('/');
+
+            return $"{baseUrl}/tracking/{pedidoId}";
         }
 
         // 1. ASIGNAR OPERARIO (ADMIN) - Pasa de Sin preparar (1) a Preparar pedido (2)
@@ -61,6 +79,7 @@ namespace Back.Services
                 {
                     try
                     {
+                        var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -69,7 +88,8 @@ namespace Back.Services
                             2,                                  // Preparar pedido
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
-                            "FGP"
+                            "FGP",
+                            trackingUrl: trackingUrl
                         );
                     }
                     catch (Exception ex)
@@ -118,6 +138,7 @@ namespace Back.Services
                 {
                     try
                     {
+                        var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -126,7 +147,8 @@ namespace Back.Services
                             5,                                  // Despachando
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
-                            "FGP"
+                            "FGP",
+                            trackingUrl: trackingUrl
                         );
                     }
                     catch (Exception ex)
@@ -236,7 +258,9 @@ namespace Back.Services
                 fecha_hora_inicio = DateTime.Now,
                 Observaciones = changeStatusDto.IDNuevoEstado == 8
                                 ? changeStatusDto.MotivoCancelacion
-                                : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete.")
+                                : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete."),
+                IntentosEntregaFallida = (estadoFinal == 8 || estadoFinal == 9) ? pedido.IntentosEntregaFallida : 0,
+                IntentosMax = 3
             };
 
             // Pasar el pedido actualizado al repositorio para que guarde todos los cambios
@@ -257,6 +281,7 @@ namespace Back.Services
                 {
                     try
                     {
+                        var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -267,7 +292,8 @@ namespace Back.Services
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
                             intentoEntrega: intentoEntrega, // Pasar el número de intento si es entrega fallida
-                            intentosMax: 3
+                            intentosMax: 3,
+                            trackingUrl: trackingUrl
                         );
                         Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
@@ -324,6 +350,7 @@ namespace Back.Services
                 {
                     try
                     {
+                        var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -332,7 +359,8 @@ namespace Back.Services
                             10,                                 // Cancelado
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
-                            "FGP"
+                            "FGP",
+                            trackingUrl: trackingUrl
                         );
                     }
                     catch (Exception ex)
@@ -380,6 +408,7 @@ namespace Back.Services
                 {
                     try
                     {
+                        var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -388,7 +417,8 @@ namespace Back.Services
                             10,                                 // Cancelado
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
-                            "FGP"
+                            "FGP",
+                            trackingUrl: trackingUrl
                         );
                     }
                     catch (Exception ex)
