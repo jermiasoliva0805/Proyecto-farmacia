@@ -58,8 +58,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                             </div>
                             
                             <div className="hidden sm:block text-right mr-2">
-                                <p className="font-medium text-sm leading-none">{user?.nombreCompleto || 'Administrador'}</p>
-                                <p className="text-[11px] text-blue-200 mt-0.5">{user?.rol || 'Administrador'}</p>
+                                <p className="font-medium text-sm leading-none">{user?.nombreCompleto || 'Encargado'}</p>
+                                <p className="text-[11px] text-blue-200 mt-0.5">{user?.rol || 'Encargado'}</p>
                             </div>
 
                             <button

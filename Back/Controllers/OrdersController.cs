@@ -42,7 +42,7 @@ namespace Back.Controllers
         /// <summary>
         /// Crea un nuevo pedido con sus detalles
         /// </summary>
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Encargado")]
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDTO orderDto)
         {
@@ -99,10 +99,10 @@ namespace Back.Controllers
         }
 
         // ==========================================
-        // SECCIÓN ADMINISTRADOR: CONSULTAS FILTRADAS
+        // SECCIÓN ENCARGADO: CONSULTAS FILTRADAS
         // ==========================================
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Encargado")]
         [HttpGet("pendientes-operario")]
         public async Task<IActionResult> GetPendientesOperario()
         {
@@ -113,7 +113,7 @@ namespace Back.Controllers
             return Ok(pedidos);
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Encargado")]
         [HttpGet("pendientes-cadete")]
         public async Task<IActionResult> GetPendientesCadete()
         {
@@ -125,7 +125,7 @@ namespace Back.Controllers
         }
 
         // ==========================================
-        // SECCIÓN ADMINISTRADOR: ASIGNACIÓN
+        // SECCIÓN ENCARGADO: ASIGNACIÓN
         // ==========================================
 
         [Authorize]

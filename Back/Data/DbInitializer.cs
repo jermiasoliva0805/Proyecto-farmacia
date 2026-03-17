@@ -77,7 +77,7 @@ namespace Back.Data
             Console.WriteLine($"✅ {listaProductos.Count} productos cargados exitosamente.");
 
             // 5. USUARIOS
-            var userAdmin = new Usuario { Nombre = "Admin", Apellido = "Sistema", UsuarioNombre = "admin", Contraseña = "123", Rol = "Administrador", IDSucursal = suc.IDSucursal, Mail= "admin@farmacia.com" };
+            var userAdmin = new Usuario { Nombre = "Encargado", Apellido = "Sistema", UsuarioNombre = "encargado", Contraseña = "123", Rol = "Encargado", IDSucursal = suc.IDSucursal, Mail= "admin@farmacia.com" };
             var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "anaLop", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
             var opLuis = new Usuario { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "luis@test.com" };
             var opMarta = new Usuario { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "marta@test.com" };

@@ -172,7 +172,7 @@ export const DashboardAdmin: React.FC = () => {
                 {/* Filtros */}
                 <div className="bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
                     <OrderFilters 
-                        userRole="Administrador" 
+                        userRole="Encargado" 
                         onFilterChange={(filtros) => loadDashboardData(filtros)} 
                     />
                 </div>

@@ -8,7 +8,7 @@ export interface UserDTO {
     usuario: string;
     nombreCompleto: string;
     email: string;
-    rol: 'Administrador' | 'Operario' | 'Cadete';
+    rol: 'Encargado' | 'Operario' | 'Cadete';
     nombreSucursal: string;
 }
 
