@@ -4,7 +4,7 @@ import { UserDTO } from '../types/auth.types';
 import { Plus, Pencil, Trash2, UserCircle } from 'lucide-react';
 
 const ROLE_THEMES: Record<string, any> = {
-    'Administrador': {
+    'Encargado': {
         bgBadge: 'bg-blue-100',
         textMain: 'text-blue-700',
         border: 'border-blue-200',
@@ -35,7 +35,7 @@ const UsuariosPage = () => {
         apellido: '',
         usuarioNombre: '',
         contraseña: '',
-        rol: 'Administrador',
+        rol: 'Encargado',
         mail: '',
         idSucursal: 1
     });
@@ -207,7 +207,7 @@ const UsuariosPage = () => {
             apellido: '',
             usuarioNombre: '',
             contraseña: '',
-            rol: 'Administrador',
+            rol: 'Encargado',
             mail: '',
             idSucursal: 1
         });
@@ -260,7 +260,7 @@ const UsuariosPage = () => {
             setIsModalOpen(false);
             await fetchUsuarios();
             // Limpiamos el formulario
-            setFormData({ nombre: '', apellido: '', usuarioNombre: '', contraseña: '', rol: 'Administrador', mail: '', idSucursal: 1 });
+            setFormData({ nombre: '', apellido: '', usuarioNombre: '', contraseña: '', rol: 'Encargado', mail: '', idSucursal: 1 });
             setEditingId(null);
             setErrors({});
         } catch (error: any) {
@@ -314,7 +314,7 @@ const UsuariosPage = () => {
                         {loading ? (
                             <tr><td colSpan={5} className="text-center py-10 text-gray-400">Cargando personal...</td></tr>
                         ) : usuarios.map((user) => {
-                            const theme = ROLE_THEMES[user.rol] || ROLE_THEMES['Administrador'];
+                            const theme = ROLE_THEMES[user.rol] || ROLE_THEMES['Encargado'];
                             return (
                                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
@@ -441,7 +441,7 @@ const UsuariosPage = () => {
                                     onChange={(e) => setFormData({...formData, rol: e.target.value})}
                                     className={`w-full p-2 border rounded-lg outline-none transition-colors ${ROLE_THEMES[formData.rol].border}`}
                                 >
-                                    <option value="Administrador">Administrador</option>
+                                    <option value="Encargado">Encargado</option>
                                     <option value="Operario">Operario</option>
                                     <option value="Cadete">Cadete</option>
                                 </select>

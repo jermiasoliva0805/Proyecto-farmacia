@@ -6,8 +6,8 @@ import { User, Lock, Loader2, ChevronRight, ArrowLeft } from 'lucide-react';
 // CONFIGURACIÓN VISUAL Y LÓGICA DE LOS ROLES
 const ROLES_CONFIG = [
     { 
-        value: 'Administrador', 
-        label: 'Administrador', 
+        value: 'Encargado', 
+        label: 'Encargado', 
         // Estilos visuales (Tema Azul)
         colorTheme: {
             border: 'border-blue-200',
@@ -92,7 +92,7 @@ export const Login: React.FC = () => {
             localStorage.setItem('farmacia_role', selectedRole.value);
 
             switch (selectedRole.value) {
-                case 'Administrador':
+                case 'Encargado':
                     navigate('/dashboard/admin');
                     break;
                 case 'Operario':

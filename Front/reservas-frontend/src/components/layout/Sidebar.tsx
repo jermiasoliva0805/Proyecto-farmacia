@@ -22,13 +22,13 @@ interface MenuItem {
     label: string;
 }
 
-type UserRole = 'Administrador' | 'Operario' | 'Cadete';
+type UserRole = 'Encargado' | 'Operario' | 'Cadete';
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     const { user } = useAuth();
 
     const menuItems: Record<UserRole, MenuItem[]> = {
-        Administrador: [
+        Encargado: [
             { path: '/dashboard/admin', icon: LayoutDashboard, label: 'Dashboard' },
             { path: '/pedidos', icon: Package, label: 'Gestión de Pedidos' },
             { path: '/asignar-operario', icon: Users, label: 'Asignar Operarios' },
@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         ],
     };
 
-    const userRole = (user?.rol as UserRole) || 'Administrador';
+    const userRole = (user?.rol as UserRole) || 'Encargado';
     const currentMenu = menuItems[userRole] || [];
 
     const visibilityClass = isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0';

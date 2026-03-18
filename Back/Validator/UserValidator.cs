@@ -24,10 +24,10 @@ namespace Back.Validators
                 .EmailAddress().WithMessage("El formato del correo electrónico no es válido.");
 
             // Validación del Rol
-            // Ref: RF11/RF12 - Especialización de roles (Admin, Operario, Cadete)
+            // Ref: RF11/RF12 - Especialización de roles (Encargado, Operario, Cadete)
             RuleFor(x => x.Rol)
                 .NotEmpty().WithMessage("Debe asignar un rol al usuario.")
-                .Must(rol => rol == "Administrador" || rol == "Operario" || rol == "Cadete")
+                .Must(rol => rol == "Encargado" || rol == "Operario" || rol == "Cadete")
                 .WithMessage("El rol asignado no es válido para el sistema de la farmacia.");
 
             // Validación de la Sucursal

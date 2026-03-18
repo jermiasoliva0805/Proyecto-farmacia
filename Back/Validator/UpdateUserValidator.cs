@@ -31,7 +31,7 @@ namespace Back.Validators
                 .When(x => !string.IsNullOrEmpty(x.Contraseña));
 
             RuleFor(x => x.Rol)
-                .Must(rol => rol == "Administrador" || rol == "Operario" || rol == "Cadete")
+                .Must(rol => rol == "Encargado" || rol == "Operario" || rol == "Cadete")
                 .WithMessage("Rol inválido.")
                 .When(x => !string.IsNullOrEmpty(x.Rol));
 

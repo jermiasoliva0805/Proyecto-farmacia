@@ -50,11 +50,11 @@ function App() {
           {/* --- RUTAS CON SIDEBAR (ADMIN, OPERARIO, CADETE) --- */}
           <Route element={<MainLayout />}>
             
-            {/* ADMINISTRADOR */}
+            {/* ENCARGADO */}
             <Route
               path="/dashboard/admin"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <DashboardAdmin />
                 </ProtectedRoute>
               }
@@ -64,7 +64,7 @@ function App() {
             <Route
               path="/pedidos/nuevo"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <OrderFormPage />
                 </ProtectedRoute>
               }
@@ -74,7 +74,7 @@ function App() {
             <Route
               path="/pedidos"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <OrderFormPage />
                 </ProtectedRoute>
               }
@@ -84,7 +84,7 @@ function App() {
             <Route
               path="/reportes"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <PanelReportes />
                 </ProtectedRoute>
               }
@@ -93,7 +93,7 @@ function App() {
             <Route
               path="/asignar-operario"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <AsignarOperarioPage />
                 </ProtectedRoute>
               }
@@ -102,7 +102,7 @@ function App() {
             <Route
               path="/asignar-cadete"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <AsignarCadetePage />
                 </ProtectedRoute>
               }
@@ -111,7 +111,7 @@ function App() {
             <Route
               path="/seguimiento"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <SeguimientoPedidos />
                 </ProtectedRoute>
               }
@@ -120,7 +120,7 @@ function App() {
             <Route
               path="/usuarios"
               element={
-                <ProtectedRoute allowedRoles={['Administrador']}>
+                <ProtectedRoute allowedRoles={['Encargado']}>
                   <UsuariosPage />
                 </ProtectedRoute>
               }

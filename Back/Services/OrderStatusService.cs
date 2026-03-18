@@ -14,19 +14,22 @@ namespace Back.Services
         private readonly IMapper _mapper;
         private readonly EmailSender _emailSender;
         private readonly IConfiguration _configuration;
+        private readonly ClientProductRelationService _clientProductRelationService;
 
         public OrderStatusService(
             IOrderStatusRepository repository,
             IOrderRepository orderRepository,
             IMapper mapper,
             EmailSender emailSender,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ClientProductRelationService clientProductRelationService)
         {
             _repository = repository;
             _orderRepository = orderRepository;
             _mapper = mapper;
             _emailSender = emailSender;
             _configuration = configuration;
+            _clientProductRelationService = clientProductRelationService;
         }
 
         /// <summary>
@@ -75,6 +78,11 @@ namespace Back.Services
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(2);
 
+                // Obtener etiqueta logística
+                var etiquetaLogistica = await _clientProductRelationService.ObtenerEtiquetaLogisticaAsync(
+                    pedido.IDCliente, 
+                    pedido.IDPedido);
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -89,7 +97,8 @@ namespace Back.Services
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
-                            trackingUrl: trackingUrl
+                            trackingUrl: trackingUrl,
+                            etiquetaLogistica: etiquetaLogistica
                         );
                     }
                     catch (Exception ex)
@@ -134,6 +143,11 @@ namespace Back.Services
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(5);
 
+                // Obtener etiqueta logística
+                var etiquetaLogistica = await _clientProductRelationService.ObtenerEtiquetaLogisticaAsync(
+                    pedido.IDCliente, 
+                    pedido.IDPedido);
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -148,7 +162,8 @@ namespace Back.Services
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
-                            trackingUrl: trackingUrl
+                            trackingUrl: trackingUrl,
+                            etiquetaLogistica: etiquetaLogistica
                         );
                     }
                     catch (Exception ex)
@@ -277,6 +292,11 @@ namespace Back.Services
                 // Usar el estado final para la descripción (puede ser 9 si fueron 3 intentos fallidos)
                 var estadoDescripcion = ObtenerDescripcionEstado(estadoFinal);
 
+                // Obtener etiqueta logística
+                var etiquetaLogistica = await _clientProductRelationService.ObtenerEtiquetaLogisticaAsync(
+                    pedido.IDCliente, 
+                    pedido.IDPedido);
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -293,7 +313,8 @@ namespace Back.Services
                             "FGP",
                             intentoEntrega: intentoEntrega, // Pasar el número de intento si es entrega fallida
                             intentosMax: 3,
-                            trackingUrl: trackingUrl
+                            trackingUrl: trackingUrl,
+                            etiquetaLogistica: etiquetaLogistica
                         );
                         Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
@@ -346,6 +367,11 @@ namespace Back.Services
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(10);
 
+                // Obtener etiqueta logística
+                var etiquetaLogistica = await _clientProductRelationService.ObtenerEtiquetaLogisticaAsync(
+                    pedido.IDCliente, 
+                    pedido.IDPedido);
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -360,7 +386,8 @@ namespace Back.Services
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
-                            trackingUrl: trackingUrl
+                            trackingUrl: trackingUrl,
+                            etiquetaLogistica: etiquetaLogistica
                         );
                     }
                     catch (Exception ex)
@@ -404,6 +431,11 @@ namespace Back.Services
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(10);
 
+                // Obtener etiqueta logística
+                var etiquetaLogistica = await _clientProductRelationService.ObtenerEtiquetaLogisticaAsync(
+                    pedido.IDCliente, 
+                    pedido.IDPedido);
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -418,7 +450,8 @@ namespace Back.Services
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
-                            trackingUrl: trackingUrl
+                            trackingUrl: trackingUrl,
+                            etiquetaLogistica: etiquetaLogistica
                         );
                     }
                     catch (Exception ex)

@@ -96,7 +96,7 @@ export const usuariosService = {
 
   // --- MÉTODOS DE FILTRADO ---
 
-  async getUsuariosByRol(rol: 'Administrador' | 'Operario' | 'Cadete'): Promise<UserDTO[]> {
+  async getUsuariosByRol(rol: 'Encargado' | 'Operario' | 'Cadete'): Promise<UserDTO[]> {
     const usuarios = await this.getAllUsuarios();
     return usuarios.filter(u => u.rol === rol);
   },

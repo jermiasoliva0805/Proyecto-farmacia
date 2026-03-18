@@ -30,8 +30,8 @@ namespace Back.Validators
             // Validación estricta del Rol (RF8)
             RuleFor(x => x.Rol)
                 .NotEmpty().WithMessage("El rol es obligatorio.")
-                .Must(rol => rol == "Administrador" || rol == "Operario" || rol == "Cadete")
-                .WithMessage("El rol debe ser: Administrador, Operario o Cadete.");
+                .Must(rol => rol == "Encargado" || rol == "Operario" || rol == "Cadete")
+                .WithMessage("El rol debe ser: Encargado, Operario o Cadete.");
 
             RuleFor(x => x.IDSucursal)
                 .GreaterThan(0).WithMessage("Debe seleccionar una sucursal válida.");

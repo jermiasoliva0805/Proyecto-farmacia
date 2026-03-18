@@ -84,5 +84,15 @@ namespace Back.Repositories
                 .ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(p => p.IDPedido == id);
         }
+
+        // Obtener todos los pedidos de un cliente con sus detalles
+        public async Task<IEnumerable<Pedido>> GetClientOrdersAsync(int clientId)
+        {
+            return await _context.Pedidos
+                .Where(p => p.IDCliente == clientId)
+                .Include(p => p.Detalles)
+                .ThenInclude(d => d.Producto)
+                .ToListAsync();
+        }
     }
 }

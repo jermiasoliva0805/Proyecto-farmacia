@@ -50,7 +50,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
   if (!isOpen || !pedido) return null;
 
   // Roles para validaciones
-  const esAdmin = user?.rol === 'Administrador';
+  const esAdmin = user?.rol === 'Encargado';
   const esOperario = user?.rol === 'Operario';
   const esCadete = user?.rol === 'Cadete';
 
