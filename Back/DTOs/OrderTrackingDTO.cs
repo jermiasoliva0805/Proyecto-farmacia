@@ -20,5 +20,7 @@ namespace Back.DTOs
         public string Responsable { get; set; } = string.Empty; // Nombre + Apellido del Usuario
         public string? MotivoCancelacion { get; set; }
         public string? Observaciones { get; set; }
+        public int IntentosEntregaFallida { get; set; } = 0; // Número de intento fallido (1, 2, 3)
+        public int IntentosMax { get; set; } = 3; // Máximo de intentos permitidos
     }
 }

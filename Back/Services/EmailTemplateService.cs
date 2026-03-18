@@ -15,8 +15,8 @@ namespace Back.Services
             string brandCode = "FGP",
             int? intentoEntrega = null,
             int intentosMax = 3,
-            string etiquetaLogistica = null
-        )
+            string trackingUrl = null,
+            string etiquetaLogistica = null)
         {
             var pedidoCodigo = FormatearCodigo(numeroPedido, brandCode);
             var (titulo, subtitulo, badgeText, badgeColor) = MapEstado(idEstado, estadoDescripcion, pedidoCodigo, intentoEntrega, intentosMax);
@@ -26,6 +26,16 @@ namespace Back.Services
             var panelBg = "#F9FAFB";
             var borderColor = "#E5E7EB";
             var footerColor = "#6B7280";
+            var accentColor = "#10B981";
+
+            var trackingButton = string.IsNullOrEmpty(trackingUrl) ? "" : $@"
+          <tr>
+            <td style=""padding:16px 24px;text-align:center;"">
+              <a href=""{trackingUrl}"" style=""display:inline-block;background-color:{accentColor};color:#ffffff;padding:12px 32px;border-radius:6px;font-weight:600;text-decoration:none;font-size:14px;border:none;cursor:pointer;"">
+                Ver Actualización de tu Pedido
+              </a>
+            </td>
+          </tr>";
 
             var sb = new StringBuilder();
             sb.Append($@"
@@ -84,6 +94,7 @@ namespace Back.Services
               {TextoAdicional(idEstado)}
             </td>
           </tr>
+          {trackingButton}
           <tr>
             <td style=""padding:8px 24px 24px;text-align:center;"">
               <span style=""display:inline-block;padding:10px 14px;border-radius:6px;background:{badgeColor};color:#ffffff;font-weight:600;font-size:14px;"">
@@ -179,6 +190,118 @@ namespace Back.Services
         {
             var year = DateTime.Now.Year;
             return $"#{brandCode}-{year}-{idPedido:D6}";
+        }
+
+        /// <summary>
+        /// Construye el HTML del email de bienvenida y tracking
+        /// </summary>
+        public string BuildOrderTrackingWelcomeHtml(
+            string brandName,
+            string nombreCliente,
+            int numeroPedido,
+            string trackingUrl,
+            string brandCode = "FGP",
+            string supportEmail = "soporte@farmacia.com")
+        {
+            var pedidoCodigo = FormatearCodigo(numeroPedido, brandCode);
+            var brandBg = "#1E3A8A";
+            var textColor = "#111827";
+            var panelBg = "#F9FAFB";
+            var borderColor = "#E5E7EB";
+            var footerColor = "#6B7280";
+            var accentColor = "#10B981";
+
+            var sb = new StringBuilder();
+            sb.Append($@"
+<!DOCTYPE html>
+<html lang=""es"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Pedido Confirmado - {pedidoCodigo}</title>
+</head>
+<body style=""margin:0;padding:0;background-color:#f3f4f6;"">
+  <table role=""presentation"" width=""100%"" cellspacing=""0"" cellpadding=""0"" style=""background-color:#f3f4f6;"">
+    <tr>
+      <td align=""center"">
+        <table role=""presentation"" width=""600"" cellspacing=""0"" cellpadding=""0"" style=""background-color:#ffffff;margin:24px;border-radius:8px;overflow:hidden;border:1px solid {borderColor};font-family:Segoe UI, Tahoma, sans-serif;color:{textColor};"">
+          <!-- Header con color de marca -->
+          <tr>
+            <td style=""background-color:{brandBg};color:#ffffff;padding:16px 24px;font-weight:600;font-size:18px;text-align:center;"">
+              ✓ {brandName} - Pedido Confirmado
+            </td>
+          </tr>
+
+          <!-- Contenido principal -->
+          <tr>
+            <td style=""padding:24px 24px 8px;text-align:center;"">
+              <h1 style=""margin:0;font-size:28px;font-weight:700;color:{accentColor};"">¡Gracias {nombreCliente.Split(' ')[0]}!</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style=""padding:0 24px 16px;text-align:center;color:#374151;font-size:15px;"">
+              Tu pedido ha sido recibido correctamente
+            </td>
+          </tr>
+
+          <!-- Número de pedido destacado -->
+          <tr>
+            <td style=""padding:0 24px 16px;"">
+              <div style=""background:{panelBg};border:2px solid {accentColor};border-radius:8px;padding:16px;text-align:center;"">
+                <p style=""margin:0 0 8px 0;font-size:13px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;"">Número de Pedido</p>
+                <p style=""margin:0;font-size:24px;font-weight:700;color:{brandBg};font-family:monospace;"">{pedidoCodigo}</p>
+                <p style=""margin:8px 0 0 0;font-size:12px;color:#6B7280;"">{DateTime.Now:dddd, d 'de' MMMM 'de' yyyy}</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Información principal -->
+          <tr>
+            <td style=""padding:16px 24px;color:#374151;font-size:14px;line-height:1.6;"">
+              <p style=""margin:0 0 12px 0;"">Hola <strong>{nombreCliente}</strong>,</p>
+              <p style=""margin:0 0 12px 0;"">Hemos recibido tu pedido y está siendo procesado. En las próximas horas comenzaremos a prepararlo para que llegue a tu domicilio lo antes posible.</p>
+              <p style=""margin:0;"">Puedes seguir el estado de tu pedido en tiempo real usando el enlace que encontrarás a continuación.</p>
+            </td>
+          </tr>
+
+          <!-- Botón de seguimiento -->
+          <tr>
+            <td style=""padding:24px 24px;text-align:center;"">
+              <a href=""{trackingUrl}"" style=""display:inline-block;background-color:{accentColor};color:#ffffff;padding:12px 32px;border-radius:6px;font-weight:600;text-decoration:none;font-size:15px;border:none;cursor:pointer;"">
+                Ver Seguimiento de tu Pedido
+              </a>
+            </td>
+          </tr>
+
+          <!-- Información adicional -->
+          <tr>
+            <td style=""padding:16px 24px;background-color:{panelBg};border-top:1px solid {borderColor};border-bottom:1px solid {borderColor};"">
+              <p style=""margin:0 0 12px 0;font-weight:600;color:{textColor};"">¿Qué sucede ahora?</p>
+              <ol style=""margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:1.8;"">
+                <li style=""margin-bottom:8px;""><strong>Preparación:</strong> Nuestro equipo estará armando tu pedido</li>
+                <li style=""margin-bottom:8px;""><strong>Control de Calidad:</strong> Verificamos que todo esté correcto</li>
+                <li style=""margin-bottom:8px;""><strong>Despacho:</strong> Tu pedido saldrá hacia su destino</li>
+                <li><strong>Entrega:</strong> Lo recibirás en el domicilio indicado</li>
+              </ol>
+            </td>
+          </tr>
+
+          <!-- Footer con soporte -->
+          <tr>
+            <td style=""padding:16px 24px 24px;text-align:center;color:{footerColor};font-size:13px;border-top:1px solid {borderColor};"">
+              <p style=""margin:0 0 8px 0;""><strong>¿Tienes preguntas?</strong></p>
+              <p style=""margin:0 0 12px 0;"">No dudes en contactarnos a <strong>{supportEmail}</strong> o a través de nuestros canales de atención.</p>
+              <p style=""margin:8px 0;font-size:11px;color:#9CA3AF;"">© {DateTime.Now.Year} {brandName}. Todos los derechos reservados.</p>
+              <p style=""margin:8px 0;font-size:11px;color:#9CA3AF;"">Este es un correo automático, por favor no responder.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>");
+            return sb.ToString();
         }
     }
 }

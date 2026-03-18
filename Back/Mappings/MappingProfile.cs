@@ -98,7 +98,9 @@ namespace Back.Mappings
                 .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => src.fecha_hora_inicio))
                 .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src => src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}" : "Sistema"))
                 .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
-                .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src => src.EstadoDePedido.motivo_cancelacion));
+                .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src => src.EstadoDePedido.motivo_cancelacion))
+                .ForMember(dest => dest.IntentosEntregaFallida, opt => opt.MapFrom(src => src.IntentosEntregaFallida))
+                .ForMember(dest => dest.IntentosMax, opt => opt.MapFrom(src => src.IntentosMax));
 
             // --- Resumen ---
             CreateMap<Pedido, OrderSummaryDTO>()
