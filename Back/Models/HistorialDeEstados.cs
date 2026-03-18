@@ -15,6 +15,8 @@ namespace Back.Models
             public DateTime fecha_hora_inicio { get; set; }
             public DateTime? fecha_hora_fin { get; set; } // Puede ser null si es el estado actual
             public string? Observaciones { get; set; }
+            public int IntentosEntregaFallida { get; set; } = 0; // Número de intento fallido (1, 2, 3)
+            public int IntentosMax { get; set; } = 3; // Máximo de intentos permitidos
 
             public int IDUsuario { get; set; }
             [ForeignKey("IDUsuario")]

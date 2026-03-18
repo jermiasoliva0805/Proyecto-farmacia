@@ -18,7 +18,8 @@ import { PanelReportes } from './pages/Reportes/PanelReportes';
 import MisEntregas from './pages/MisEntregasCadete';
 import EntregasFallidas from './pages/EntregasFallidasCadete';
 import MisPedidosOperario from './pages/MisPedidosOperario';
-import UsuariosPage from './pages/UsuariosPage'; 
+import UsuariosPage from './pages/UsuariosPage';
+import TrackingPage from './pages/TrackingPage'; 
 
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
@@ -42,8 +43,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* --- RUTA PÚBLICA --- */}
+          {/* --- RUTAS PÚBLICAS --- */}
           <Route path="/login" element={<Login />} />
+          <Route path="/tracking/:id" element={<TrackingPage />} />
 
           {/* --- RUTAS CON SIDEBAR (ADMIN, OPERARIO, CADETE) --- */}
           <Route element={<MainLayout />}>
