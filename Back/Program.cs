@@ -100,6 +100,7 @@ namespace Back
             builder.Services.AddScoped<IHistoryService, HistoryService>();
             builder.Services.AddScoped<IDeliveryService, DeliveryService>();
             builder.Services.AddScoped<ICancellationService, CancellationService>();
+            builder.Services.AddScoped<ClientProductRelationService>();
             builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();

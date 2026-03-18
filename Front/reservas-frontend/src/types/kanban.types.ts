@@ -15,7 +15,7 @@ export const ESTADO_MAP: Record<number, string> = {
 
 // ========== CONSTANTES DE COLUMNAS POR ROL ==========
 export const COLUMNAS_POR_ROL: Record<string, number[]> = {
-    'Administrador': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    'Encargado': [1, 2, 3, 4, 5, 6, 7, 8, 9],
     'Operario': [2, 3, 4],           // Preparar, Demorado, Listo
     'Cadete': [5, 6, 7, 8]            // Despachando, En camino, Entregado, Entrega fallida
 };
@@ -88,9 +88,9 @@ export const VALIDACIONES_CADETE: ValidationRuleSet = {
     puedeLlegarAlEstado: (estado: number) => [5, 6, 7, 8, 9].includes(estado)
 };
 
-export const VALIDACIONES_ADMIN: ValidationRuleSet = {
+export const VALIDACIONES_ENCARGADO: ValidationRuleSet = {
     puedeMoverHacia: (origen: number, destino: number) => {
-        // Admin puede mover entre cualquier estado lógicamente válido
+        // Encargado puede mover entre cualquier estado lógicamente válido
         if (destino < 1 || destino > 9 || origen < 1 || origen > 9) {
             return false;
         }

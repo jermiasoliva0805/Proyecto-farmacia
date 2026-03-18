@@ -52,7 +52,7 @@ namespace Back.Services
         public async Task<bool> ChangeUserRoleAsync(int userId, string newRole)
         {
             // 1. Validar que el rol sea válido (opcional, según tu lógica)
-            var rolesValidos = new List<string> { "Administrador", "Operario", "Cadete" };
+            var rolesValidos = new List<string> { "Encargado", "Operario", "Cadete" };
             if (!rolesValidos.Contains(newRole)) throw new Exception("Rol no válido");
 
             // 2. Buscar usuario

@@ -14,7 +14,8 @@ namespace Back.Services
             string supportEmail = null,
             string brandCode = "FGP",
             int? intentoEntrega = null,
-            int intentosMax = 3
+            int intentosMax = 3,
+            string etiquetaLogistica = null
         )
         {
             var pedidoCodigo = FormatearCodigo(numeroPedido, brandCode);
@@ -54,7 +55,22 @@ namespace Back.Services
             <td style=""padding:0 24px 16px;text-align:center;color:#374151;font-size:15px;"">
               {subtitulo}
             </td>
-          </tr>
+          </tr>");
+
+            // Agregar etiqueta logística si está disponible
+            if (!string.IsNullOrWhiteSpace(etiquetaLogistica))
+            {
+                sb.Append($@"
+          <tr>
+            <td style=""padding:0 24px 16px;text-align:center;"">
+              <div style=""display:inline-block;padding:8px 12px;border-radius:6px;background:#E8F4F8;border:1px solid #A0D8E8;color:#076A8F;font-size:13px;font-weight:600;"">
+                Relación Cliente-Producto: <strong>{etiquetaLogistica}</strong>
+              </div>
+            </td>
+          </tr>");
+            }
+
+            sb.Append($@"
           <tr>
             <td style=""padding:0 24px 16px;"">
               <div style=""background:{panelBg};border:1px solid {borderColor};border-radius:8px;padding:16px;font-size:15px;color:#374151;"">

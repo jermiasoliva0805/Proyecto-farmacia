@@ -9,7 +9,7 @@ import {
     COLUMNAS_POR_ROL,
     VALIDACIONES_OPERARIO,
     VALIDACIONES_CADETE,
-    VALIDACIONES_ADMIN,
+    VALIDACIONES_ENCARGADO,
     ValidationRuleSet,
     ESTADO_MAP
 } from '../../types/kanban.types';
@@ -104,7 +104,7 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
 
     // Obtener validador según rol
     const getValidador = (): ValidationRuleSet => {
-        if (!user) return VALIDACIONES_ADMIN;
+        if (!user) return VALIDACIONES_ENCARGADO;
         
         switch (user.rol) {
             case 'Operario':
@@ -112,14 +112,14 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             case 'Cadete':
                 return VALIDACIONES_CADETE;
             default:
-                return VALIDACIONES_ADMIN;
+                return VALIDACIONES_ENCARGADO;
         }
     };
 
     // Obtener columnas visibles según rol
     const getColumnasVisibles = (): number[] => {
-        if (!user) return COLUMNAS_POR_ROL['Administrador'];
-        return COLUMNAS_POR_ROL[user.rol] || COLUMNAS_POR_ROL['Administrador'];
+        if (!user) return COLUMNAS_POR_ROL['Encargado'];
+        return COLUMNAS_POR_ROL[user.rol] || COLUMNAS_POR_ROL['Encargado'];
     };
 
     // Agrupar pedidos por estado
