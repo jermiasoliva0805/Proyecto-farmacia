@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Back.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260212001131_IE")]
-    partial class IE
+    [Migration("20260318214015_AddMissingProperties")]
+    partial class AddMissingProperties
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -301,6 +301,12 @@ namespace Back.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("FechaEntregaReal")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaFinArmado")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaInicioArmado")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("FormaDePago")

@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Back.Migrations
 {
     /// <inheritdoc />
-    public partial class IE : Migration
+    public partial class AddMissingProperties : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,6 +19,18 @@ namespace Back.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
 
+            migrationBuilder.AddColumn<DateTime>(
+                name: "FechaFinArmado",
+                table: "Pedidos",
+                type: "datetime2",
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "FechaInicioArmado",
+                table: "Pedidos",
+                type: "datetime2",
+                nullable: true);
+
             migrationBuilder.AddColumn<int>(
                 name: "IntentosEntregaFallida",
                 table: "Pedidos",
@@ -29,6 +42,14 @@ namespace Back.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+                name: "FechaFinArmado",
+                table: "Pedidos");
+
+            migrationBuilder.DropColumn(
+                name: "FechaInicioArmado",
+                table: "Pedidos");
+
             migrationBuilder.DropColumn(
                 name: "IntentosEntregaFallida",
                 table: "Pedidos");
