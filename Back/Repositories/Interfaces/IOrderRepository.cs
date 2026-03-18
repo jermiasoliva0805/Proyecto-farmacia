@@ -18,5 +18,8 @@ namespace Back.Repositories.Interfaces
 
         // NUEVO: obtiene todos los pedidos de un cliente con sus detalles
         Task<IEnumerable<Pedido>> GetClientOrdersAsync(int clientId);
+
+        // NUEVO: trae el pedido incluyendo Cliente y Detalles (para emails personalizados)
+        Task<Pedido> GetByIdWithClienteAndDetailsAsync(int id);
     }
 }

@@ -16,9 +16,13 @@ namespace Back.Services
             int? intentoEntrega = null,
             int intentosMax = 3,
             string trackingUrl = null,
-            string etiquetaLogistica = null)
+            string etiquetaLogistica = null,
+            List<string> nombresProductos = null)
         {
-            var pedidoCodigo = FormatearCodigo(numeroPedido, brandCode);
+            // Generar código personalizado si hay productos, sino usar el formato clásico
+            var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
+                ? GenerarCodigoPersonalizado(nombreCliente, nombresProductos, numeroPedido)
+                : FormatearCodigo(numeroPedido, brandCode);
             var (titulo, subtitulo, badgeText, badgeColor) = MapEstado(idEstado, estadoDescripcion, pedidoCodigo, intentoEntrega, intentosMax);
 
             var brandBg = "#1E3A8A";
@@ -65,24 +69,11 @@ namespace Back.Services
             <td style=""padding:0 24px 16px;text-align:center;color:#374151;font-size:15px;"">
               {subtitulo}
             </td>
-          </tr>");
+          </tr>
 
-            // Agregar etiqueta logística si está disponible
-            if (!string.IsNullOrWhiteSpace(etiquetaLogistica))
-            {
-                sb.Append($@"
+          <!-- Contenido principal -->
           <tr>
-            <td style=""padding:0 24px 16px;text-align:center;"">
-              <div style=""display:inline-block;padding:8px 12px;border-radius:6px;background:#E8F4F8;border:1px solid #A0D8E8;color:#076A8F;font-size:13px;font-weight:600;"">
-                Relación Cliente-Producto: <strong>{etiquetaLogistica}</strong>
-              </div>
-            </td>
-          </tr>");
-            }
-
-            sb.Append($@"
-          <tr>
-            <td style=""padding:0 24px 16px;"">
+            <td style=""padding:0 24px 16px;"">>
               <div style=""background:{panelBg};border:1px solid {borderColor};border-radius:8px;padding:16px;font-size:15px;color:#374151;"">
                 <p style=""margin:0 0 8px 0;"">Hola <strong>{nombreCliente}</strong>,</p>
                 <p style=""margin:0;"">{MensajePrincipal(idEstado, pedidoCodigo, intentoEntrega, intentosMax)}</p>
@@ -193,6 +184,54 @@ namespace Back.Services
         }
 
         /// <summary>
+        /// Genera un código personalizado basado en cliente y productos
+        /// Ejemplo: #JuanDiaz-PAR-IBU-ASP-0002 (Juan Díaz, Paracetamol, Ibuprofeno, Aspirin, Pedido 2)
+        /// </summary>
+        public string GenerarCodigoPersonalizado(
+            string nombreCliente, 
+            List<string> nombresProductos, 
+            int idPedido)
+        {
+            try
+            {
+                // Usar nombre completo del cliente (sin espacios)
+                var nombreLimpio = nombreCliente.Replace(" ", "").ToUpper();
+                // Limitar a 15 caracteres para que no sea muy largo
+                nombreLimpio = nombreLimpio.Substring(0, Math.Min(15, nombreLimpio.Length));
+
+                // Obtener abreviaturas de hasta 3 productos
+                var abreviaciones = new List<string>();
+                if (nombresProductos != null && nombresProductos.Count > 0)
+                {
+                    // Tomar hasta 3 productos
+                    var productosAUsar = nombresProductos.Take(3).ToList();
+                    foreach (var producto in productosAUsar)
+                    {
+                        // Tomar primeras 3 letras del producto, eliminando espacios
+                        var productoLimpio = producto.Replace(" ", "").ToUpper();
+                        var abrev = productoLimpio.Substring(0, Math.Min(3, productoLimpio.Length));
+                        abreviaciones.Add(abrev);
+                    }
+                }
+
+                // Si no hay productos, usar abreviatura por defecto
+                if (abreviaciones.Count == 0)
+                {
+                    abreviaciones.Add("PROD");
+                }
+
+                // Combinar: NOMBRECLIENTE-ABREV1-ABREV2-ABREV3-NUMERO
+                var abreviacionesTexto = string.Join("-", abreviaciones);
+                return $"#{nombreLimpio}-{abreviacionesTexto}-{idPedido:D4}";
+            }
+            catch
+            {
+                // Fallback al formato anterior si hay error
+                return $"#{idPedido:D6}";
+            }
+        }
+
+        /// <summary>
         /// Construye el HTML del email de bienvenida y tracking
         /// </summary>
         public string BuildOrderTrackingWelcomeHtml(
@@ -201,9 +240,13 @@ namespace Back.Services
             int numeroPedido,
             string trackingUrl,
             string brandCode = "FGP",
-            string supportEmail = "soporte@farmacia.com")
+            string supportEmail = "soporte@farmacia.com",
+            List<string> nombresProductos = null)
         {
-            var pedidoCodigo = FormatearCodigo(numeroPedido, brandCode);
+            // Generar código personalizado si hay productos, sino usar el formato clásico
+            var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
+                ? GenerarCodigoPersonalizado(nombreCliente, nombresProductos, numeroPedido)
+                : FormatearCodigo(numeroPedido, brandCode);
             var brandBg = "#1E3A8A";
             var textColor = "#111827";
             var panelBg = "#F9FAFB";
@@ -241,17 +284,6 @@ namespace Back.Services
           <tr>
             <td style=""padding:0 24px 16px;text-align:center;color:#374151;font-size:15px;"">
               Tu pedido ha sido recibido correctamente
-            </td>
-          </tr>
-
-          <!-- Número de pedido destacado -->
-          <tr>
-            <td style=""padding:0 24px 16px;"">
-              <div style=""background:{panelBg};border:2px solid {accentColor};border-radius:8px;padding:16px;text-align:center;"">
-                <p style=""margin:0 0 8px 0;font-size:13px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;"">Número de Pedido</p>
-                <p style=""margin:0;font-size:24px;font-weight:700;color:{brandBg};font-family:monospace;"">{pedidoCodigo}</p>
-                <p style=""margin:8px 0 0 0;font-size:12px;color:#6B7280;"">{DateTime.Now:dddd, d 'de' MMMM 'de' yyyy}</p>
-              </div>
             </td>
           </tr>
 

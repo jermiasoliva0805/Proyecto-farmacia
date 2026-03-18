@@ -94,5 +94,15 @@ namespace Back.Repositories
                 .ThenInclude(d => d.Producto)
                 .ToListAsync();
         }
+
+        // Incluye Cliente y Detalles para poder acceder al mail y productos
+        public async Task<Pedido> GetByIdWithClienteAndDetailsAsync(int id)
+        {
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Detalles)
+                .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(p => p.IDPedido == id);
+        }
     }
 }

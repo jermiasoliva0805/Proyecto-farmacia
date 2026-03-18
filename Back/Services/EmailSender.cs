@@ -44,16 +44,21 @@ namespace Back.Services
             int? intentoEntrega = null,
             int intentosMax = 3,
             string trackingUrl = null,
-            string etiquetaLogistica = null)
+            string etiquetaLogistica = null,
+            List<string> nombresProductos = null)
         {
             var html = _templates.BuildOrderStatusHtml(
                 brandName, nombreCliente, estadoDescripcion, numeroPedido, idEstado,
-                supportEmail, brandCode, intentoEntrega, intentosMax, trackingUrl);
+                supportEmail, brandCode, intentoEntrega, intentosMax, trackingUrl, etiquetaLogistica, nombresProductos);
 
-            // Construir asunto con la etiqueta logística si está disponible
-            var asunto = string.IsNullOrWhiteSpace(etiquetaLogistica)
-                ? $"{estadoDescripcion} · Pedido #{numeroPedido:D6}"
-                : $"Confirmación de Pedido #{numeroPedido:D6} [Relación: {etiquetaLogistica}]";
+            // Generar código personalizado para el asunto
+            string codigoPersonalizado = (nombresProductos != null && nombresProductos.Count > 0)
+                ? _templates.GenerarCodigoPersonalizado(nombreCliente, nombresProductos, numeroPedido)
+                : $"#{numeroPedido:D6}";
+
+            // Construir asunto con código personalizado - ESTANDARIZADO
+            // Formato: "Estado del Pedido · Tu Pedido #JUANDIAZ-PAR-IBU-ASP-0002"
+            var asunto = $"{estadoDescripcion} · Tu Pedido {codigoPersonalizado}";
 
             var mail = new MailMessage
             {
@@ -77,7 +82,8 @@ namespace Back.Services
             string trackingUrl,
             string brandName = "Farmacia General Paz",
             string supportEmail = "soporte@farmacia.com",
-            string brandCode = "FGP")
+            string brandCode = "FGP",
+            List<string> nombresProductos = null)
         {
             try
             {
@@ -87,12 +93,18 @@ namespace Back.Services
                     numeroPedido,
                     trackingUrl,
                     brandCode,
-                    supportEmail);
+                    supportEmail,
+                    nombresProductos);
+
+                // Generar código personalizado para el asunto
+                string codigoPersonalizado = (nombresProductos != null && nombresProductos.Count > 0)
+                    ? _templates.GenerarCodigoPersonalizado(nombreCliente, nombresProductos, numeroPedido)
+                    : $"#{numeroPedido:D6}";
 
                 var mail = new MailMessage
                 {
                     From = new MailAddress(_smtpSettings.User, brandName),
-                    Subject = $"Pedido Confirmado #{numeroPedido:D6} - Sigue tu Compra",
+                    Subject = $"Pedido Recibido · Tu Pedido {codigoPersonalizado}",
                     Body = html,
                     IsBodyHtml = true
                 };

@@ -118,8 +118,24 @@ namespace Back.Services
                 // Construir el URL único de seguimiento
                 var trackingUrl = $"{baseUrl}/tracking/{pedidoId}";
 
+                // ✅ Obtener los nombres de productos del pedido para personalizar el email
+                var pedido = await _orderRepository.GetOrderWithDetailsAsync(pedidoId);
+                var nombresProductos = new List<string>();
+                if (pedido?.Detalles != null)
+                {
+                    foreach (var detalle in pedido.Detalles)
+                    {
+                        if (detalle.Producto != null && !string.IsNullOrEmpty(detalle.Producto.NombreProducto))
+                        {
+                            nombresProductos.Add(detalle.Producto.NombreProducto);
+                        }
+                    }
+                    nombresProductos = nombresProductos.Distinct().Take(3).ToList();
+                }
+
                 Console.WriteLine($"[OrderService] Enviando email de creación de pedido #{pedidoId} a {clientEmail}");
                 Console.WriteLine($"[OrderService] URL de tracking: {trackingUrl}");
+                Console.WriteLine($"[OrderService] Productos: {string.Join(", ", nombresProductos)}");
 
                 // ✅ Usar el mismo método que AsignarOperarioAsync - es más robusto
                 // Estado 1 = Pedido Creado / Sin preparar
@@ -132,7 +148,8 @@ namespace Back.Services
                     brandName: "Farmacia General Paz",
                     supportEmail: "contacto@farmaciageneralpaz.com",
                     brandCode: "FGP",
-                    trackingUrl: trackingUrl
+                    trackingUrl: trackingUrl,
+                    nombresProductos: nombresProductos
                 );
 
                 Console.WriteLine($"[OrderService] Email enviado exitosamente para pedido #{pedidoId}");

@@ -47,11 +47,31 @@ namespace Back.Services
             return $"{baseUrl}/tracking/{pedidoId}";
         }
 
+        /// <summary>
+        /// Extrae los nombres de los productos de un pedido para personalizar emails
+        /// </summary>
+        private List<string> ObtenerNombresProductos(Pedido pedido)
+        {
+            var nombres = new List<string>();
+            if (pedido?.Detalles != null && pedido.Detalles.Any())
+            {
+                foreach (var detalle in pedido.Detalles)
+                {
+                    if (detalle.Producto != null && !string.IsNullOrEmpty(detalle.Producto.NombreProducto))
+                    {
+                        nombres.Add(detalle.Producto.NombreProducto);
+                    }
+                }
+                nombres = nombres.Distinct().Take(3).ToList();
+            }
+            return nombres;
+        }
+
         // 1. ASIGNAR OPERARIO (ADMIN) - Pasa de Sin preparar (1) a Preparar pedido (2)
         public async Task<bool> AsignarOperarioAsync(AssignOperatorDTO dto)
         {
-            // Trae Cliente para poder enviar correo
-            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
+            // Trae Cliente y Detalles para poder enviar correo personalizado
+            var pedido = await _orderRepository.GetByIdWithClienteAndDetailsAsync(dto.PedidoId);
 
             if (pedido == null || pedido.IDEstadoDePedido != 1) return false;
 
@@ -74,7 +94,7 @@ namespace Back.Services
             {
                 var destinatario = pedido.Cliente?.Mail;
                 var nombreCliente = pedido.Cliente != null
-                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    ? pedido.Cliente.Nombre  // Solo el nombre, como en "sin preparar"
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(2);
 
@@ -88,6 +108,7 @@ namespace Back.Services
                     try
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
+                        var nombresProductos = ObtenerNombresProductos(pedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -98,7 +119,8 @@ namespace Back.Services
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
                             trackingUrl: trackingUrl,
-                            etiquetaLogistica: etiquetaLogistica
+                            etiquetaLogistica: etiquetaLogistica,
+                            nombresProductos: nombresProductos
                         );
                     }
                     catch (Exception ex)
@@ -114,8 +136,8 @@ namespace Back.Services
         // 2. ASIGNAR CADETE (ADMIN) - Pasa de Listo para despachar (4) a Despachando (5)
         public async Task<bool> AsignarCadeteAsync(AssignDeliveryDTO dto)
         {
-            // Trae Cliente para poder enviar correo
-            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
+            // Trae Cliente y Detalles para poder enviar correo personalizado
+            var pedido = await _orderRepository.GetByIdWithClienteAndDetailsAsync(dto.PedidoId);
 
             // El pedido debe estar en 4 (Listo para despachar) para pasar a 5 (Despachando)
             if (pedido == null || pedido.IDEstadoDePedido != 4) return false;
@@ -139,7 +161,7 @@ namespace Back.Services
             {
                 var destinatario = pedido.Cliente?.Mail;
                 var nombreCliente = pedido.Cliente != null
-                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    ? pedido.Cliente.Nombre  // Solo el nombre, como en "sin preparar"
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(5);
 
@@ -153,6 +175,7 @@ namespace Back.Services
                     try
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
+                        var nombresProductos = ObtenerNombresProductos(pedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -163,7 +186,8 @@ namespace Back.Services
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
                             trackingUrl: trackingUrl,
-                            etiquetaLogistica: etiquetaLogistica
+                            etiquetaLogistica: etiquetaLogistica,
+                            nombresProductos: nombresProductos
                         );
                     }
                     catch (Exception ex)
@@ -179,9 +203,12 @@ namespace Back.Services
         // 3. CAMBIO DE ESTADO FINAL (CADETE) - Entregado (7) o Entrega fallida (8)
         public async Task<bool> CambiarEstadoAsync(ChangeOrderStatusDTO changeStatusDto)
         {
-            // Trae el pedido incluyendo Cliente (para tener el mail)
-            var pedido = await _orderRepository.GetByIdWithClienteAsync(changeStatusDto.IDPedido);
+            // Trae el pedido incluyendo Cliente y Detalles (para tener el mail y productos)
+            var pedido = await _orderRepository.GetByIdWithClienteAndDetailsAsync(changeStatusDto.IDPedido);
             if (pedido == null) return false;
+
+            // Capturar el estado anterior antes de cambios
+            int estadoAnterior = pedido.IDEstadoDePedido;
 
             // === VALIDACIÓN DE TRANSICIONES DE ESTADO ===
             // CU25: Operario: 1 (Sin preparar) -> 2 (Preparando)
@@ -282,11 +309,14 @@ namespace Back.Services
             var resultado = await _repository.ActualizarEstadoAsync(nuevoHistorial, pedido);
 
             // Envío automático de mail al cliente si el cambio de estado fue exitoso
-            if (resultado)
+            // NO enviar correo si es transición 1→2 o 2→2 (ya lo hace AsignarOperarioAsync en 1→2, y 2→2 es solo registrar inicio armado)
+            bool debeEnviarCorreo = resultado && !(estadoFinal == 2);
+            
+            if (debeEnviarCorreo)
             {
                 var destinatario = pedido.Cliente?.Mail; // Usa 'Email' si tu modelo lo llama así
                 var nombreCliente = pedido.Cliente != null
-                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    ? pedido.Cliente.Nombre  // Solo el nombre, como en "sin preparar"
                     : "Cliente";
                 
                 // Usar el estado final para la descripción (puede ser 9 si fueron 3 intentos fallidos)
@@ -302,6 +332,7 @@ namespace Back.Services
                     try
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
+                        var nombresProductos = ObtenerNombresProductos(pedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -314,7 +345,8 @@ namespace Back.Services
                             intentoEntrega: intentoEntrega, // Pasar el número de intento si es entrega fallida
                             intentosMax: 3,
                             trackingUrl: trackingUrl,
-                            etiquetaLogistica: etiquetaLogistica
+                            etiquetaLogistica: etiquetaLogistica,
+                            nombresProductos: nombresProductos
                         );
                         Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
@@ -377,17 +409,19 @@ namespace Back.Services
                     try
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
+                        var nombresProductos = ObtenerNombresProductos(pedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
                             estadoDescripcion,
                             pedido.IDPedido,
-                            10,                                 // Cancelado
+                            5,                                  // Despachando
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
                             trackingUrl: trackingUrl,
-                            etiquetaLogistica: etiquetaLogistica
+                            etiquetaLogistica: etiquetaLogistica,
+                            nombresProductos: nombresProductos
                         );
                     }
                     catch (Exception ex)
@@ -402,7 +436,7 @@ namespace Back.Services
 
         public async Task<bool> CancelarPedidoAsync(CancelarPedidoDTO dto)
         {
-            var pedido = await _orderRepository.GetByIdWithClienteAsync(dto.PedidoId);
+            var pedido = await _orderRepository.GetByIdWithClienteAndDetailsAsync(dto.PedidoId);
 
             if (pedido == null || pedido.IDEstadoDePedido == 7 || pedido.IDEstadoDePedido == 9)
                 return false;
@@ -427,7 +461,7 @@ namespace Back.Services
             {
                 var destinatario = pedido.Cliente?.Mail;
                 var nombreCliente = pedido.Cliente != null
-                    ? $"{pedido.Cliente.Nombre} {pedido.Cliente.Apellido}"
+                    ? pedido.Cliente.Nombre  // Solo el nombre, como en "sin preparar"
                     : "Cliente";
                 var estadoDescripcion = ObtenerDescripcionEstado(10);
 
@@ -441,6 +475,7 @@ namespace Back.Services
                     try
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
+                        var nombresProductos = ObtenerNombresProductos(pedido);
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -451,7 +486,8 @@ namespace Back.Services
                             "contacto@farmaciageneralpaz.com",
                             "FGP",
                             trackingUrl: trackingUrl,
-                            etiquetaLogistica: etiquetaLogistica
+                            etiquetaLogistica: etiquetaLogistica,
+                            nombresProductos: nombresProductos
                         );
                     }
                     catch (Exception ex)
