@@ -32,6 +32,7 @@ const OrderFormPage: React.FC = () => {
     const [sucursales, setSucursales] = useState<SucursalDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -115,6 +116,9 @@ const OrderFormPage: React.FC = () => {
     };
 
     const handleSave = async () => {
+        // Prevenir múltiples clicks
+        if (saving) return;
+
         // Validaciones
         if (tipoCliente === 'existente' && !clienteId) {
             return alert("Por favor selecciona un cliente");
@@ -132,15 +136,16 @@ const OrderFormPage: React.FC = () => {
         
         if (!sucursalId) return alert("Por favor selecciona una sucursal");
 
-        // Obtener datos del usuario autenticado
-        const userDataJson = localStorage.getItem('farmacia_user');
-        const userData = userDataJson ? JSON.parse(userDataJson) : null;
+        setSaving(true); // ✅ Deshabilitar el botón mientras se guarda
         
-        if (!userData) {
-            return alert("No se pudo obtener los datos de tu usuario. Por favor inicia sesión nuevamente.");
-        }
-
         try {
+            const userDataJson = localStorage.getItem('farmacia_user');
+            const userData = userDataJson ? JSON.parse(userDataJson) : null;
+            
+            if (!userData) {
+                return alert("No se pudo obtener los datos de tu usuario. Por favor inicia sesión nuevamente.");
+            }
+
             // Obtener datos del cliente
             let clienteData = null;
             if (tipoCliente === 'existente') {
@@ -186,10 +191,14 @@ const OrderFormPage: React.FC = () => {
             const resultado = await pedidosService.createOrder(pedido);
             console.log('✅ Pedido creado:', resultado);
             alert(`Pedido creado con éxito. ID: ${resultado.pedidoId}`);
-            navigate('/pedidos'); 
+            
+            // ✅ Recargar la página para limpiar el formulario y prevenir duplicados
+            window.location.reload();
         } catch (error) {
             console.error("❌ Error al guardar:", error);
             alert("Error al guardar el pedido");
+        } finally {
+            setSaving(false); // ✅ Permitir nuevos intentos siempre
         }
     };
 
@@ -444,15 +453,26 @@ const OrderFormPage: React.FC = () => {
                             <div className="flex gap-3 pt-6 border-t">
                                 <button
                                     onClick={() => navigate(-1)}
-                                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                                    disabled={saving}
+                                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <ArrowLeft size={18} className="inline mr-2" /> Cancelar
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center gap-2"
+                                    disabled={saving}
+                                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Save size={18} /> Guardar Pedido
+                                    {saving ? (
+                                        <>
+                                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={18} /> Guardar Pedido
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

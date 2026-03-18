@@ -94,7 +94,7 @@ namespace Back.Services
         }
 
         /// <summary>
-        /// Genera el URL de tracking y envía el email al cliente
+        /// Envía email de confirmación de pedido al cliente cuando se crea
         /// </summary>
         private async Task EnviarEmailTrackingAsync(int pedidoId, string clientName, string clientEmail)
         {
@@ -118,25 +118,28 @@ namespace Back.Services
                 // Construir el URL único de seguimiento
                 var trackingUrl = $"{baseUrl}/tracking/{pedidoId}";
 
-                Console.WriteLine($"[OrderService] Enviando email de tracking para pedido #{pedidoId} a {clientEmail}");
+                Console.WriteLine($"[OrderService] Enviando email de creación de pedido #{pedidoId} a {clientEmail}");
                 Console.WriteLine($"[OrderService] URL de tracking: {trackingUrl}");
 
-                // Enviar el email con el tracking link
-                await _emailSender.EnviarCorreoTrackingAsync(
+                // ✅ Usar el mismo método que AsignarOperarioAsync - es más robusto
+                // Estado 1 = Pedido Creado / Sin preparar
+                await _emailSender.EnviarCorreoCambioEstadoHtml(
                     destinatario: clientEmail,
                     nombreCliente: clientName,
+                    estadoDescripcion: "Pedido Recibido",
                     numeroPedido: pedidoId,
-                    trackingUrl: trackingUrl,
+                    idEstado: 1,  // Sin preparar (Recibido)
                     brandName: "Farmacia General Paz",
-                    supportEmail: "soporte@farmaciagp.com",
-                    brandCode: "FGP"
+                    supportEmail: "contacto@farmaciageneralpaz.com",
+                    brandCode: "FGP",
+                    trackingUrl: trackingUrl
                 );
 
-                Console.WriteLine($"[OrderService] Email de tracking enviado exitosamente para pedido #{pedidoId}");
+                Console.WriteLine($"[OrderService] Email enviado exitosamente para pedido #{pedidoId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OrderService] Error al enviar email de tracking: {ex.Message}");
+                Console.WriteLine($"[OrderService] Error al enviar email de creación: {ex.Message}");
                 // No relanzar la excepción para que el pedido se cree igualmente
             }
         }
