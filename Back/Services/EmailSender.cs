@@ -42,16 +42,22 @@ namespace Back.Services
             string supportEmail = null,
             string brandCode = "FGP",
             int? intentoEntrega = null,
-            int intentosMax = 3)
+            int intentosMax = 3,
+            string etiquetaLogistica = null)
         {
             var html = _templates.BuildOrderStatusHtml(
                 brandName, nombreCliente, estadoDescripcion, numeroPedido, idEstado,
-                supportEmail, brandCode, intentoEntrega, intentosMax);
+                supportEmail, brandCode, intentoEntrega, intentosMax, etiquetaLogistica);
+
+            // Construir asunto con la etiqueta logística si está disponible
+            var asunto = string.IsNullOrWhiteSpace(etiquetaLogistica)
+                ? $"{estadoDescripcion} · Pedido #{numeroPedido:D6}"
+                : $"Confirmación de Pedido #{numeroPedido:D6} [Relación: {etiquetaLogistica}]";
 
             var mail = new MailMessage
             {
                 From = new MailAddress(_smtpSettings.User, brandName),
-                Subject = $"{estadoDescripcion} · Pedido #{numeroPedido:D6}",
+                Subject = asunto,
                 Body = html,
                 IsBodyHtml = true
             };
