@@ -133,7 +133,7 @@ export const getTop10Productos = async (periodo: string, idSucursal: number | nu
     }
 };
 
-export const getReporteTiempos = async (periodo: string, idSucursal: number | null): Promise<TiemposProcesoDTO> => {
+export const getReporteTiempos = async (periodo: string, idSucursal: number | null, idEstado: number | null = null): Promise<TiemposProcesoDTO> => {
     try {
         const params: any = {
             dias: parseInt(periodo)
@@ -142,6 +142,11 @@ export const getReporteTiempos = async (periodo: string, idSucursal: number | nu
         // Solo agregar idSucursal si es válido
         if (idSucursal !== null && idSucursal > 0) {
             params.idSucursal = idSucursal;
+        }
+
+        // Solo agregar idEstado si es válido
+        if (idEstado !== null && idEstado > 0) {
+            params.idEstado = idEstado;
         }
         
         const response = await api.get<TiemposProcesoDTO>('/reporte/tiempos-proceso', {

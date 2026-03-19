@@ -155,11 +155,12 @@ namespace Back.Controllers
         [HttpGet("tiempos-proceso")]
         public async Task<ActionResult<TiemposProcesoDTO>> GetReporteTiemposProceso(
             [FromQuery] int dias = 7,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] int? idSucursal = null,
+            [FromQuery] int? idEstado = null)
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteTiemposProcesoAsync(dias, idSucursal);
+                var reporte = await _reporteRepository.GetReporteTiemposProcesoAsync(dias, idSucursal, idEstado);
                 return Ok(reporte);
             }
             catch (Exception ex)

@@ -295,7 +295,7 @@ namespace Back.Repositories
             return topProductos;
         }
 
-        public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null)
+        public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null)
         {
             // Calcular la fecha desde la cual filtrar
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
@@ -310,6 +310,13 @@ namespace Back.Repositories
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            // Agregar filtro de estado si viene especificado
+            if (idEstado.HasValue && idEstado.Value > 0)
+            {
+                Console.WriteLine($"[REPO DEBUG] Aplicando filtro de estado: {idEstado.Value}");
+                query = query.Where(p => p.IDEstadoDePedido == idEstado.Value);
             }
 
             var pedidos = await query.ToListAsync();

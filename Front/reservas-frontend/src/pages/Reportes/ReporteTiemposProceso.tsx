@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/common/Card';
-import { Calendar, MapPin, AlertCircle, Zap } from 'lucide-react';
+import { Calendar, MapPin, AlertCircle, Zap, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getReporteTiempos } from '../../service/reporteService';
 import { TiemposProcesoDTO, DetalleTiempoProcesoDTO } from '../../types/pedido.types';
@@ -10,12 +10,13 @@ export const ReporteTiemposProceso: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [idEstado, setIdEstado] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchDatos = async () => {
             try {
                 setLoading(true);
-                const data = await getReporteTiempos(periodo, idSucursal);
+                const data = await getReporteTiempos(periodo, idSucursal, idEstado);
                 setTiempos(data);
             } catch (error) {
                 console.error("Error al cargar tiempos:", error);
@@ -24,7 +25,7 @@ export const ReporteTiemposProceso: React.FC = () => {
             }
         };
         fetchDatos();
-    }, [periodo, idSucursal]);
+    }, [periodo, idSucursal, idEstado]);
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
     if (!tiempos) return <p className="p-6 text-gray-500 font-medium">Sin datos disponibles</p>;
@@ -50,7 +51,7 @@ export const ReporteTiemposProceso: React.FC = () => {
             </div>
 
             {/* Selectores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Selector
                     icon={<Calendar size={18} />}
                     label="Periodo:"
@@ -72,6 +73,24 @@ export const ReporteTiemposProceso: React.FC = () => {
                         { value: "2", label: "Sucursal Norte" },
                     ]}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
+                />
+                <Selector
+                    icon={<Filter size={18} />}
+                    label="Estado:"
+                    value={idEstado !== null ? idEstado.toString() : ""}
+                    options={[
+                        { value: "", label: "Todos los estados" },
+                        { value: "1", label: "Sin preparar" },
+                        { value: "2", label: "Preparar pedido" },
+                        { value: "3", label: "Demorado" },
+                        { value: "4", label: "Listo para despachar" },
+                        { value: "5", label: "Despachando" },
+                        { value: "6", label: "En camino" },
+                        { value: "7", label: "Entregado" },
+                        { value: "8", label: "Entrega fallida" },
+                        { value: "9", label: "Cancelado" },
+                    ]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdEstado(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
             </div>
 

@@ -45,6 +45,6 @@ namespace Back.Repositories.Interfaces
         /// <summary>
         /// Obtiene un reporte de tiempos de proceso con análisis de 4 fases críticas
         /// </summary>
-        Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null);
+        Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null);
     }
 }
