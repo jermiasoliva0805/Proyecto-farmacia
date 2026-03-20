@@ -163,6 +163,7 @@ namespace Back.Repositories
             var query = _context.HistorialesDeEstados
                 .Include(h => h.Usuario)
                 .Include(h => h.Pedido)
+                .Where(h => !h.Usuario!.IsDeleted) // Excluir operarios eliminados (soft delete)
                 .Where(h => h.fecha_hora_inicio >= fechaInicioFiltro)
                 .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
                 .AsQueryable();

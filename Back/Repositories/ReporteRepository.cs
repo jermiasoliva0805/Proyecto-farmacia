@@ -30,6 +30,7 @@ namespace Back.Repositories
             var query = _context.Pedidos
                 .Include(p => p.Usuario)
                 .Where(p => p.Usuario.Rol == "Cadete") // Filtrar solo cadetes
+                .Where(p => !p.Usuario.IsDeleted) // Excluir usuarios eliminados (soft delete)
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
                 .AsQueryable();
 

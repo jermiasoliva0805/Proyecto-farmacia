@@ -11,6 +11,7 @@ namespace Back.Models
         public string Contraseña { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;
         public string Mail { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false; // Soft delete: usuario "eliminado" pero permanece en BD
 
         // Relación con Sucursal (CF en  diagrama)
         

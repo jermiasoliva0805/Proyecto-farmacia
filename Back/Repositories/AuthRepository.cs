@@ -17,8 +17,10 @@ namespace Back.Repositories
         {
             // Ref: RF7 - El sistema debe permitir la autenticación de usuarios.
             // Buscamos por UsuarioNombre
+            // Excluimos usuarios eliminados (soft delete)
             var user = await _context.Usuarios
                 .Include(u => u.Sucursal) // Importante para el UserDTO después
+                .Where(u => !u.IsDeleted) // No permitir login de usuarios eliminados
                 .FirstOrDefaultAsync(x => x.UsuarioNombre == username);
 
             // Si no existe el usuario, retornamos null
@@ -52,7 +54,10 @@ namespace Back.Repositories
 
         public async Task<bool> UserExists(string username)
         {
-            return await _context.Usuarios.AnyAsync(x => x.UsuarioNombre == username);
+            // Solo contar usuarios activos (no eliminados)
+            return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
+                .AnyAsync(x => x.UsuarioNombre == username);
         }
     }
 }

@@ -22,12 +22,17 @@ namespace Back.Repositories
         public async Task<IEnumerable<Usuario>> GetAllAsync()
         {
             // Ref: RF13 - Listar pedidos y responsables. Necesitamos traer la sucursal.
-            return await _context.Usuarios.Include(u => u.Sucursal).ToListAsync();
+            // Excluimos usuarios eliminados (soft delete)
+            return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
+                .Include(u => u.Sucursal)
+                .ToListAsync();
         }
 
         public async Task<Usuario?> GetByIdAsync(int id)
         {
             return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
                 .Include(u => u.Sucursal)
                 .FirstOrDefaultAsync(u => u.IDUsuario == id);
         }
@@ -46,9 +51,13 @@ namespace Back.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var user = await GetByIdAsync(id);
+            // Soft delete: marcar usuario como eliminado en lugar de borrarlo
+            // Esto preserva el historial y la integridad referencial
+            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.IDUsuario == id);
             if (user == null) return false;
-            _context.Usuarios.Remove(user);
+            
+            user.IsDeleted = true;
+            _context.Usuarios.Update(user);
             return await _context.SaveChangesAsync() > 0;
         }
 
@@ -60,7 +69,9 @@ namespace Back.Repositories
         {
             // Buscamos por nombre de usuario (ej: "juan.perez")
             // Incluimos la Sucursal porque el Frontend la necesita en el Login
+            // Excluimos usuarios eliminados (no pueden loguearse si están "eliminados")
             return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
                 .Include(u => u.Sucursal)
                 .FirstOrDefaultAsync(u => u.UsuarioNombre == username);
         }
@@ -68,14 +79,18 @@ namespace Back.Repositories
         public async Task<bool> UserExistsAsync(string username)
         {
             // Verifica si ya existe alguien con ese usuario (devuelve true/false)
+            // Solo cuenta usuarios activos (no eliminados)
             return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
                 .AnyAsync(u => u.UsuarioNombre == username);
         }
 
         public async Task<bool> EmailExistsAsync(string email)
         {
             // Verifica si ya existe alguien con ese mail
+            // Solo cuenta usuarios activos (no eliminados)
             return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
                 .AnyAsync(u => u.Mail == email);
         }
     }
