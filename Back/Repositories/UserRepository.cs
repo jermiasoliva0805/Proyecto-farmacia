@@ -2,6 +2,7 @@
 using Back.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Back.Repositories
@@ -92,6 +93,15 @@ namespace Back.Repositories
             return await _context.Usuarios
                 .Where(u => !u.IsDeleted)
                 .AnyAsync(u => u.Mail == email);
+        }
+
+        public async Task<Usuario?> GetByIdWithPedidosAsync(int id)
+        {
+            // Obtiene usuario con todos sus pedidos incluidos (para validar eliminación)
+            return await _context.Usuarios
+                .Where(u => !u.IsDeleted)
+                .Include(u => u.Pedidos)
+                .FirstOrDefaultAsync(u => u.IDUsuario == id);
         }
     }
 }
