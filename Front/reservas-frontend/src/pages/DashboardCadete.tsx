@@ -10,7 +10,7 @@ import { OrderFilters } from '@components/orders/OrderFilters';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
-import { Truck, MapPin, CheckCircle, Navigation, Eye, AlertCircle } from 'lucide-react';
+import { Truck, MapPin, CheckCircle, Navigation, Eye, AlertCircle, Play, Package } from 'lucide-react';
 
 export const DashboardCadete: React.FC = () => {
     const { user } = useAuth();
@@ -73,7 +73,22 @@ export const DashboardCadete: React.FC = () => {
         return colors[name.length % colors.length];
     };
 
-    const pedidosEnCamino = pedidos.filter(p => [5, 6].includes(p.idEstadoDePedido)); // Despachando + En camino
+    const pedidosPorRetirar = pedidos.filter(p => p.idEstadoDePedido === 5); // Despachando - por iniciar ruta
+    const pedidosEnCamino = pedidos.filter(p => p.idEstadoDePedido === 6); // Solo En camino (estado 6)
+
+    const handleIniciarRuta = async (pedido: OrderSummaryDTO) => {
+        try {
+            await pedidosService.cambiarEstado({
+                idPedido: pedido.idPedido,
+                idNuevoEstado: 6, // Cambiar a "En camino"
+                idUsuario: user!.id,
+                observaciones: 'Cadete inicia ruta de entregas'
+            });
+            loadPedidos();
+        } catch (error) {
+            console.error('Error al iniciar ruta:', error);
+        }
+    };
 
     const entregadosHoyCount = pedidos.filter(p => {
         if (p.estadoNombre !== 'Entregado') return false;
@@ -95,7 +110,7 @@ export const DashboardCadete: React.FC = () => {
                         <div className="relative z-10">
                             <p className="text-amber-600 text-sm font-medium mb-1">En Ruta</p>
                             <h3 className="text-4xl font-bold mb-2 text-amber-900">{pedidosEnCamino.length}</h3>
-                            <p className="text-gray-500 text-xs">Entregas pendientes (Despachando + En Camino)</p>
+                            <p className="text-gray-500 text-xs">Entregas por realizar (En Camino)</p>
                         </div>
                         <div className="absolute right-4 top-4 bg-amber-100/50 p-3 rounded-xl backdrop-blur-sm">
                             <Truck className="w-6 h-6 text-amber-600" />
@@ -123,6 +138,65 @@ export const DashboardCadete: React.FC = () => {
                     </div>
                 ) : (
                     <>
+                        {/* SECCIÓN: Por Retirar (Estado 5 - Despachando) */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Package className="w-5 h-5 text-blue-500" /> 
+                                <h2 className="text-xl font-bold text-gray-900">Por Retirar</h2>
+                            </div>
+
+                            {pedidosPorRetirar.length === 0 ? (
+                                <Alert type="info">No tienes pedidos por retirar.</Alert>
+                            ) : (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                    {pedidosPorRetirar.map((pedido) => (
+                                        <div
+                                            key={pedido.idPedido}
+                                            className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:-translate-y-1 border-blue-100`}
+                                        >
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm`}>
+                                                        {getInitials(pedido.clienteNombre)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">#{pedido.idPedido}</p>
+                                                        <p className="text-xs text-gray-500">{pedido.clienteNombre}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mb-4">
+                                                <span className={`flex w-full justify-center py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => handleIniciarRuta(pedido)}
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                                >
+                                                    <Play className="w-3 h-3 mr-2" /> Iniciar ruta
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleVerDetalle(pedido)}
+                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg"
+                                                >
+                                                    <Eye className="w-3 h-3 mr-2" /> Ver
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* SECCIÓN: Entregas Activas (Estado 6 - En Camino) */}
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <MapPin className="w-5 h-5 text-amber-500" /> 

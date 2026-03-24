@@ -21,5 +21,8 @@ namespace Back.Repositories
         // Para evitar duplicados en el Register (validaciones)
         Task<bool> UserExistsAsync(string username);
         Task<bool> EmailExistsAsync(string email);
+
+        // Para validación de eliminación de operarios
+        Task<Usuario?> GetByIdWithPedidosAsync(int id);
     }
 }
