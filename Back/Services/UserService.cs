@@ -3,21 +3,25 @@ using Back.DTOs;
 using Back.DTOS;
 using Back.Models;
 using Back.Repositories;
+using Back.Repositories.Interfaces;
 using BCrypt.Net; // Necesario para el HashPassword
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Back.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPedidoRepository _pedidoRepository;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPedidoRepository pedidoRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _pedidoRepository = pedidoRepository;
             _mapper = mapper;
         }
 
@@ -96,10 +100,31 @@ namespace Back.Services
 
         public async Task<bool> DeleteUserAsync(int id)
         {
-            // Validación: No permitir eliminar operario si está armando activamente
+            // Obtener usuario para verificar su rol y pedidos
             var usuario = await _userRepository.GetByIdWithPedidosAsync(id);
             if (usuario == null) return false;
 
+            // VALIDACIÓN 1: Si es cadete, verificar si tiene pedidos "En Camino" (estado 6)
+            if (usuario.Rol == "Cadete")
+            {
+                // Buscar si tiene pedidos con estado "En Camino"
+                var pedidosEnCamino = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                {
+                    IDUsuario = id,
+                    IDEstadoDePedido = 6 // En Camino
+                });
+
+                if (pedidosEnCamino != null && pedidosEnCamino.Any())
+                {
+                    // Lanzar excepción bloqueante
+                    throw new InvalidOperationException(
+                        $"No se puede eliminar el cadete {usuario.Nombre} {usuario.Apellido} porque tiene {pedidosEnCamino.Count()} pedido(s) en estado 'En Camino'. " +
+                        "El proceso logístico es irreversible en esta etapa. Espere a que se completen las entregas antes de eliminarlo."
+                    );
+                }
+            }
+
+            // VALIDACIÓN 2: No permitir eliminar operario si está armando activamente
             // Solo bloquea si tiene pedidos en estado 2 (Preparar) o 3 (Demorado)
             // Estado 1 (Sin preparar): ✅ Puede eliminar - solo asignado, sin iniciar armado
             // Estado 4+ (Listo para despachar, etc): ✅ Puede eliminar - ya pasó al siguiente responsable
@@ -113,7 +138,7 @@ namespace Back.Services
                     + "El operario debe completar o cancelar todos los pedidos en preparación antes de ser eliminado.");
             }
 
-            // Si pasa la validación, proceder con soft delete (preserva historial)
+            // Si pasa ambas validaciones, proceder con soft delete (preserva historial)
             return await _userRepository.DeleteAsync(id);
         }
     }
