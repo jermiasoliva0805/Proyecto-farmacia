@@ -90,17 +90,44 @@ export const VALIDACIONES_CADETE: ValidationRuleSet = {
 
 export const VALIDACIONES_ENCARGADO: ValidationRuleSet = {
     puedeMoverHacia: (origen: number, destino: number) => {
-        // Encargado puede mover entre cualquier estado lógicamente válido
+        // Validación básica
         if (destino < 1 || destino > 9 || origen < 1 || origen > 9) {
             return false;
         }
+        
         // Los estados finales (7, 9) no pueden cambiar
         if ([7, 9].includes(origen)) {
             return false;
         }
-        return true;
+        
+        // Encargado gestiona solo la parte operaria: estados [1, 2, 3, 4]
+        // No puede manipular estados del cadete [5, 6, 8]
+        const estadosOperario = [1, 2, 3, 4];
+        const estadosCadete = [5, 6, 8];
+        
+        // Si el origen es estado de operario (1-4):
+        if (estadosOperario.includes(origen)) {
+            // Puede ir a otros estados operarios o a cancelado
+            if (estadosOperario.includes(destino) || destino === 9) {
+                return TRANSICIONES_PERMITIDAS[origen].includes(destino);
+            }
+            // Puede avanzar a 5 (asignar cadete) si viene de 4
+            if (origen === 4 && destino === 5) {
+                return true;
+            }
+            return false;
+        }
+        
+        // Si el origen es estado de cadete (5, 6, 8):
+        // Solo permite cancelar como encargado (mover a estado 9)
+        if (estadosCadete.includes(origen)) {
+            return destino === 9;
+        }
+        
+        // Si es estado 7 (Entregado), ya está bloqueado arriba
+        return false;
     },
-    puedeLlegarAlEstado: (estado: number) => estado >= 1 && estado <= 9
+    puedeLlegarAlEstado: (estado: number) => [1, 2, 3, 4, 5, 9].includes(estado)
 };
 
 // ========== TIPOS KANBAN ==========

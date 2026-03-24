@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { pedidosService } from '../../service/PedidosService';
 import { KanbanColumn } from './KanbanColumn';
 import { CancelarConMotivoModal } from './CancelarConMotivoModal';
+import { AsignarCadeteModal } from '../pedidos/AsignarCadeteModal';
 import {
     COLUMNAS_POR_ROL,
     VALIDACIONES_OPERARIO,
@@ -42,6 +43,10 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [pedidoACancelar, setPedidoACancelar] = useState<OrderSummaryDTO | null>(null);
     const [operacionCancelacionPendiente, setOperacionCancelacionPendiente] = useState(false);
+
+    // Estado para modal de asignar cadete (cuando encargado mueve de 4→5)
+    const [showAsignarCadeteModal, setShowAsignarCadeteModal] = useState(false);
+    const [pedidoAAsignarCadete, setPedidoAAsignarCadete] = useState<OrderSummaryDTO | null>(null);
 
     // Sincronizar pedidos locales cuando cambian los props
     useEffect(() => {
@@ -183,6 +188,14 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             return;
         }
 
+        // ========== CASO ESPECIAL: ASIGNAR CADETE AL PASAR A DESPACHANDO ==========
+        // Si es encargado y mueve de 4→5, debe asignar cadete
+        if (user?.rol === 'Encargado' && estadoOrigenId === 4 && estadoDestinoId === 5) {
+            setPedidoAAsignarCadete(pedido);
+            setShowAsignarCadeteModal(true);
+            return;
+        }
+
         // ========== CASO ESPECIAL: CANCELACIÓN CON MOTIVO ==========
         // Si se arrastra al estado 9 (Cancelado), mostrar modal para pedir motivo
         if (estadoDestinoId === 9) {
@@ -306,6 +319,24 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
                         setShowCancelModal(false);
                         setPedidoACancelar(null);
                         setOperacionCancelacionPendiente(false);
+                    }}
+                />
+            )}
+
+            {/* Modal de Asignar Cadete (cuando encargado mueve de 4→5) */}
+            {pedidoAAsignarCadete && (
+                <AsignarCadeteModal
+                    isOpen={showAsignarCadeteModal}
+                    pedido={pedidoAAsignarCadete}
+                    onClose={() => {
+                        setShowAsignarCadeteModal(false);
+                        setPedidoAAsignarCadete(null);
+                    }}
+                    onSuccess={() => {
+                        setShowAsignarCadeteModal(false);
+                        setPedidoAAsignarCadete(null);
+                        onUpdate();
+                        showToast('success', 'Cadete asignado correctamente');
                     }}
                 />
             )}
