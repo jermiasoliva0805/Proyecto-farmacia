@@ -3,21 +3,25 @@ using Back.DTOs;
 using Back.DTOS;
 using Back.Models;
 using Back.Repositories;
+using Back.Repositories.Interfaces;
 using BCrypt.Net; // Necesario para el HashPassword
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Back.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPedidoRepository _pedidoRepository;
         private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(IUserRepository userRepository, IPedidoRepository pedidoRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _pedidoRepository = pedidoRepository;
             _mapper = mapper;
         }
 
@@ -96,7 +100,31 @@ namespace Back.Services
 
         public async Task<bool> DeleteUserAsync(int id)
         {
-            // La lógica de verificación ya suele estar en el repositorio o se maneja con el retorno bool
+            // Obtener usuario para verificar su rol
+            var usuario = await _userRepository.GetByIdAsync(id);
+            if (usuario == null) return false;
+
+            // Si es cadete, verificar si tiene pedidos "En Camino" (estado 6)
+            if (usuario.Rol == "Cadete")
+            {
+                // Buscar si tiene pedidos con estado "En Camino"
+                var pedidosEnCamino = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                {
+                    IDUsuario = id,
+                    IDEstadoDePedido = 6 // En Camino
+                });
+
+                if (pedidosEnCamino != null && pedidosEnCamino.Any())
+                {
+                    // Lanzar excepción bloqueante
+                    throw new InvalidOperationException(
+                        $"No se puede eliminar el cadete {usuario.Nombre} {usuario.Apellido} porque tiene {pedidosEnCamino.Count()} pedido(s) en estado 'En Camino'. " +
+                        "El proceso logístico es irreversible en esta etapa. Espere a que se completen las entregas antes de eliminarlo."
+                    );
+                }
+            }
+
+            // Si no es cadete o no tiene pedidos en camino, proceder con eliminación
             return await _userRepository.DeleteAsync(id);
         }
     }

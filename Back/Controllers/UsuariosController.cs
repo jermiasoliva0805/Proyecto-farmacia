@@ -63,10 +63,26 @@ namespace Back.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUsuario(int id)
         {
-            var result = await _userService.DeleteUserAsync(id);
-            if (!result) return NotFound(new { message = "Usuario no encontrado." });
+            try
+            {
+                var result = await _userService.DeleteUserAsync(id);
+                if (!result) return NotFound(new { message = "Usuario no encontrado." });
 
-            return Ok(new { message = "Usuario eliminado correctamente." });
+                return Ok(new { message = "Usuario eliminado correctamente." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Error de validación de negocio: cadete con pedidos en camino
+                return BadRequest(new 
+                { 
+                    message = ex.Message,
+                    errorCode = "CADETE_HAS_ACTIVE_DELIVERIES"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al eliminar usuario: " + ex.Message });
+            }
         }
     }
 }

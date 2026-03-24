@@ -449,7 +449,7 @@ namespace Back.Services
             {
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 9,
-                IDUsuario = pedido.IDUsuario, // Usuario responsable registrado
+                IDUsuario = pedido.IDUsuario, // Usuario responsable registrado (puede ser null)
                 fecha_hora_inicio = DateTime.Now,
                 Observaciones = $"Cancelación. Motivo ID: {dto.MotivoCancelacionId}. Justificación: {dto.Justificacion ?? "Sin detalle."}"
             };

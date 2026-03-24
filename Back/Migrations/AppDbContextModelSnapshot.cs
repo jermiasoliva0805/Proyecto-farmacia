@@ -41,7 +41,7 @@ namespace Back.Migrations
 
                     b.HasIndex("IDLocalidad");
 
-                    b.ToTable("Barrios");
+                    b.ToTable("Barrios", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Cliente", b =>
@@ -88,7 +88,7 @@ namespace Back.Migrations
 
                     b.HasIndex("IDLocalidad");
 
-                    b.ToTable("Clientes");
+                    b.ToTable("Clientes", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.DetalleDePedido", b =>
@@ -118,7 +118,7 @@ namespace Back.Migrations
 
                     b.HasIndex("IDProducto");
 
-                    b.ToTable("DetallesDePedidos");
+                    b.ToTable("DetallesDePedidos", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.EstadoDePedido", b =>
@@ -139,7 +139,7 @@ namespace Back.Migrations
 
                     b.HasKey("IDEstadoDePedido");
 
-                    b.ToTable("EstadosDePedidos");
+                    b.ToTable("EstadosDePedidos", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.HistorialDeEstados", b =>
@@ -182,7 +182,7 @@ namespace Back.Migrations
 
                     b.HasIndex("IDUsuario");
 
-                    b.ToTable("HistorialesDeEstados");
+                    b.ToTable("HistorialesDeEstados", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.IntentoDeEntrega", b =>
@@ -229,7 +229,7 @@ namespace Back.Migrations
 
                     b.HasIndex("UsuarioIDUsuario");
 
-                    b.ToTable("IntentosDeEntregas");
+                    b.ToTable("IntentosDeEntregas", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Localidad", b =>
@@ -254,7 +254,7 @@ namespace Back.Migrations
 
                     b.HasKey("IDLocalidad");
 
-                    b.ToTable("Localidades");
+                    b.ToTable("Localidades", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.MotivoCancelacion", b =>
@@ -274,7 +274,7 @@ namespace Back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MotivosCancelacion");
+                    b.ToTable("MotivosCancelacion", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Pedido", b =>
@@ -362,7 +362,7 @@ namespace Back.Migrations
 
                     b.HasIndex("MotivoCancelacionId");
 
-                    b.ToTable("Pedidos");
+                    b.ToTable("Pedidos", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Producto", b =>
@@ -394,7 +394,7 @@ namespace Back.Migrations
 
                     b.HasKey("IDProducto");
 
-                    b.ToTable("Productos");
+                    b.ToTable("Productos", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Sucursal", b =>
@@ -419,7 +419,7 @@ namespace Back.Migrations
 
                     b.HasKey("IDSucursal");
 
-                    b.ToTable("Sucursales");
+                    b.ToTable("Sucursales", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Usuario", b =>
@@ -464,7 +464,7 @@ namespace Back.Migrations
 
                     b.HasIndex("IDSucursal");
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("Usuarios", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Barrio", b =>
