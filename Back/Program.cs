@@ -105,7 +105,20 @@ namespace Back
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
 
-            // 7. SEGURIDAD JWT (Ajuste de expiración y validación)
+            // 7. CORS - Orígenes permitidos desde configuración
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigins", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
+
+            // 8. SEGURIDAD JWT (Ajuste de expiración y validación)
             var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options => {
@@ -139,7 +152,7 @@ namespace Back
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors("AllowSpecificOrigins");
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
