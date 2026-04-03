@@ -52,4 +52,4 @@ jobs:
           app-name: 'farmacia-Api'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D749DFC181694774BCC50894EBA02A3C }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D6B76940076346C3B6C6960BBDD7F9F2 }}
