@@ -121,7 +121,8 @@ namespace Back
             // 8. SEGURIDAD JWT (Ajuste de expiración y validación)
             var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options => {
+                .AddJwtBearer(options =>
+                {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
@@ -134,20 +135,29 @@ namespace Back
 
             var app = builder.Build();
 
-            // 8. Seeding
+            // 9. Seeding
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                try {
+                try
+                {
                     var context = services.GetRequiredService<AppDbContext>();
                     DbInitializer.Initialize(context);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex)
+                {
                     var logger = services.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "Error al sembrar la base de datos.");
                 }
             }
 
-            if (app.Environment.IsDevelopment()) {
+            // Swagger: habilitar en Development o si la config lo permite explícitamente
+            var enableSwagger =
+                app.Environment.IsDevelopment() ||
+                builder.Configuration.GetValue<bool>("EnableSwagger");
+
+            if (enableSwagger)
+            {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
@@ -156,7 +166,10 @@ namespace Back
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // Health endpoint (para verificar que el contenedor arrancó)
             app.MapGet("/health", () => Results.Ok("ok"));
+
             app.MapControllers();
             app.Run();
         }
