@@ -1,65 +1,54 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - farmacia-Api
+name: Azure Static Web Apps CI/CD
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
 jobs:
-  build:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
+    name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v3
         with:
-          dotnet-version: '9.x'
+          submodules: true
+          lfs: false
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GRASS_0D17BC710 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          action: "upload"
 
-  deploy:
+          # Frontend (Vite) lives here:
+          app_location: "./Front/reservas-frontend"
+
+          # No Azure Functions API in this repo (optional):
+          api_location: ""
+
+          # Vite build output folder:
+          output_location: "dist"
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
+    name: Close Pull Request Job
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
         with:
-          name: .net-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_BF931A879B7E4EE1B8EBBBFD3AECB3B8 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_032570FC053F4864BBF2C0CAE851AFE1 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B67EC856E42C4C069BBD3C21AFBE1271 }}
-
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'farmacia-Api'
-          slot-name: 'Production'
-          package: .
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_GRASS_0D17bc710 }}
+          action: "close"
           
