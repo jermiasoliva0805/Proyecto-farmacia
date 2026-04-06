@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
@@ -28,13 +29,8 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
 
-          # Vite/React app lives here:
           app_location: "./Front/reservas-frontend"
-
-          # No Azure Functions API in this repo:
           api_location: ""
-
-          # Vite build output:
           output_location: "dist"
 
   close_pull_request_job:
