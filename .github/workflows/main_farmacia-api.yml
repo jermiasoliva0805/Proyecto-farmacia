@@ -24,16 +24,13 @@ jobs:
           dotnet-version: "9.x"
 
       - name: Restore
-        run: dotnet restore
-        working-directory: Back
+        run: dotnet restore Back/Back.sln
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
-        working-directory: Back
+        run: dotnet build Back/Back.sln --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish --configuration Release --no-build --output ../publish
-        working-directory: Back
+        run: dotnet publish Back/Back.csproj --configuration Release --no-build --output ./publish
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -45,10 +42,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          # En Azure Portal se ve como "farmacia-Api"
           app-name: farmacia-Api
-          package: ./publish
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: farmacia-api
           package: ./publish
