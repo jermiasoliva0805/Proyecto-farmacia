@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
     return (
         <aside 
-            className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-40 transition-transform duration-300 ease-in-out ${visibilityClass}`}
+            className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-50 lg:z-40 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none ${visibilityClass}`}
         >
             <nav className="p-4 space-y-2">
                 {currentMenu.map((item) => (
@@ -63,15 +63,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${
+                            `flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all font-medium text-sm sm:text-base ${
                                 isActive
                                     ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                             }`
                         }
                     >
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.label}</span>
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
                     </NavLink>
                 ))}
             </nav>
