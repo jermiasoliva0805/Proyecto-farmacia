@@ -99,31 +99,31 @@ export const DashboardCadete: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-8 font-sans">
+            <div className="space-y-4 sm:space-y-8 font-sans px-2 sm:px-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ruta de {user?.nombreCompleto?.split(' ')[0]}</h1>
-                    <p className="text-gray-500 mt-1">Panel de Entregas - {user?.nombreSucursal}</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Ruta de {user?.nombreCompleto?.split(' ')[0]}</h1>
+                    <p className="text-gray-500 mt-1 text-sm sm:text-base">Panel de Entregas - {user?.nombreSucursal}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border-2 border-amber-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+                    <div className="bg-white border-2 border-amber-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
-                            <p className="text-amber-600 text-sm font-medium mb-1">En Ruta</p>
-                            <h3 className="text-4xl font-bold mb-2 text-amber-900">{pedidosEnCamino.length}</h3>
-                            <p className="text-gray-500 text-xs">Entregas por realizar (En Camino)</p>
+                            <p className="text-amber-600 text-xs sm:text-sm font-medium mb-1">En Ruta</p>
+                            <h3 className="text-3xl sm:text-4xl font-bold mb-2 text-amber-900">{pedidosEnCamino.length}</h3>
+                            <p className="text-gray-500 text-[11px] sm:text-xs">Entregas por realizar (En Camino)</p>
                         </div>
-                        <div className="absolute right-4 top-4 bg-amber-100/50 p-3 rounded-xl backdrop-blur-sm">
-                            <Truck className="w-6 h-6 text-amber-600" />
+                        <div className="absolute right-4 top-4 bg-amber-100/50 p-2 sm:p-3 rounded-xl backdrop-blur-sm">
+                            <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
                         </div>
                     </div>
-                    <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
+                    <div className="bg-white border-2 border-emerald-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm relative overflow-hidden group transition-all hover:shadow-md">
                         <div className="relative z-10">
-                            <p className="text-emerald-600 text-sm font-medium mb-1">Entregados Hoy</p>
-                            <h3 className="text-4xl font-bold mb-2 text-emerald-900">{entregadosHoyCount}</h3>
-                            <p className="text-gray-500 text-xs">Objetivo diario</p>
+                            <p className="text-emerald-600 text-xs sm:text-sm font-medium mb-1">Entregados Hoy</p>
+                            <h3 className="text-3xl sm:text-4xl font-bold mb-2 text-emerald-900">{entregadosHoyCount}</h3>
+                            <p className="text-gray-500 text-[11px] sm:text-xs">Objetivo diario</p>
                         </div>
-                        <div className="absolute right-4 top-4 bg-emerald-100/50 p-3 rounded-xl backdrop-blur-sm">
-                            <CheckCircle className="w-6 h-6 text-emerald-600" />
+                        <div className="absolute right-4 top-4 bg-emerald-100/50 p-2 sm:p-3 rounded-xl backdrop-blur-sm">
+                            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
                         </div>
                     </div>
                 </div>
@@ -140,54 +140,54 @@ export const DashboardCadete: React.FC = () => {
                     <>
                         {/* SECCIÓN: Por Retirar (Estado 5 - Despachando) */}
                         <div>
-                            <div className="flex items-center gap-2 mb-4">
+                            <div className="flex items-center gap-2 mb-3 sm:mb-4">
                                 <Package className="w-5 h-5 text-blue-500" /> 
-                                <h2 className="text-xl font-bold text-gray-900">Por Retirar</h2>
+                                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Por Retirar</h2>
                             </div>
 
                             {pedidosPorRetirar.length === 0 ? (
                                 <Alert type="info">No tienes pedidos por retirar.</Alert>
                             ) : (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8">
                                     {pedidosPorRetirar.map((pedido) => (
                                         <div
                                             key={pedido.idPedido}
-                                            className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:-translate-y-1 border-blue-100`}
+                                            className={`bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border shadow-sm transition-all hover:-translate-y-1 border-blue-100`}
                                         >
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm`}>
+                                            <div className="flex justify-between items-start mb-3 sm:mb-4">
+                                                <div className="flex items-center gap-2 sm:gap-3">
+                                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-xs sm:text-sm`}>
                                                         {getInitials(pedido.clienteNombre)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900">#{pedido.idPedido}</p>
+                                                        <p className="font-bold text-gray-900 text-sm sm:text-base">#{pedido.idPedido}</p>
                                                         <p className="text-xs text-gray-500">{pedido.clienteNombre}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             
-                                            <div className="mb-4">
-                                                <span className={`flex w-full justify-center py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                            <div className="mb-3 sm:mb-4">
+                                                <span className={`flex w-full justify-center py-1 rounded-full text-[10px] sm:text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
                                                     {pedido.estadoNombre.toUpperCase()}
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
                                                     onClick={() => handleIniciarRuta(pedido)}
-                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm"
                                                 >
-                                                    <Play className="w-3 h-3 mr-2" /> Iniciar ruta
+                                                    <Play className="w-3 h-3 mr-1 sm:mr-2" /> Iniciar ruta
                                                 </Button>
                                                 <Button
                                                     variant="secondary"
                                                     size="sm"
                                                     onClick={() => handleVerDetalle(pedido)}
-                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg"
+                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg text-xs sm:text-sm"
                                                 >
-                                                    <Eye className="w-3 h-3 mr-2" /> Ver
+                                                    <Eye className="w-3 h-3 mr-1 sm:mr-2" /> Ver
                                                 </Button>
                                             </div>
                                         </div>
@@ -198,55 +198,55 @@ export const DashboardCadete: React.FC = () => {
 
                         {/* SECCIÓN: Entregas Activas (Estado 6 - En Camino) */}
                         <div>
-                            <div className="flex items-center gap-2 mb-4">
+                            <div className="flex items-center gap-2 mb-3 sm:mb-4">
                                 <MapPin className="w-5 h-5 text-amber-500" /> 
-                                <h2 className="text-xl font-bold text-gray-900">Entregas Activas</h2>
+                                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Entregas Activas</h2>
                             </div>
 
                             {pedidosEnCamino.length === 0 ? (
                                 <Alert type="info">No tienes entregas asignadas actualmente.</Alert>
                             ) : (
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                                     {pedidosEnCamino.map((pedido) => (
                                         <div
                                             key={pedido.idPedido}
-                                            className={`bg-white rounded-2xl p-5 border shadow-sm transition-all hover:-translate-y-1 ${pedido.estaDemorado ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-100'}`}
+                                            className={`bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border shadow-sm transition-all hover:-translate-y-1 ${pedido.estaDemorado ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-100'}`}
                                         >
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-sm`}>
+                                            <div className="flex justify-between items-start mb-3 sm:mb-4">
+                                                <div className="flex items-center gap-2 sm:gap-3">
+                                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${getAvatarColor(pedido.clienteNombre)} text-white flex items-center justify-center font-bold text-xs sm:text-sm`}>
                                                         {getInitials(pedido.clienteNombre)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900">#{pedido.idPedido}</p>
+                                                        <p className="font-bold text-gray-900 text-sm sm:text-base">#{pedido.idPedido}</p>
                                                         <p className="text-xs text-gray-500">{pedido.clienteNombre}</p>
                                                     </div>
                                                 </div>
-                                                {pedido.estaDemorado && <AlertCircle className="text-red-500 w-5 h-5" />}
+                                                {pedido.estaDemorado && <AlertCircle className="text-red-500 w-4 h-4 sm:w-5 sm:h-5" />}
                                             </div>
                                             
-                                            <div className="mb-4">
-                                                <span className={`flex w-full justify-center py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                            <div className="mb-3 sm:mb-4">
+                                                <span className={`flex w-full justify-center py-1 rounded-full text-[10px] sm:text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
                                                     {pedido.estadoNombre.toUpperCase()}
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
                                                     onClick={() => handleConfirmarEntrega(pedido)}
-                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm"
                                                 >
-                                                    <Navigation className="w-3 h-3 mr-2" /> Entregar
+                                                    <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Entregar
                                                 </Button>
                                                 <Button
                                                     variant="secondary"
                                                     size="sm"
                                                     onClick={() => handleVerDetalle(pedido)}
-                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg"
+                                                    className="w-full border border-gray-200 hover:bg-gray-50 rounded-lg text-xs sm:text-sm"
                                                 >
-                                                    <Eye className="w-3 h-3 mr-2" /> Ver
+                                                    <Eye className="w-3 h-3 mr-1 sm:mr-2" /> Ver
                                                 </Button>
                                             </div>
                                         </div>
@@ -255,18 +255,18 @@ export const DashboardCadete: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8">
-                            <div className="p-6 border-b border-gray-100">
-                                <h2 className="text-lg font-bold text-gray-800">Entregas Finalizadas</h2>
+                        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6 sm:mt-8">
+                            <div className="p-3 sm:p-6 border-b border-gray-100">
+                                <h2 className="text-base sm:text-lg font-bold text-gray-800">Entregas Finalizadas</h2>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full">
+                                <table className="w-full text-xs sm:text-sm">
                                     <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                                         <tr>
-                                            <th className="p-4 text-left">ID</th>
-                                            <th className="p-4 text-left">Cliente</th>
-                                            <th className="p-4 text-left">Estado</th>
-                                            <th className="p-4 text-right">Acciones</th>
+                                            <th className="p-3 sm:p-4 text-left">ID</th>
+                                            <th className="p-3 sm:p-4 text-left">Cliente</th>
+                                            <th className="p-3 sm:p-4 text-left">Estado</th>
+                                            <th className="p-3 sm:p-4 text-right">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -274,35 +274,35 @@ export const DashboardCadete: React.FC = () => {
                                             .filter(p => [7, 8, 9].includes(p.idEstadoDePedido))
                                             .map((pedido) => (
                                                 <tr key={pedido.idPedido} className="hover:bg-gray-50">
-                                                    <td className="p-4 font-medium text-gray-700">#{pedido.idPedido}</td>
-                                                    <td className="p-4 text-sm">{pedido.clienteNombre}</td>
-                                                    <td className="p-4">
+                                                    <td className="p-3 sm:p-4 font-medium text-gray-700">#{pedido.idPedido}</td>
+                                                    <td className="p-3 sm:p-4 text-xs sm:text-sm truncate">{pedido.clienteNombre}</td>
+                                                    <td className="p-3 sm:p-4">
                                                         <span className={`flex w-full justify-center py-1 rounded-full text-[10px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
                                                             {pedido.estadoNombre.toUpperCase()}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-right flex gap-2 justify-end items-center">
-                                                        <button 
-                                                            onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
-                                                            className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1 transition-colors"
-                                                        >
-                                                            <Eye className="w-4 h-4" /> 
-                                                            <span>Ver Detalle</span>
-                                                        </button>
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => handleConfirmarEntrega(pedido)}
-                                                            disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
-                                                            className={`rounded-lg text-xs px-3 py-1 ${
-                                                                (pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
+                                                    <td className="p-3 sm:p-4 text-right">
+                                                        <div className="flex gap-1 sm:gap-2 justify-end items-center flex-wrap">
+                                                            <button 
+                                                                onClick={() => { setSelectedPedidoDetalle(pedido); setModalDetalleOpen(true); }} 
+                                                                className="text-blue-600 hover:text-blue-800 font-bold text-xs transition-colors"
+                                                            >
+                                                                <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> 
+                                                            </button>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => handleConfirmarEntrega(pedido)}
+                                                                disabled={pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9}
+                                                                className={`rounded-lg text-xs px-2 py-1 ${ (pedido.idEstadoDePedido === 7 || pedido.idEstadoDePedido === 9) 
                                                                 ? "bg-gray-400 cursor-not-allowed text-white" 
                                                                 : "bg-green-600 hover:bg-green-700 text-white"
                                                             }`}
-                                                        >
-                                                            {pedido.idEstadoDePedido === 7 ? 'Entregado' : 
-                                                             pedido.idEstadoDePedido === 9 ? 'Cancelado' : 
-                                                             'Gestionar'}
-                                                        </Button>
+                                                            >
+                                                                {pedido.idEstadoDePedido === 7 ? 'Entregado' : 
+                                                                 pedido.idEstadoDePedido === 9 ? 'Cancelado' : 
+                                                                 'Gestionar'}
+                                                            </Button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
