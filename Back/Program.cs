@@ -101,7 +101,37 @@ namespace Back
             builder.Services.AddScoped<IDeliveryService, DeliveryService>();
             builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
-            builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+            
+            // 6a. Configuración de SMTP - Lee variables de entorno o appsettings
+            var smtpSettings = new SmtpSettings
+            {
+                Host = builder.Configuration["Smtp:Host"] 
+                    ?? Environment.GetEnvironmentVariable("SMTP_HOST") 
+                    ?? "smtp.gmail.com",
+                Port = int.Parse(builder.Configuration["Smtp:Port"] 
+                    ?? Environment.GetEnvironmentVariable("SMTP_PORT") 
+                    ?? "587"),
+                User = builder.Configuration["Smtp:User"] 
+                    ?? Environment.GetEnvironmentVariable("SMTP_USER")
+                    ?? "",
+                Password = builder.Configuration["Smtp:Password"] 
+                    ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
+                    ?? "",
+                EnableSsl = bool.Parse(builder.Configuration["Smtp:EnableSsl"] 
+                    ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL")
+                    ?? "true")
+            };
+            builder.Services.Configure<SmtpSettings>(s =>
+            {
+                s.Host = smtpSettings.Host;
+                s.Port = smtpSettings.Port;
+                s.User = smtpSettings.User;
+                s.Password = smtpSettings.Password;
+                s.EnableSsl = smtpSettings.EnableSsl;
+            });
+            
+            Console.WriteLine($"[SMTP Config] Host: {smtpSettings.Host}, Port: {smtpSettings.Port}, User: {smtpSettings.User}, EnableSsl: {smtpSettings.EnableSsl}");
+            
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
 

@@ -122,26 +122,41 @@ namespace Back.Services
 
         private async Task Send(MailMessage mail)
         {
+            // Validar configuración SMTP
+            if (string.IsNullOrWhiteSpace(_smtpSettings.Host))
+            {
+                Console.WriteLine($"[EmailSender] ⚠️ ADVERTENCIA: SMTP Host no configurado. Email NO se envió a {string.Join(",", mail.To)}");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_smtpSettings.User) || string.IsNullOrWhiteSpace(_smtpSettings.Password))
+            {
+                Console.WriteLine($"[EmailSender] ⚠️ ADVERTENCIA: Credenciales SMTP incompletas. Email NO se envió a {string.Join(",", mail.To)}");
+                return;
+            }
+
             using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
             {
                 EnableSsl = _smtpSettings.EnableSsl,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpSettings.User, _smtpSettings.Password)
+                Credentials = new NetworkCredential(_smtpSettings.User, _smtpSettings.Password),
+                Timeout = 20000 // 20 segundos timeout
             };
 
             try
             {
+                Console.WriteLine($"[EmailSender] Enviando email a {string.Join(",", mail.To)} via {_smtpSettings.Host}:{_smtpSettings.Port}");
                 await client.SendMailAsync(mail);
-                Console.WriteLine($"[EmailSender] Email enviado a {string.Join(",", mail.To)}");
+                Console.WriteLine($"[EmailSender] ✅ Email enviado exitosamente a {string.Join(",", mail.To)}");
             }
             catch (SmtpException ex)
             {
-                Console.WriteLine($"[EmailSender] Error SMTP: {ex.StatusCode} - {ex.Message}");
+                Console.WriteLine($"[EmailSender] ❌ Error SMTP ({ex.StatusCode}): {ex.Message}");
                 throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[EmailSender] Error general: {ex.Message}");
+                Console.WriteLine($"[EmailSender] ❌ Error al enviar email: {ex.Message}");
                 throw;
             }
         }
