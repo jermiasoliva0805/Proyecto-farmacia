@@ -1,34 +1,46 @@
-name: .NET Core CI
+name: Build and deploy ASP.NET Core API to Azure Web App - farmacia-api
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  build:
+  build_and_deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 7.0.x
+          dotnet-version: "9.x"
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore
+        run: dotnet restore Back/Back.sln
 
       - name: Build
-        run: dotnet build Back/ --configuration Release
+        run: dotnet build Back/Back.sln --configuration Release --no-restore
 
       - name: Publish
-        run: dotnet publish Back/ -c Release -o ./bin/publish
+        run: dotnet publish Back/Back.csproj --configuration Release --no-build --output ./publish
 
-      - name: Test
-        run: dotnet test
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_BF931A879B7E4EE1B8EBBBFD3AECB3B8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_032570FC053F4864BBF2C0CAE851AFE1 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B67EC856E42C4C069BBD3C21AFBE1271 }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: farmacia-Api
+          package: ./publish
