@@ -192,8 +192,10 @@ const OrderFormPage: React.FC = () => {
             console.log('✅ Pedido creado:', resultado);
             alert(`Pedido creado con éxito. ID: ${resultado.pedidoId}`);
             
-            // ✅ Recargar la página para limpiar el formulario y prevenir duplicados
-            window.location.reload();
+            // ✅ Navegar al dashboard del admin donde se ven los pedidos
+            setTimeout(() => {
+                navigate('/dashboard/admin');
+            }, 500);
         } catch (error) {
             console.error("❌ Error al guardar:", error);
             alert("Error al guardar el pedido");
