@@ -1,20 +1,19 @@
 using AutoMapper;
 using Back.Data;
+using Back.Interfaces;
 using Back.Repositories;
 using Back.Repositories.Interfaces;
-using Back.Validators;
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using Microsoft.EntityFrameworkCore;
 using Back.Services;
 using Back.Services.Interfaces;
+using Back.Validators;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.OpenApi.Models;
-using Back.Interfaces;
 
 namespace Back
 {
@@ -56,7 +55,7 @@ namespace Back
                         {
                             Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
                         },
-                        new string[] {}
+                        Array.Empty<string>()
                     }
                 });
             });
@@ -101,37 +100,43 @@ namespace Back
             builder.Services.AddScoped<IDeliveryService, DeliveryService>();
             builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
-            
-            // 6a. Configuración de SMTP - Lee variables de entorno o appsettings
-            var smtpSettings = new SmtpSettings
-            {
-                Host = builder.Configuration["Smtp:Host"] 
-                    ?? Environment.GetEnvironmentVariable("SMTP_HOST") 
-                    ?? "smtp.gmail.com",
-                Port = int.Parse(builder.Configuration["Smtp:Port"] 
-                    ?? Environment.GetEnvironmentVariable("SMTP_PORT") 
-                    ?? "587"),
-                User = builder.Configuration["Smtp:User"] 
-                    ?? Environment.GetEnvironmentVariable("SMTP_USER")
-                    ?? "",
-                Password = builder.Configuration["Smtp:Password"] 
-                    ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
-                    ?? "",
-                EnableSsl = bool.Parse(builder.Configuration["Smtp:EnableSsl"] 
-                    ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL")
-                    ?? "true")
-            };
+
+            // 6a. SMTP (prioridad: Smtp:* -> SMTP_* -> defaults). Evita Parse exceptions.
+            static int GetInt(string? value, int fallback) => int.TryParse(value, out var v) ? v : fallback;
+            static bool GetBool(string? value, bool fallback) => bool.TryParse(value, out var v) ? v : fallback;
+
+            var host = builder.Configuration["Smtp:Host"]
+                ?? Environment.GetEnvironmentVariable("SMTP_HOST")
+                ?? "smtp.gmail.com";
+
+            var port = GetInt(
+                builder.Configuration["Smtp:Port"] ?? Environment.GetEnvironmentVariable("SMTP_PORT"),
+                587);
+
+            var user = builder.Configuration["Smtp:User"]
+                ?? Environment.GetEnvironmentVariable("SMTP_USER")
+                ?? "";
+
+            var password = builder.Configuration["Smtp:Password"]
+                ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
+                ?? "";
+
+            var enableSsl = GetBool(
+                builder.Configuration["Smtp:EnableSsl"] ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL"),
+                true);
+
             builder.Services.Configure<SmtpSettings>(s =>
             {
-                s.Host = smtpSettings.Host;
-                s.Port = smtpSettings.Port;
-                s.User = smtpSettings.User;
-                s.Password = smtpSettings.Password;
-                s.EnableSsl = smtpSettings.EnableSsl;
+                s.Host = host;
+                s.Port = port;
+                s.User = user;
+                s.Password = password;
+                s.EnableSsl = enableSsl;
             });
-            
-            Console.WriteLine($"[SMTP Config] Host: {smtpSettings.Host}, Port: {smtpSettings.Port}, User: {smtpSettings.User}, EnableSsl: {smtpSettings.EnableSsl}");
-            
+
+            // Log seguro (sin user/password)
+            Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
+
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
 
@@ -148,7 +153,7 @@ namespace Back
                 });
             });
 
-            // 8. SEGURIDAD JWT (Ajuste de expiración y validación)
+            // 8. SEGURIDAD JWT
             var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -159,30 +164,28 @@ namespace Back
                         IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateIssuer = false,
                         ValidateAudience = false,
-                        ClockSkew = TimeSpan.Zero // Hace que el token expire exactamente cuando dice el payload
+                        ClockSkew = TimeSpan.Zero
                     };
                 });
 
             var app = builder.Build();
 
-           // 9. Seeding (SOLO en Development)
-        if (app.Environment.IsDevelopment())
-    {
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            var context = services.GetRequiredService<AppDbContext>();
-            DbInitializer.Initialize(context);
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "Error al sembrar la base de datos.");
-        }
-        }
-    }
+            // 9. Seeding (SOLO en Development)
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    DbInitializer.Initialize(context);
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Error al sembrar la base de datos.");
+                }
+            }
 
             // Swagger: habilitar en Development o si la config lo permite explícitamente
             var enableSwagger =
@@ -200,7 +203,7 @@ namespace Back
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Health endpoint (para verificar que el contenedor arrancó)
+            // Health endpoint
             app.MapGet("/health", () => Results.Ok("ok"));
 
             app.MapControllers();
