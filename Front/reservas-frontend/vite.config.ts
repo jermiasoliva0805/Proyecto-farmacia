@@ -21,4 +21,9 @@ export default defineConfig({
         middlewareMode: false,
     },
     publicDir: 'public',
+    build: {
+        outDir: 'dist',
+        sourcemap: false,
+        minify: 'terser',
+    }
 })
