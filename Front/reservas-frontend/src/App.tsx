@@ -28,9 +28,15 @@ const MainLayout = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden mt-16"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className="flex pt-16">
         <Sidebar isOpen={sidebarOpen} />
-        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <main className="flex-1 transition-all duration-300 lg:ml-64">
           <Outlet />
         </main>
       </div>

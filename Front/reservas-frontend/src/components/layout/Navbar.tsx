@@ -23,20 +23,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                             <Menu className="w-6 h-6 text-white" />
                         </button>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             {/* Logo con fondo blanco circular para resaltar sobre el azul */}
-                            <div className="bg-white p-1 rounded-full w-10 h-10 flex items-center justify-center">
+                            <div className="bg-white p-1 rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
                                 <img 
                                     src="/LogofarmaciaCirculo.png" 
                                     alt="Logo Farmacia" 
-                                    className="w-8 h-8 object-contain" 
+                                    className="w-7 h-7 sm:w-8 sm:h-8 object-contain" 
                                 />
                             </div>
-                            <div>
-                                <h1 className="text-lg font-bold leading-none">
+                            <div className="hidden sm:block">
+                                <h1 className="text-base sm:text-lg font-bold leading-none">
                                     Farmacia General Paz
                                 </h1>
-                                <p className="text-[10px] text-blue-200 uppercase tracking-wider mt-0.5">
+                                <p className="text-[9px] sm:text-[10px] text-blue-200 uppercase tracking-wider mt-0.5">
                                     Sistema de Gestión de Pedidos
                                 </p>
                             </div>
@@ -44,16 +44,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                     </div>
 
                     {/* Sección Derecha: Notificaciones y Usuario */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button className="relative p-2 rounded-lg hover:bg-blue-800 transition-colors">
-                            <Bell className="w-6 h-6 text-white" />
+                            <Bell className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-400 rounded-full"></span>
                         </button>
 
                         <div className="h-8 w-px bg-blue-700 mx-1 hidden sm:block"></div>
 
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center text-blue-900 font-bold border-2 border-white/20">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-yellow-400 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm border-2 border-white/20 flex-shrink-0">
                                 {user?.nombreCompleto?.charAt(0) || 'A'}
                             </div>
                             
@@ -64,9 +64,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
                             <button
                                 onClick={logout}
-                                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors shadow-sm"
+                                className="px-2 sm:px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-medium rounded-md transition-colors shadow-sm whitespace-nowrap"
                             >
-                                Cerrar Sesión
+                                Salir
                             </button>
                         </div>
                     </div>
