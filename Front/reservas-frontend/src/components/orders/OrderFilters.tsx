@@ -26,7 +26,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({ userRole, onFilterCh
 
     // 2. Lógica de visibilidad por Rol
     const getFilteredOptions = () => {
-        if (userRole === 'Encargado' || userRole === 'Admin') return allFilters;
+        if (userRole === 'Encargado' || userRole === 'Encargado') return allFilters;
 
         if (userRole === 'Operario') {
             return allFilters.filter(f => 

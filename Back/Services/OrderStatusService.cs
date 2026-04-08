@@ -67,7 +67,7 @@ namespace Back.Services
             return nombres;
         }
 
-        // 1. ASIGNAR OPERARIO (ADMIN) - Pasa de Sin preparar (1) a Preparar pedido (2)
+        // 1. ASIGNAR OPERARIO (encargado) - Pasa de Sin preparar (1) a Preparar pedido (2)
         public async Task<bool> AsignarOperarioAsync(AssignOperatorDTO dto)
         {
             // Trae Cliente y Detalles para poder enviar correo personalizado
@@ -84,7 +84,7 @@ namespace Back.Services
                 IDEstadoDePedido = 2,
                 IDUsuario = dto.OperarioId,
                 fecha_hora_inicio = DateTime.Now,
-                Observaciones = "Admin asignó operario para la preparación del pedido."
+                Observaciones = "Encargado asignó operario para la preparación del pedido."
             };
 
             var resultado = await _repository.ActualizarEstadoAsync(historial, pedido);
@@ -133,7 +133,7 @@ namespace Back.Services
             return resultado;
         }
 
-        // 2. ASIGNAR CADETE (ADMIN) - Pasa de Listo para despachar (4) a Despachando (5)
+        // 2. ASIGNAR CADETE (ENCARGADO) - Pasa de Listo para despachar (4) a Despachando (5)
         public async Task<bool> AsignarCadeteAsync(AssignDeliveryDTO dto)
         {
             // Trae Cliente y Detalles para poder enviar correo personalizado
