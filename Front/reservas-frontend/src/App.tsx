@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar'; 
@@ -24,6 +24,12 @@ import TrackingPage from './pages/TrackingPage';
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const location = useLocation();
+
+  // Cerrar sidebar cuando cambia de página
+  React.useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-gray-50">

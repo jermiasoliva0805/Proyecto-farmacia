@@ -285,7 +285,7 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
 
             {/* Contenedor del Kanban */}
             <DragDropContext onDragEnd={handleDragEnd}>
-                <div className="inline-flex gap-6 p-4 w-full" style={{ overflowX: 'auto' }}>
+                <div className="inline-flex gap-2 sm:gap-4 md:gap-6 p-2 sm:p-4 w-full" style={{ overflowX: 'auto', minHeight: 'fit-content' }}>
                     {getColumnasVisibles().map(estadoId => (
                         <KanbanColumn
                             key={estadoId}

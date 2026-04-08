@@ -38,13 +38,13 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     const estilo = getEstadoStyle(estadoId);
 
     return (
-        <div className={`flex-none w-80 rounded-lg ${estilo.bg} border-2 ${estilo.border} p-4 flex flex-col`}>
+        <div className={`flex-none w-72 sm:w-80 md:w-96 rounded-lg ${estilo.bg} border-2 ${estilo.border} p-3 sm:p-4 flex flex-col`}>
             {/* Encabezado de columna */}
-            <div className="mb-4 pb-3 border-b-2 border-gray-300">
-                <h2 className={`text-sm font-bold ${estilo.text} uppercase tracking-wider`}>
+            <div className="mb-3 sm:mb-4 pb-2 sm:pb-3 border-b-2 border-gray-300">
+                <h2 className={`text-xs sm:text-sm font-bold ${estilo.text} uppercase tracking-wider`}>
                     {estadoNombre}
                 </h2>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
                     {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''}
                 </p>
             </div>
@@ -56,7 +56,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={`
-                            flex-1 min-h-96 rounded-lg p-2 transition-all
+                            flex-1 min-h-80 sm:min-h-96 rounded-lg p-2 transition-all
                             ${snapshot.isDraggingOver ? 'bg-blue-200 ring-2 ring-blue-400' : 'bg-white'}
                         `}
                     >
@@ -73,7 +73,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 />
                             ))
                         ) : (
-                            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                            <div className="h-full flex items-center justify-center text-gray-400 text-xs sm:text-sm">
                                 Sin pedidos
                             </div>
                         )}

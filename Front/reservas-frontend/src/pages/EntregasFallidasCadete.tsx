@@ -52,10 +52,10 @@ const EntregasFallidas = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6 font-sans">
+            <div className="space-y-4 sm:space-y-6 font-sans px-2 sm:px-0">
                 <div className="flex items-center gap-3">
                     <div className="w-2 h-8 bg-red-500 rounded-full"></div>
-                    <h1 className="text-2xl font-bold text-gray-900">Incidentes y Fallidos</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Incidentes y Fallidos</h1>
                 </div>
 
                 {loading ? (
@@ -65,49 +65,87 @@ const EntregasFallidas = () => {
                 ) : pedidos.length === 0 ? (
                     <Alert type="info">¡Todo en orden! No hay pedidos fallidos.</Alert>
                 ) : (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                                <tr>
-                                    <th className="p-4 text-left">ID</th>
-                                    <th className="p-4 text-left">Fecha</th>
-                                    <th className="p-4 text-left">Cliente</th>
-                                    <th className="p-4 text-left">Estado</th>
-                                    <th className="p-4 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {pedidos.map((pedido) => (
-                                    <tr key={pedido.idPedido} className="hover:bg-gray-50 transition-colors">
-                                        <td className="p-4 font-bold text-blue-600">#{pedido.idPedido}</td>
-                                        <td className="p-4 text-sm text-gray-600">
-                                            {pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '-'}
-                                        </td>
-                                        <td className="p-4 text-sm text-gray-700">{pedido.clienteNombre}</td>
-                                        <td className="p-4">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
-                                                {pedido.estadoNombre.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <Button
-                                                size="sm"
-                                                onClick={() => handleGestionar(pedido)}
-                                                disabled={pedido.idEstadoDePedido === 9}
-                                                className={`rounded-lg text-xs px-4 py-2 font-bold ${
-                                                    pedido.idEstadoDePedido === 9 
-                                                    ? "bg-gray-400 cursor-not-allowed text-white border-none" 
-                                                    : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
-                                                }`}
-                                            >
-                                                Gestionar Entrega
-                                            </Button>
-                                        </td>
+                    <>
+                        {/* TABLA DESKTOP */}
+                        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table className="w-full">
+                                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                                    <tr>
+                                        <th className="p-4 text-left">ID</th>
+                                        <th className="p-4 text-left">Fecha</th>
+                                        <th className="p-4 text-left">Cliente</th>
+                                        <th className="p-4 text-left">Estado</th>
+                                        <th className="p-4 text-right">Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {pedidos.map((pedido) => (
+                                        <tr key={pedido.idPedido} className="hover:bg-gray-50 transition-colors">
+                                            <td className="p-4 font-bold text-blue-600">#{pedido.idPedido}</td>
+                                            <td className="p-4 text-sm text-gray-600">
+                                                {pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '-'}
+                                            </td>
+                                            <td className="p-4 text-sm text-gray-700">{pedido.clienteNombre}</td>
+                                            <td className="p-4">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleGestionar(pedido)}
+                                                    disabled={pedido.idEstadoDePedido === 9}
+                                                    className={`rounded-lg text-xs px-4 py-2 font-bold ${
+                                                        pedido.idEstadoDePedido === 9 
+                                                        ? "bg-gray-400 cursor-not-allowed text-white border-none" 
+                                                        : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                                    }`}
+                                                >
+                                                    Gestionar Entrega
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* TARJETAS MOBILE */}
+                        <div className="md:hidden space-y-3">
+                            {pedidos.map((pedido) => (
+                                <div key={pedido.idPedido} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
+                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                        <div>
+                                            <p className="font-bold text-gray-900 text-sm">#{pedido.idPedido}</p>
+                                            <p className="text-xs text-gray-500">{pedido.clienteNombre}</p>
+                                        </div>
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border flex-shrink-0 ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                            {pedido.estadoNombre.length > 12 ? pedido.estadoNombre.substring(0, 10) + '...' : pedido.estadoNombre.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="text-xs mb-3">
+                                        <p className="text-gray-500 mb-1">Fecha</p>
+                                        <p className="font-medium text-gray-900">{pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '-'}</p>
+                                    </div>
+
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleGestionar(pedido)}
+                                        disabled={pedido.idEstadoDePedido === 9}
+                                        className={`w-full rounded-lg text-xs py-2 font-bold ${
+                                            pedido.idEstadoDePedido === 9 
+                                            ? "bg-gray-400 cursor-not-allowed text-white border-none" 
+                                            : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                        }`}
+                                    >
+                                        Gestionar Entrega
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
