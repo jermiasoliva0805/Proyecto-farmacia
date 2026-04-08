@@ -174,10 +174,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                                 type="email"
                                 value={formData.mail}
                                 onChange={(e) => handleInputChange('mail', e.target.value)}
-                                className={`w-full px-4 py-2.5 border rounded-lg text-gray-900 placeholder-gray-500 transition-all font-medium text-sm ${
+                                className={`w-full px-4 py-2.5 border rounded-lg text-black placeholder-gray-400 transition-all font-medium text-sm bg-white ${
                                     errors.mail
-                                        ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                                        : 'border-gray-300 focus:ring-blue-500 bg-white'
+                                        ? 'border-red-500 focus:ring-red-500'
+                                        : 'border-gray-300 focus:ring-blue-500'
                                 } focus:ring-1 focus:outline-none`}
                                 placeholder="tu@email.com"
                             />
@@ -196,10 +196,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                                     type={showPassword ? 'text' : 'password'}
                                     value={formData.contraseña}
                                     onChange={(e) => handleInputChange('contraseña', e.target.value)}
-                                    className={`w-full px-4 py-2.5 pr-10 border rounded-lg text-gray-900 placeholder-gray-500 transition-all font-medium text-sm ${
+                                    className={`w-full px-4 py-2.5 pr-10 border rounded-lg text-black placeholder-gray-400 transition-all font-medium text-sm bg-white ${
                                         errors.contraseña
-                                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                                            : 'border-gray-300 focus:ring-blue-500 bg-white'
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-blue-500'
                                     } focus:ring-1 focus:outline-none`}
                                     placeholder="Mínimo 6 caracteres"
                                 />
