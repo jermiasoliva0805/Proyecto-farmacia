@@ -23,7 +23,7 @@ import TrackingPage from './pages/TrackingPage';
 
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
