@@ -23,16 +23,16 @@ import TrackingPage from './pages/TrackingPage';
 
 // Componente Layout para mantener el Navbar, Sidebar y contenido
 const MainLayout = () => {
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
-  const [sidebarOpen, setSidebarOpen] = React.useState(window.innerWidth >= 1024);
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 1024);
+  const [sidebarOpen, setSidebarOpen] = React.useState(() => window.innerWidth >= 1024);
   const location = useLocation();
 
-  // Detectar cambio de tamaño de pantalla
+  // Detectar cambio de tamaño de pantalla y cerrar sidebar en mobile
   React.useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // En mobile siempre cerrado, en desktop abierto
+      // Forzar cerrado en mobile, abierto en desktop
       setSidebarOpen(!mobile);
     };
     
@@ -40,7 +40,7 @@ const MainLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cerrar sidebar cuando cambia de página (solo en mobile)
+  // Cerrar sidebar al cambiar de página (en mobile)
   React.useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
