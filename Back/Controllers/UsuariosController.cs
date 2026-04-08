@@ -3,6 +3,7 @@ using Back.Services;
 using Back.DTOs;
 using Back.DTOS;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Back.Controllers
 {
@@ -49,10 +50,26 @@ namespace Back.Controllers
             }
         }
 
-        // 4. EDITAR USUARIO (Modificación)
+        // 4. EDITAR USUARIO (Modificación) - Con validación de seguridad
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateUsuario(int id, [FromBody] UpdateUserDTO updateDto)
         {
+            // ⚠️ VALIDACIÓN CRÍTICA DE SEGURIDAD
+            // Obtener el ID del usuario autenticado desde el token JWT
+            var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            // Si no es Admin (Encargado), solo puede editar su propio perfil
+            if (currentUserRole != "Encargado" && currentUserIdClaim != id.ToString())
+            {
+                return Unauthorized(new 
+                { 
+                    message = "No tienes permiso para editar este usuario. Solo puedes modificar tu propio perfil.",
+                    errorCode = "UNAUTHORIZED_EDIT"
+                });
+            }
+
             var result = await _userService.UpdateUserAsync(id, updateDto);
             if (!result) return NotFound(new { message = "No se pudo actualizar. Usuario no encontrado." });
             

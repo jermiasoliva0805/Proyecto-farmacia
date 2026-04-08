@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@context/AuthContext';
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
+import { UserProfileModal } from '../profile/UserProfileModal';
 // import { Badge } from './Badge'; // Descomenta si usas el Badge separado
 
 interface NavbarProps {
@@ -9,6 +10,8 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     const { user, logout } = useAuth();
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     return (
         <nav className="fixed top-0 left-0 right-0 bg-[#1e3a8a] text-white z-50 h-16 shadow-md">
@@ -52,24 +55,65 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
                         <div className="h-8 w-px bg-blue-700 mx-1 hidden sm:block"></div>
 
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-yellow-400 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm border-2 border-white/20 flex-shrink-0">
-                                {user?.nombreCompleto?.charAt(0) || 'A'}
-                            </div>
-                            
-                            <div className="hidden sm:block text-right mr-2">
-                                <p className="font-medium text-sm leading-none">{user?.nombreCompleto || 'Encargado'}</p>
-                                <p className="text-[11px] text-blue-200 mt-0.5">{user?.rol || 'Encargado'}</p>
-                            </div>
-
+                        {/* Dropdown Usuario */}
+                        <div className="relative">
                             <button
-                                onClick={logout}
-                                className="px-2 sm:px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-medium rounded-md transition-colors shadow-sm whitespace-nowrap"
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="flex items-center gap-2 sm:gap-3 hover:bg-blue-800 px-2 sm:px-3 py-1.5 rounded-lg transition-colors"
                             >
-                                Salir
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-yellow-400 rounded-full flex items-center justify-center text-blue-900 font-bold text-sm border-2 border-white/20 flex-shrink-0">
+                                    {user?.nombreCompleto?.charAt(0) || 'A'}
+                                </div>
+                                
+                                <div className="hidden sm:block text-right">
+                                    <p className="font-medium text-sm leading-none">{user?.nombreCompleto || 'Usuario'}</p>
+                                    <p className="text-[11px] text-blue-200 mt-0.5">{user?.rol || 'Encargado'}</p>
+                                </div>
                             </button>
+
+                            {/* Dropdown Menu */}
+                            {dropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-40 overflow-hidden">
+                                    {/* Header con info */}
+                                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                        <p className="text-sm font-medium text-gray-900">{user?.nombreCompleto}</p>
+                                        <p className="text-xs text-gray-500">{user?.email}</p>
+                                    </div>
+
+                                    {/* Opciones */}
+                                    <div className="py-1">
+                                        <button
+                                            onClick={() => {
+                                                setProfileModalOpen(true);
+                                                setDropdownOpen(false);
+                                            }}
+                                            className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            Mi Perfil
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setDropdownOpen(false);
+                                            }}
+                                            className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors border-t border-gray-200"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Salir
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {/* Modal Mi Perfil */}
+                    <UserProfileModal 
+                        isOpen={profileModalOpen}
+                        onClose={() => setProfileModalOpen(false)}
+                    />
                 </div>
             </div>
         </nav>
