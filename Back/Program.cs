@@ -6,6 +6,8 @@ using Back.Repositories.Interfaces;
 using Back.Services;
 using Back.Services.Interfaces;
 using Back.Validators;
+using Back.DTOS;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -66,8 +68,12 @@ namespace Back
 
             // 4. AutoMapper y Validaciones
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
+
             builder.Services.AddFluentValidationAutoValidation();
-            builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserValidator>();
+
+            // Registro manual del/los validadores para evitar el error:
+            // CS1061: IServiceCollection no contiene AddValidatorsFromAssemblyContaining
+            builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterUserValidator>();
 
             // 5. Inyección de Repositorios
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
