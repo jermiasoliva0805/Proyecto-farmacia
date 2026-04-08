@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@context/AuthContext';
-import { usuariosService, UpdateUserDTO } from '@service/usuariosService';
+import { usuariosService, UpdateUserDTO } from '@services/usuariosService';
 import { X, Eye, EyeOff } from 'lucide-react';
 
 interface UserProfileModalProps {
