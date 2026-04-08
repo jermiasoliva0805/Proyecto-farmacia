@@ -9,7 +9,7 @@ interface UserProfileModalProps {
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose }) => {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -23,11 +23,22 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
     // Cargar datos del usuario al abrir modal
     useEffect(() => {
         if (isOpen && user) {
-            setFormData({
-                mail: user.email,
-                contraseña: ''
+            // Traer datos frescos del usuario
+            usuariosService.getUsuarioById(user.id).then(usuarioFresco => {
+                setFormData({
+                    mail: usuarioFresco.email,
+                    contraseña: ''
+                });
+                setErrors({});
+            }).catch(error => {
+                console.error('Error al cargar datos frescos del usuario:', error);
+                // Fallback: usar los datos del contexto
+                setFormData({
+                    mail: user.email,
+                    contraseña: ''
+                });
+                setErrors({});
             });
-            setErrors({});
         }
     }, [isOpen, user]);
 
@@ -101,12 +112,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                 updateData.contraseña = formData.contraseña;
             }
 
-            await usuariosService.updateUsuario(user.id, updateData);
+            // Actualizar en el backend y obtener datos frescos
+            const usuarioActualizado = await usuariosService.updateUsuario(user.id, updateData);
+            
+            // Refrescar el contexto con los nuevos datos
+            updateUser(usuarioActualizado);
+            
             setToast({ message: 'Perfil actualizado correctamente', type: 'success' });
             
             // Limpiar formulario y cerrar modal después de 1.5s
             setTimeout(() => {
-                setFormData({ mail: user.email, contraseña: '' });
+                setFormData({ mail: usuarioActualizado.email, contraseña: '' });
                 onClose();
             }, 1500);
         } catch (error: any) {

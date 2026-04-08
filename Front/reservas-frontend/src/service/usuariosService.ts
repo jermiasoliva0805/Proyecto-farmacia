@@ -76,7 +76,7 @@ export const usuariosService = {
     };
   },
 
-  async updateUsuario(id: number, data: UpdateUserDTO): Promise<void> {
+  async updateUsuario(id: number, data: UpdateUserDTO): Promise<UserDTO> {
     const payload: any = {};
     
     if (data.nombre !== undefined) payload.Nombre = data.nombre;
@@ -87,6 +87,9 @@ export const usuariosService = {
     if (data.idSucursal !== undefined) payload.IDSucursal = data.idSucursal;
     
     await api.put(`/usuarios/${id}`, payload);
+    
+    // Retornar los datos actualizados
+    return this.getUsuarioById(id);
   },
 
   async deleteUsuario(id: number): Promise<void> {

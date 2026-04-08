@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (usuario: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: UserDTO) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,8 +78,14 @@ const login = async (usuario: string, password: string) => {
     setIsAuthenticated(false);
   };
 
+  // ✅ Función para actualizar datos del usuario autenticado
+  const updateUser = (userData: UserDTO) => {
+    setUser(userData);
+    localStorage.setItem('farmacia_user', JSON.stringify(userData));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
