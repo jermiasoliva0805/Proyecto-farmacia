@@ -128,56 +128,56 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                        <h2 className="text-xl font-bold text-gray-900">Mi Perfil</h2>
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+                        <h2 className="text-lg font-bold text-gray-900">Mi Perfil</h2>
                         <button
                             onClick={onClose}
-                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
                         >
-                            <X className="w-5 h-5 text-gray-500" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 space-y-5">
+                    <div className="p-6 space-y-5 bg-white">
                         {/* Información no editable */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Nombre Completo</label>
-                            <div className="px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
+                            <label className="text-sm font-semibold text-gray-900">Nombre Completo</label>
+                            <div className="px-4 py-2.5 bg-gray-100 rounded-lg text-gray-900 border border-gray-300 font-medium text-sm">
                                 {user?.nombreCompleto}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Usuario</label>
-                            <div className="px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
+                            <label className="text-sm font-semibold text-gray-900">Usuario</label>
+                            <div className="px-4 py-2.5 bg-gray-100 rounded-lg text-gray-900 border border-gray-300 font-medium text-sm">
                                 {user?.usuario}
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Rol</label>
-                            <div className="px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
+                            <label className="text-sm font-semibold text-gray-900">Rol</label>
+                            <div className="px-4 py-2.5 bg-gray-100 rounded-lg text-gray-900 border border-gray-300 font-medium text-sm">
                                 {user?.rol}
                             </div>
                         </div>
 
                         {/* Email (editable) */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">
+                            <label className="text-sm font-semibold text-gray-900">
                                 Email <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="email"
                                 value={formData.mail}
                                 onChange={(e) => handleInputChange('mail', e.target.value)}
-                                className={`w-full px-3 py-2 border rounded-lg transition-all ${
+                                className={`w-full px-4 py-2.5 border rounded-lg text-gray-900 placeholder-gray-500 transition-all font-medium text-sm ${
                                     errors.mail
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'border-gray-300 focus:ring-blue-500'
+                                        ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                                        : 'border-gray-300 focus:ring-blue-500 bg-white'
                                 } focus:ring-1 focus:outline-none`}
                                 placeholder="tu@email.com"
                             />
@@ -188,25 +188,25 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
 
                         {/* Contraseña (editable, opcional) */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">
-                                Nueva Contraseña <span className="text-gray-400 text-xs">(opcional)</span>
+                            <label className="text-sm font-semibold text-gray-900">
+                                Nueva Contraseña <span className="text-gray-500 text-xs font-normal">(opcional)</span>
                             </label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     value={formData.contraseña}
                                     onChange={(e) => handleInputChange('contraseña', e.target.value)}
-                                    className={`w-full px-3 py-2 pr-10 border rounded-lg transition-all ${
+                                    className={`w-full px-4 py-2.5 pr-10 border rounded-lg text-gray-900 placeholder-gray-500 transition-all font-medium text-sm ${
                                         errors.contraseña
-                                            ? 'border-red-500 focus:ring-red-500'
-                                            : 'border-gray-300 focus:ring-blue-500'
+                                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:ring-blue-500 bg-white'
                                     } focus:ring-1 focus:outline-none`}
                                     placeholder="Mínimo 6 caracteres"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
                                 >
                                     {showPassword ? (
                                         <EyeOff className="w-4 h-4" />
@@ -226,12 +226,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
 
                     {/* Toast */}
                     {toast && (
-                        <div className={`px-6 py-3 border-t ${
+                        <div className={`px-6 py-3 border-t text-sm font-medium ${
                             toast.type === 'success'
                                 ? 'bg-green-50 border-green-200 text-green-700'
                                 : 'bg-red-50 border-red-200 text-red-700'
                         }`}>
-                            <p className="text-sm">{toast.message}</p>
+                            {toast.message}
                         </div>
                     )}
 
@@ -239,14 +239,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                     <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                            className="flex-1 px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-semibold transition-colors text-sm"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleGuardar}
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-medium transition-colors"
+                            className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 font-semibold transition-colors text-sm"
                         >
                             {loading ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
