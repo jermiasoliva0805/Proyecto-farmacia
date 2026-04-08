@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using CsvHelper;
+using System.Globalization;
 
 namespace Back.Data
 {
@@ -119,7 +121,7 @@ namespace Back.Data
             Console.WriteLine("✅ Semillado inicial completado (sin reset de base).");
         }
 
-        // --- MÉTODOS AUXILIARES (los dejo igual que tu versión) ---
+        // --- MÉTODOS AUXILIARES ---
         private static List<Producto> CargarProductosDesdeCSV(string rutaCSVInicial)
         {
             var productos = new List<Producto>();
@@ -156,101 +158,72 @@ namespace Back.Data
 
             try
             {
-                var lineas = File.ReadAllLines(rutaCSV);
-                Console.WriteLine($"📄 Archivo leído: {lineas.Length} líneas");
-
-                if (lineas.Length < 2)
+                using (var reader = new StreamReader(rutaCSV, System.Text.Encoding.UTF8))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    Console.WriteLine("⚠️ El archivo CSV está vacío o solo contiene encabezado.");
-                    return productos;
-                }
+                    csv.Context.RegisterClassMap<ProductoCSVMap>();
+                    var records = csv.GetRecords<ProductoCSV>().ToList();
+                    Console.WriteLine($"📄 Archivo leído: {records.Count} registros");
 
-                for (int i = 1; i < lineas.Length; i++)
-                {
-                    var linea = lineas[i].Trim();
-                    if (string.IsNullOrEmpty(linea)) continue;
-
-                    try
+                    foreach (var record in records)
                     {
-                        var campos = ParsearLineasCSV(linea);
-                        if (campos.Count < 5) continue;
-
-                        if (!int.TryParse(campos[0].Trim(), out var _)) continue;
-
-                        var nombre = campos[1]?.Trim() ?? "Sin nombre";
-                        var descripcion = campos[2]?.Trim() ?? "";
-                        var categoria = campos[3]?.Trim() ?? "General";
-
-                        var precioStr = (campos[4]?.Trim() ?? "0").Replace("\"", "").Trim();
-                        precioStr = precioStr.Replace(",", ".");
-
-                        if (!decimal.TryParse(precioStr, System.Globalization.CultureInfo.InvariantCulture, out var precio))
-                            precio = 0m;
-
-                        if (string.IsNullOrEmpty(nombre) || nombre == "Sin nombre")
+                        if (string.IsNullOrWhiteSpace(record.NombreProducto))
                             continue;
+
+                        decimal precio = 0;
+                        if (!string.IsNullOrWhiteSpace(record.PrecioProducto))
+                        {
+                            var precioStr = record.PrecioProducto.Trim()
+                                .Replace("\"", "")
+                                .Replace(",", ".");
+                            
+                            if (!decimal.TryParse(precioStr, CultureInfo.InvariantCulture, out precio))
+                                precio = 0;
+                        }
 
                         productos.Add(new Producto
                         {
-                            NombreProducto = nombre,
-                            Descripcion = descripcion,
-                            Categoria = categoria,
+                            NombreProducto = record.NombreProducto.Trim(),
+                            Descripcion = record.Descripcion?.Trim() ?? "",
+                            Categoria = record.Categoria?.Trim() ?? "General",
                             CantidadProducto = 100,
                             PrecioProducto = precio
                         });
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"⚠️ Error al parsear línea {i + 1}: {ex.Message}");
-                        continue;
-                    }
-                }
 
-                Console.WriteLine($"✅ Se cargaron {productos.Count} productos desde CSV (total líneas: {lineas.Length})");
+                    Console.WriteLine($"✅ Se cargaron {productos.Count} productos desde CSV");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error al cargar CSV: {ex.Message}");
+                Console.WriteLine($"❌ Stack: {ex.StackTrace}");
             }
 
             return productos;
         }
 
-        private static List<string> ParsearLineasCSV(string linea)
+        // Clase auxiliar para mapear el CSV
+        private class ProductoCSV
         {
-            var campos = new List<string>();
-            var campoActual = new System.Text.StringBuilder();
-            bool dentroDeComillas = false;
+            public string IDProducto { get; set; }
+            public string NombreProducto { get; set; }
+            public string Descripcion { get; set; }
+            public string Categoria { get; set; }
+            public string PrecioProducto { get; set; }
+        }
 
-            for (int i = 0; i < linea.Length; i++)
+        // Map para CsvHelper
+        private sealed class ProductoCSVMap : ClassMap<ProductoCSV>
+        {
+            public ProductoCSVMap()
             {
-                char c = linea[i];
-
-                if (c == '"')
-                {
-                    if (dentroDeComillas && i + 1 < linea.Length && linea[i + 1] == '"')
-                    {
-                        campoActual.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        dentroDeComillas = !dentroDeComillas;
-                    }
-                }
-                else if (c == ',' && !dentroDeComillas)
-                {
-                    campos.Add(campoActual.ToString());
-                    campoActual.Clear();
-                }
-                else
-                {
-                    campoActual.Append(c);
-                }
+                Map(m => m.IDProducto).Index(0);
+                Map(m => m.NombreProducto).Index(1);
+                Map(m => m.Descripcion).Index(2);
+                Map(m => m.Categoria).Index(3);
+                Map(m => m.PrecioProducto).Index(4);
             }
-
-            campos.Add(campoActual.ToString());
-            return campos;
         }
     }
 }
