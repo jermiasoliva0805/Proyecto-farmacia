@@ -32,38 +32,24 @@ https://tu-dominio-frontend.com
 ```
 
 ### 4. SMTP (Configuración de Emails)
-Configura las 4 variables SMTP para el envío de emails:
 
-**SMTP_HOST**
-```
-smtp.gmail.com
-```
+En Azure App Service, usa el formato `Smtp__` (doble guion bajo) para variables de entorno jerárquicas:
 
-**SMTP_USER**
-Tu email de Gmail:
-```
-tu-email@gmail.com
-```
+| Variable | Valor |
+|----------|-------|
+| `Smtp__Host` | `smtp.gmail.com` |
+| `Smtp__Port` | `587` |
+| `Smtp__User` | `tu-email@gmail.com` |
+| `Smtp__Password` | `tu-app-password` |
+| `Smtp__EnableSsl` | `true` |
 
-**SMTP_PASSWORD**
-```
-tu-app-password
-```
-⚠️ **IMPORTANTE**: Para Gmail, NO uses tu contraseña regular. Usa una **contraseña de aplicación (App Password)**:
-1. Ve a https://myaccount.google.com/apppasswords
-2. Selecciona "Mail" y "Windows Computer"
-3. Copia la contraseña de 16 caracteres que genera
-4. Pega en SMTP_PASSWORD
-
-**SMTP_PORT** (opcional)
-```
-587
-```
-
-**SMTP_ENABLE_SSL** (opcional)
-```
-true
-```
+⚠️ **IMPORTANTE**: 
+- Usa `Smtp__` (doble guion bajo), NO `SMTP_` (guion bajo simple)
+- Para Gmail, NO uses tu contraseña regular. Usa una **contraseña de aplicación (App Password)**:
+  1. Ve a https://myaccount.google.com/apppasswords
+  2. Selecciona "Mail" y "Windows Computer"
+  3. Copia la contraseña de 16 caracteres que genera
+  4. Pega en `Smtp__Password`
 
 ## Pasos en Azure Portal
 
@@ -75,17 +61,20 @@ true
 
 ## Verificación rápida
 
-Para confirmar que todo está configurado:
-1. Ve a **App Service → Logs**
-2. Revisa los logs de deployment
+Para confirmar que todo está configurado correctamente:
+1. Ve a **App Service → Log stream**
+2. Crea un pedido o realiza cualquier acción que envíe email
 3. Busca mensajes como:
    ```
-   [SMTP Config] Host: smtp.gmail.com, Port: 587, User: tu-email@gmail.com, EnableSsl: True
+   [SMTP Config] ✅ Host: smtp.gmail.com, Port: 587, EnableSsl: True
    [EmailSender] Enviando email a cliente@example.com via smtp.gmail.com:587
    [EmailSender] ✅ Email enviado exitosamente
    ```
 
-Si ves `⚠️ ADVERTENCIA: SMTP Host no configurado`, significa que las variables de entorno no se cargaron. Revisa que estén todas configuradas en Azure Portal.
+Si ves `⚠️ ADVERTENCIA: Usuario SMTP no configurado`, significa que las variables `Smtp__*` no se cargaron. Verifica:
+- Que las variables estén con el formato `Smtp__Host` (doble guion bajo), NO `SMTP_HOST`
+- Que estén todas configuradas en Azure Portal en Application Settings
+- Reinicia la app: `az webapp restart -g <resource-group> -n <app-name>`
 
 ## Variables de Entorno (Alternativa: CLI)
 
@@ -99,11 +88,11 @@ az webapp config appsettings set \
     DATABASE_CONNECTION_STRING="<your-connection-string>" \
     JWT_TOKEN="<64-char-secret>" \
     FRONTEND_URL="<frontend-url>" \
-    SMTP_HOST="smtp.gmail.com" \
-    SMTP_USER="<tu-email@gmail.com>" \
-    SMTP_PASSWORD="<app-password>" \
-    SMTP_PORT="587" \
-    SMTP_ENABLE_SSL="true"
+    Smtp__Host="smtp.gmail.com" \
+    Smtp__User="<tu-email@gmail.com>" \
+    Smtp__Password="<app-password>" \
+    Smtp__Port="587" \
+    Smtp__EnableSsl="true"
 ```
 
 ## Cómo funciona la configuración
@@ -119,14 +108,24 @@ az webapp config appsettings set \
 ### Los emails no se envían
 - Revisa los logs en `App Service → Log stream`
 - Busca mensajes de error SMTP
-- Verifica que SMTP_USER y SMTP_PASSWORD sean correctos
+- Verifica que `Smtp__User` y `Smtp__Password` sean correctos
 - Confirma que el email del usuario (Cliente) no está vacío
+- Usa el formato `Smtp__*` (doble guion bajo), NO `SMTP_*`
 
-### Error: "SMTP Host no configurado"
-- Las variables de entorno no se cargaron en Azure
+### Error: "Usuario SMTP no configurado"
+- La variable `Smtp__User` NO está en Azure Portal
+- Agrégala con el valor de tu email
 - Recarga la app: `az webapp restart -g <resource-group> -n <app-name>`
-- O redeploy desde GitHub
+
+### Error: "Host SMTP no configurado" o emails silenciosos
+- Las variables `Smtp__*` no se cargaron
+- Verifica que uses `Smtp__Host` (NO `SMTP_HOST`)
+- En Azure Portal → Configuration → Application Settings
+- Confirma que estén TODAS las variables Smtp__*
+- Recarga la app después de guardar
 
 ### Error: "535 5.7.8 Username and Password not accepted"
 - La contraseña de Gmail es incorrecta
-- Crea una nueva app password en https://myaccount.google.com/apppasswords
+- Crea una nueva App Password en https://myaccount.google.com/apppasswords
+- NO uses tu contraseña regular de Gmail
+- Copia la contraseña de 16 caracteres y pégala en `Smtp__Password`

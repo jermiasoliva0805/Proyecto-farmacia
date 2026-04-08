@@ -107,29 +107,17 @@ namespace Back
             builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
 
-            // 6a. SMTP (prioridad: Smtp:* -> SMTP_* -> defaults). Evita Parse exceptions.
+            // 6a. SMTP Configuration - Lee del formato Azure (Smtp__Host) o appsettings (Smtp:Host)
+            // En Azure: usar Smtp__Host, Smtp__Port, Smtp__User, Smtp__Password, Smtp__EnableSsl
             static int GetInt(string? value, int fallback) => int.TryParse(value, out var v) ? v : fallback;
             static bool GetBool(string? value, bool fallback) => bool.TryParse(value, out var v) ? v : fallback;
 
-            var host = builder.Configuration["Smtp:Host"]
-                ?? Environment.GetEnvironmentVariable("SMTP_HOST")
-                ?? "smtp.gmail.com";
-
-            var port = GetInt(
-                builder.Configuration["Smtp:Port"] ?? Environment.GetEnvironmentVariable("SMTP_PORT"),
-                587);
-
-            var user = builder.Configuration["Smtp:User"]
-                ?? Environment.GetEnvironmentVariable("SMTP_USER")
-                ?? "";
-
-            var password = builder.Configuration["Smtp:Password"]
-                ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
-                ?? "";
-
-            var enableSsl = GetBool(
-                builder.Configuration["Smtp:EnableSsl"] ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL"),
-                true);
+            var smtpConfig = builder.Configuration.GetSection("Smtp");
+            var host = smtpConfig["Host"] ?? "smtp.gmail.com";
+            var port = GetInt(smtpConfig["Port"], 587);
+            var user = smtpConfig["User"] ?? "";
+            var password = smtpConfig["Password"] ?? "";
+            var enableSsl = GetBool(smtpConfig["EnableSsl"], true);
 
             builder.Services.Configure<SmtpSettings>(s =>
             {
@@ -141,7 +129,9 @@ namespace Back
             });
 
             // Log seguro (sin user/password)
-            Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
+            Console.WriteLine($"[SMTP Config] ✅ Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
+            if (string.IsNullOrEmpty(user))
+                Console.WriteLine($"[SMTP Config] ⚠️  ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
 
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
