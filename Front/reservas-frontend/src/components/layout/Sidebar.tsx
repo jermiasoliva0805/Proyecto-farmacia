@@ -14,6 +14,7 @@ import {
 
 interface SidebarProps {
     isOpen: boolean;
+    onClose?: () => void;
 }
 
 interface MenuItem {
@@ -24,7 +25,7 @@ interface MenuItem {
 
 type UserRole = 'Encargado' | 'Operario' | 'Cadete';
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
 
     const menuItems: Record<UserRole, MenuItem[]> = {
@@ -53,9 +54,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
     const visibilityClass = isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0';
 
+    const handleNavClick = () => {
+        // Cerrar el sidebar en móviles cuando se hace clic en un enlace
+        if (window.innerWidth < 1024 && onClose) {
+            onClose();
+        }
+    };
+
     return (
         <aside 
-            className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-50 lg:z-40 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none ${visibilityClass}`}
+            className={`onClick={handleNavClick}
+                        fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-50 lg:z-40 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none ${visibilityClass}`}
         >
             <nav className="p-4 space-y-2">
                 {currentMenu.map((item) => (

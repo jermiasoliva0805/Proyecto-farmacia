@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Ensure the Navbar component is correctly imported
 import { Navbar } from '../layout/Navbar.tsx'; // Ensure Navbar.tsx exists in the same directory
 // If Navbar.tsx does not exist, create it or correct the import path
@@ -10,15 +10,38 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // En desktop (lg+) lo abre automático, en mobile se mantiene cerrado
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setSidebarOpen(true);
+            } else {
+                setSidebarOpen(false);
+            }
+        };
+        
+        // Ejecutar al montar
+        handleResize();
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-            <div className="flex">
-                <Sidebar isOpen={sidebarOpen} />
-                <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'} pt-16`}>
-                    <div className="p-6">
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 lg:hidden mt-16"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+            <div className="flex pt-16">
+                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <main className="flex-1 transition-all duration-300 lg:ml-64">
+                    <div className="p-4 sm:p-6">
                         {children}
                     </div>
                 </main>
