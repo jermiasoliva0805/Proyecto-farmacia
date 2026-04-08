@@ -38,14 +38,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     const estilo = getEstadoStyle(estadoId);
 
     return (
-        <div className={`flex-none w-72 sm:w-80 md:w-96 rounded-lg ${estilo.bg} border-2 ${estilo.border} p-3 sm:p-4 flex flex-col`}>
+        <div className={`flex-none w-64 sm:w-72 md:w-80 lg:w-96 rounded-lg ${estilo.bg} border-2 ${estilo.border} p-2 sm:p-3 flex flex-col h-fit`}>
             {/* Encabezado de columna */}
-            <div className="mb-3 sm:mb-4 pb-2 sm:pb-3 border-b-2 border-gray-300">
-                <h2 className={`text-xs sm:text-sm font-bold ${estilo.text} uppercase tracking-wider`}>
+            <div className="mb-2 sm:mb-3 pb-2 border-b-2 border-gray-300">
+                <h2 className={`text-xs sm:text-sm font-bold ${estilo.text} uppercase tracking-wider truncate`}>
                     {estadoNombre}
                 </h2>
-                <p className="text-[11px] sm:text-xs text-gray-500 mt-1">
-                    {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''}
+                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">
+                    {pedidos.length} {pedidos.length !== 1 ? 'ped.' : 'ped.'}
                 </p>
             </div>
 
@@ -56,7 +56,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={`
-                            flex-1 min-h-80 sm:min-h-96 rounded-lg p-2 transition-all
+                            flex-1 min-h-72 sm:min-h-80 md:min-h-96 rounded-lg p-1 sm:p-2 transition-all
                             ${snapshot.isDraggingOver ? 'bg-blue-200 ring-2 ring-blue-400' : 'bg-white'}
                         `}
                     >
@@ -73,7 +73,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
                                 />
                             ))
                         ) : (
-                            <div className="h-full flex items-center justify-center text-gray-400 text-xs sm:text-sm">
+                            <div className="h-full flex items-center justify-center text-gray-400 text-[10px] sm:text-xs">
                                 Sin pedidos
                             </div>
                         )}

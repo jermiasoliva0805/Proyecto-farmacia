@@ -285,16 +285,18 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
 
             {/* Contenedor del Kanban */}
             <DragDropContext onDragEnd={handleDragEnd}>
-                <div className="inline-flex gap-2 sm:gap-4 md:gap-6 p-2 sm:p-4 w-full" style={{ overflowX: 'auto', minHeight: 'fit-content' }}>
-                    {getColumnasVisibles().map(estadoId => (
-                        <KanbanColumn
-                            key={estadoId}
-                            estadoId={estadoId}
-                            pedidos={pedidosPorEstado[estadoId]}
-                            dragBlockedPedidoId={dragBlockedPedidoId}
-                            isLoadingPedidoId={isLoadingPedidoId}
-                        />
-                    ))}
+                <div className="w-full overflow-x-auto" style={{ scrollBehavior: 'smooth' }}>
+                    <div className="inline-flex gap-1 sm:gap-2 md:gap-4 p-1 sm:p-2 md:p-4 min-w-min">
+                        {getColumnasVisibles().map(estadoId => (
+                            <KanbanColumn
+                                key={estadoId}
+                                estadoId={estadoId}
+                                pedidos={pedidosPorEstado[estadoId]}
+                                dragBlockedPedidoId={dragBlockedPedidoId}
+                                isLoadingPedidoId={isLoadingPedidoId}
+                            />
+                        ))}
+                    </div>
                 </div>
             </DragDropContext>
 

@@ -12,8 +12,7 @@ const MisEntregas = () => {
     const { user } = useAuth();
     const [pedidos, setPedidos] = useState<OrderSummaryDTO[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [view, setView] = useState<'tabla' | 'kanban'>(window.innerWidth < 768 ? 'kanban' : 'tabla');
+    const [view, setView] = useState<'tabla' | 'kanban'>('tabla');
     
     const [selectedPedido, setSelectedPedido] = useState<OrderSummaryDTO | null>(null);
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
@@ -72,18 +71,6 @@ const MisEntregas = () => {
     useEffect(() => {
         if (user?.id) loadPedidos();
     }, [user?.id, view]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 768;
-            setIsMobile(mobile);
-            if (mobile && view === 'tabla') {
-                setView('kanban');
-            }
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
