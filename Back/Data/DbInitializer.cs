@@ -6,6 +6,7 @@ using System.Linq;
 using System.IO;
 using CsvHelper;
 using System.Globalization;
+using CsvHelper.Configuration;
 
 namespace Back.Data
 {
