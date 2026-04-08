@@ -166,21 +166,19 @@ namespace Back
 
             var app = builder.Build();
 
-            // 9. Seeding (SOLO en Development)
-            if (app.Environment.IsDevelopment())
+            // 9. Seeding (SIEMPRE en startup, pero seguro: no borra existentes)
+            // En Production/Azure, DbInitializer verifica si ya está sembrado
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider;
+            try
             {
-                using var scope = app.Services.CreateScope();
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<AppDbContext>();
-                    DbInitializer.Initialize(context);
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Error al sembrar la base de datos.");
-                }
+                var context = services.GetRequiredService<AppDbContext>();
+                DbInitializer.Initialize(context);
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "Error al sembrar la base de datos.");
             }
 
             // Swagger: habilitar en Development o si la config lo permite explícitamente
