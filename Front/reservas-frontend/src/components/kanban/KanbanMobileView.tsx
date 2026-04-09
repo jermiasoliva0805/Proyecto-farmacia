@@ -263,7 +263,7 @@ export const KanbanMobileView: React.FC<KanbanMobileViewProps> = ({
                 {columnasVisibles.map(estadoId => {
                     const colores = getColoresEstado(estadoId);
                     const pedidosColumna = pedidosPorEstado[estadoId];
-                    const isExpanded = expandedColumns[estadoId] !== false; // Expandidas por defecto
+                    const isExpanded = expandedColumns[estadoId] !== false; 
 
                     return (
                         <div
