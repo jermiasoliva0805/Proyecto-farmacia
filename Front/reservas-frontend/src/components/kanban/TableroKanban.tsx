@@ -4,6 +4,7 @@ import { OrderSummaryDTO } from '../../types/pedido.types';
 import { useAuth } from '../../context/AuthContext';
 import { pedidosService } from '../../service/PedidosService';
 import { KanbanColumn } from './KanbanColumn';
+import { KanbanMobileView } from './KanbanMobileView';
 import { CancelarConMotivoModal } from './CancelarConMotivoModal';
 import { AsignarCadeteModal } from '../pedidos/AsignarCadeteModal';
 import {
@@ -38,6 +39,7 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     const [isLoadingPedidoId, setIsLoadingPedidoId] = useState<number | undefined>();
     const [dragBlockedPedidoId, setDragBlockedPedidoId] = useState<number | undefined>();
     const [pedidosLocal, setPedidosLocal] = useState<OrderSummaryDTO[]>(pedidos);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     
     // Estado para modal de cancelación
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -47,6 +49,16 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     // Estado para modal de asignar cadete (cuando encargado mueve de 4→5)
     const [showAsignarCadeteModal, setShowAsignarCadeteModal] = useState(false);
     const [pedidoAAsignarCadete, setPedidoAAsignarCadete] = useState<OrderSummaryDTO | null>(null);
+
+    // Detectar cambios de tamaño de pantalla
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Sincronizar pedidos locales cuando cambian los props
     useEffect(() => {
@@ -263,6 +275,18 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     };
 
     // ========== RENDER ==========
+    // Si es mobile, mostrar vista colapsable vertical
+    if (isMobile) {
+        return (
+            <KanbanMobileView
+                pedidos={pedidos}
+                onUpdate={onUpdate}
+                usuarioId={usuarioId}
+            />
+        );
+    }
+
+    // Si es desktop, mostrar vista PC normal con columnas horizontales
     return (
         <div className="w-full">
             {/* Toast de notificaciones */}
