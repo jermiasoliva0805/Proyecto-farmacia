@@ -51,7 +51,7 @@ namespace Back.Repositories
                     IDPedido = pedido.IDPedido,
                     IDEstadoDePedido = 1, // "Sin preparar"
                     IDUsuario = idUsuario,
-                    fecha_hora_inicio = DateTime.Now,
+                    fecha_hora_inicio = DateTime.UtcNow,
                     Observaciones = "Pedido recibido e ingresado al sistema."
                 };
 
