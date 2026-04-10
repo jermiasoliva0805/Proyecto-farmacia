@@ -20,7 +20,7 @@ namespace Back.Services
             {
                 IDPedido = dto.PedidoId,
                 IDEstadoDePedido = 1, // Aquí iría la lógica del ID según el nombre del estado
-                fecha_hora_inicio = DateTime.Now,
+                fecha_hora_inicio = DateTime.UtcNow,
                 Observaciones = dto.Motivo,
                 IDUsuario = 1 // Esto debería venir del usuario logueado
             };

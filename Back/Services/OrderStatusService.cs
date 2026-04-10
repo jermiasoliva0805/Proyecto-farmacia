@@ -83,7 +83,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 2,
                 IDUsuario = dto.OperarioId,
-                fecha_hora_inicio = DateTime.Now,
+                fecha_hora_inicio = DateTime.UtcNow,
                 Observaciones = "Encargado asignó operario para la preparación del pedido."
             };
 
@@ -150,7 +150,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 5,
                 IDUsuario = dto.CadeteId,
-                fecha_hora_inicio = DateTime.Now,
+                fecha_hora_inicio = DateTime.UtcNow,
                 Observaciones = "Cadete asignado. Pedido en despachando."
             };
 
@@ -245,22 +245,22 @@ namespace Back.Services
             // ✅ CU25: Cuando operario inicia armado (1→2), guardar FechaInicioArmado
             if (pedido.IDEstadoDePedido == 1 && changeStatusDto.IDNuevoEstado == 2)
             {
-                pedido.FechaInicioArmado = DateTime.Now;
+                pedido.FechaInicioArmado = DateTime.UtcNow;
             }
             // ✅ CU25: Cuando operario presiona "Comenzar armado" (2→2), guardar FechaInicioArmado si no existe
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 2 && !pedido.FechaInicioArmado.HasValue)
             {
-                pedido.FechaInicioArmado = DateTime.Now;
+                pedido.FechaInicioArmado = DateTime.UtcNow;
             }
             // ✅ CU25: Cuando operario finaliza armado (2→4), guardar FechaFinArmado
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
             {
-                pedido.FechaFinArmado = DateTime.Now;
+                pedido.FechaFinArmado = DateTime.UtcNow;
             }
             else if (changeStatusDto.IDNuevoEstado == 7)
             {
-                pedido.FechaEntregaReal = DateTime.Now;
-                pedido.HoraEntregaReal = DateTime.Now.TimeOfDay;
+                pedido.FechaEntregaReal = DateTime.UtcNow;
+                pedido.HoraEntregaReal = DateTime.UtcNow.TimeOfDay;
                 pedido.IntentosEntregaFallida = 0; // Resetear intentos si se entrega exitosamente
             }
             else if (changeStatusDto.IDNuevoEstado == 8)
@@ -297,7 +297,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = estadoFinal,
                 IDUsuario = changeStatusDto.IDUsuario,
-                fecha_hora_inicio = DateTime.Now,
+                fecha_hora_inicio = DateTime.UtcNow,
                 Observaciones = changeStatusDto.IDNuevoEstado == 8
                                 ? changeStatusDto.MotivoCancelacion
                                 : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete."),
@@ -383,7 +383,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 9,
                 IDUsuario = userId, // El ID del Admin/Operario que cancela
-                fecha_hora_inicio = DateTime.Now,
+                fecha_hora_inicio = DateTime.UtcNow,
                 // Registramos el ID del motivo y la justificación en las observaciones
                 Observaciones = $"Cancelación (Motivo ID: {dto.MotivoCancelacionId}). Justificación: {dto.Justificacion ?? "Sin justificación adicional."}"
             };

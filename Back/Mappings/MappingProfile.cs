@@ -83,13 +83,13 @@ namespace Back.Mappings
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
                 .ForMember(dest => dest.IDEstadoDePedido, opt => opt.MapFrom(src => src.IDNuevoEstado))
                 .ForMember(dest => dest.IDUsuario, opt => opt.MapFrom(src => src.IDUsuario))
-                .ForMember(dest => dest.fecha_hora_inicio, opt => opt.MapFrom(src => DateTime.Now));
+                .ForMember(dest => dest.fecha_hora_inicio, opt => opt.MapFrom(src => DateTime.UtcNow));
 
             // --- Tracking principal ---
             CreateMap<Pedido, OrderTrackingDTO>()
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
                 .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
-                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => DateTime.Now))
+                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.HistorialDeEstados));
 
             // --- Items del historial ---

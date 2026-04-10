@@ -225,7 +225,7 @@ namespace Back.Services
                     IDPedido = pedido.IDPedido,
                     IDEstadoDePedido = 9,
                     IDUsuario = int.Parse(usuarioId),
-                    fecha_hora_inicio = DateTime.Now,
+                    fecha_hora_inicio = DateTime.UtcNow,
                     Observaciones = observacionHistorial
                 };
 
