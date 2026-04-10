@@ -8,6 +8,7 @@ import { ReporteCancelacionesPorMotivos } from './ReporteCancelacionesPorMotivos
 import { ReporteProductos } from './ReporteProductos';
 import { ReporteTiemposProceso } from './ReporteTiemposProceso';
 
+
 export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
 
