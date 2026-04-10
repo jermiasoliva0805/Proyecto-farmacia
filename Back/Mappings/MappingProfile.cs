@@ -89,13 +89,13 @@ namespace Back.Mappings
             CreateMap<Pedido, OrderTrackingDTO>()
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
                 .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
-                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => src.HistorialDeEstados.Max(h => h.fecha_hora_inicio.Kind == DateTimeKind.Utc ? h.fecha_hora_inicio.ToLocalTime() : h.fecha_hora_inicio)))
                 .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.HistorialDeEstados));
 
             // --- Items del historial ---
             CreateMap<HistorialDeEstados, TrackingHistoryItemDTO>()
                 .ForMember(dest => dest.NombreEstado, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
-                .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => src.fecha_hora_inicio))
+                .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => src.fecha_hora_inicio.Kind == DateTimeKind.Utc ? src.fecha_hora_inicio.ToLocalTime() : src.fecha_hora_inicio))
                 .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src => src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}" : "Sistema"))
                 .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
                 .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src => src.EstadoDePedido.motivo_cancelacion))
