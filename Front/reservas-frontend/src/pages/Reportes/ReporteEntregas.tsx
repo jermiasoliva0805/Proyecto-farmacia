@@ -40,7 +40,8 @@ export const ReporteEntregas: React.FC = () => {
         const fHasta = hoy.toISOString().split("T")[0];
 
         // 2. Construimos la URL con parámetros correctos
-        let url = `http://localhost:5000/api/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}`;
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        let url = `${API_BASE}/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}`;
         
         if (idSucursal !== null && idSucursal > 0) {
           url += `&idSucursal=${idSucursal}`;

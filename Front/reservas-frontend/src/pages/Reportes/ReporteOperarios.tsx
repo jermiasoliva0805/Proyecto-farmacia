@@ -33,7 +33,8 @@ const ReporteOperarios = () => {
                 params.append('idSucursal', idSucursal.toString());
             }
             
-            const response = await fetch(`http://localhost:5000/api/Orders/reporte-tiempos-operarios?${params}`, {
+            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+            const response = await fetch(`${API_BASE}/Orders/reporte-tiempos-operarios?${params}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             if (response.ok) {
