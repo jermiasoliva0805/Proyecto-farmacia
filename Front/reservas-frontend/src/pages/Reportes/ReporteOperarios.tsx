@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, MapPin, User, TrendingUp, Package, Zap, ClipboardList, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Calendar, MapPin, User, TrendingUp, Package, Zap, ClipboardList, Clock, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 interface ReporteOperario {
     nombreOperario: string;
@@ -16,6 +17,8 @@ const ReporteOperarios = () => {
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState('7');
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const fetchDatos = useCallback(async () => {
         setLoading(true);
@@ -43,6 +46,48 @@ const ReporteOperarios = () => {
 
     useEffect(() => { fetchDatos(); }, [fetchDatos]);
 
+    const handleExportExcel = () => {
+        if (!datos || datos.length === 0) {
+            alert('No hay datos');
+            return;
+        }
+        const dataExport = datos.map(op => ({
+            'Operario': op.nombreOperario,
+            'Pedidos Totales': op.pedidosTotales,
+            'Dentro Umbral': op.dentroUmbral,
+            'Fuera Umbral': op.fueraUmbral,
+            'Tiempo Promedio (min)': op.tiempoPromedioMinutos.toFixed(2),
+            'Eficiencia': `${op.porcentajeEficiencia.toFixed(2)}%`,
+        }));
+        
+        const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
+        
+        exportToExcel(dataExport, {
+            reportName: 'Desempeño de Operarios',
+            fileName: 'desempeno-operarios',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido');
+            return;
+        }
+        const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
+        
+        await exportToPDF(contentRef.current, {
+            reportName: 'Desempeño de Operarios',
+            fileName: 'desempeno-operarios',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+        format ? handleExportExcel() : handleExportPDF();
+    };
+
     const totalPedidos = datos.reduce((acc, curr) => acc + curr.pedidosTotales, 0);
     const totalDentro = datos.reduce((acc, curr) => acc + curr.dentroUmbral, 0);
     const totalFuera = datos.reduce((acc, curr) => acc + curr.fueraUmbral, 0);
@@ -63,11 +108,17 @@ const ReporteOperarios = () => {
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">Desempeño de Operarios</h1>
                     <p className="text-sm text-gray-500 font-medium">Análisis de eficiencia y preparación (Umbral: 30 min)</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* FILTROS - AJUSTADO TAMAÑO FUENTE */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
                 <div className="flex-1 flex items-center gap-3 bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm group">
@@ -185,6 +236,7 @@ const ReporteOperarios = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
         </div>
     );

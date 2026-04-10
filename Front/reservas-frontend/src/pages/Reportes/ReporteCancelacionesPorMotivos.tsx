@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Calendar, MapPin, AlertCircle, TrendingDown, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, AlertCircle, TrendingDown, DollarSign, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getCancelacionesPorMotivo } from '../../service/reporteService';
 import { ReporteCancelacionesPorMotivoDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#ec4899', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981'];
 
@@ -12,6 +13,10 @@ export const ReporteCancelacionesPorMotivos = () => {
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    
+    // Referencias para exportación
+    const contentRef = useRef<HTMLDivElement>(null);
+    const tableRef = useRef<HTMLTableElement>(null);
 
     useEffect(() => {
         const cargarData = async () => {
@@ -35,6 +40,65 @@ export const ReporteCancelacionesPorMotivos = () => {
         cargarData();
     }, [periodo, idSucursal]);
 
+    // Funciones de exportación
+    const handleExportExcel = () => {
+        if (!reporte) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const dataExport = reporte.detalleMotivos.map((motivo, index) => ({
+            '#': index + 1,
+            'Motivo': motivo.motivo,
+            'Cantidad': motivo.cantidad,
+            'Porcentaje': `${motivo.porcentaje.toFixed(2)}%`,
+            'Monto Perdido': motivo.montoPerdido,
+        }));
+
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+        exportToExcel(dataExport, {
+            reportName: 'Cancelaciones por Motivo',
+            fileName: 'cancelaciones-por-motivo',
+            filters: {
+                periodo: periodoLabel,
+                sucursal: sucursalLabel,
+            }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido para exportar');
+            return;
+        }
+
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+        await exportToPDF(contentRef.current, {
+            reportName: 'Cancelaciones por Motivo',
+            fileName: 'cancelaciones-por-motivo',
+            filters: {
+                periodo: periodoLabel,
+                sucursal: sucursalLabel,
+            }
+        });
+    };
+
+    const handleExportClick = async () => {
+        // Mostrar opciones de formato
+        const format = window.confirm('¿Deseas exportar a Excel? (OK = Excel | Cancelar = PDF)');
+        if (format) {
+            handleExportExcel();
+        } else {
+            await handleExportPDF();
+        }
+    };
+
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
     if (!reporte) return <p className="p-6 text-gray-500 font-medium">No hay datos disponibles</p>;
 
@@ -51,7 +115,11 @@ export const ReporteCancelacionesPorMotivos = () => {
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">Cancelaciones por Motivo</h1>
                     <p className="text-sm text-gray-500">Análisis de motivos de <strong>cancelación manual</strong> realizada por el encargado</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
@@ -84,6 +152,8 @@ export const ReporteCancelacionesPorMotivos = () => {
                 />
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <MetricCard 
@@ -180,6 +250,7 @@ export const ReporteCancelacionesPorMotivos = () => {
                     </tbody>
                 </table>
             </Card>
+            </div>
         </div>
     );
 };

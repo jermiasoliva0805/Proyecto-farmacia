@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Calendar, MapPin, AlertCircle, TrendingDown } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Calendar, MapPin, AlertCircle, TrendingDown, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getPedidosCancelados } from '../../service/reporteService';
 import { ReportePedidosCanceladosDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 export const ReporteCancelados = () => {
     const [reporte, setReporte] = useState<ReportePedidosCanceladosDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const cargarData = async () => {
@@ -32,6 +35,70 @@ export const ReporteCancelados = () => {
         cargarData();
     }, [periodo, idSucursal]);
 
+    const handleExportExcel = () => {
+        if (!reporte) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const dataExport = [
+            {
+                'Métrica': 'Total de Pedidos',
+                'Cantidad': reporte.totalPedidosCancelados,
+            },
+            {
+                'Métrica': 'Porcentaje del Total',
+                'Cantidad': `${reporte.porcentajeDelTotal.toFixed(2)}%`,
+            },
+            {
+                'Métrica': 'Monto Total',
+                'Cantidad': reporte.montoTotalCancelado,
+            },
+        ];
+
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+        exportToExcel(dataExport, {
+            reportName: 'Pedidos Cancelados',
+            fileName: 'pedidos-cancelados',
+            filters: {
+                periodo: periodoLabel,
+                sucursal: sucursalLabel,
+            }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido para exportar');
+            return;
+        }
+
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+        await exportToPDF(contentRef.current, {
+            reportName: 'Pedidos Cancelados',
+            fileName: 'pedidos-cancelados',
+            filters: {
+                periodo: periodoLabel,
+                sucursal: sucursalLabel,
+            }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Deseas exportar a Excel? (OK = Excel | Cancelar = PDF)');
+        if (format) {
+            handleExportExcel();
+        } else {
+            await handleExportPDF();
+        }
+    };
+
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de pedidos cancelados...</p>;
 
     if (!reporte) return <p className="p-6 text-gray-500 font-medium">No hay datos disponibles</p>;
@@ -44,11 +111,17 @@ export const ReporteCancelados = () => {
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Pedidos Cancelados</h1>
                     <p className="text-sm text-gray-500">Visualiza la cantidad total de pedidos cancelados por intentos de entrega fallida</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Selector de Sucursal */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Selector
@@ -110,6 +183,7 @@ export const ReporteCancelados = () => {
                     Para ver cancelaciones manuales por motivo, ir a "Cancelaciones por Motivo".
                 </p>
             </Card>
+            </div>
         </div>
     );
 };

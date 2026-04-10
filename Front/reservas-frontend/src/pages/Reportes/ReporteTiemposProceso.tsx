@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/common/Card';
-import { Calendar, MapPin, AlertCircle, Zap, Filter } from 'lucide-react';
+import { Calendar, MapPin, AlertCircle, Zap, Filter, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getReporteTiempos } from '../../service/reporteService';
 import { TiemposProcesoDTO, DetalleTiempoProcesoDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 export const ReporteTiemposProceso: React.FC = () => {
     const [tiempos, setTiempos] = useState<TiemposProcesoDTO | null>(null);
@@ -11,6 +12,8 @@ export const ReporteTiemposProceso: React.FC = () => {
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [idEstado, setIdEstado] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchDatos = async () => {
@@ -26,6 +29,44 @@ export const ReporteTiemposProceso: React.FC = () => {
         };
         fetchDatos();
     }, [periodo, idSucursal, idEstado]);
+
+    const handleExportExcel = () => {
+        if (!tiempos) {
+            alert('No hay datos para exportar');
+            return;
+        }
+        const dataExport = tiempos.fases.map(f => ({
+            'Fase': f.nombre,
+            'Duración Promedio (min)': f.tiempoPromedio.toFixed(2),
+        }));
+        
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        exportToExcel(dataExport, {
+            reportName: 'Tiempos de Proceso',
+            fileName: 'tiempos-proceso',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido');
+            return;
+        }
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        await exportToPDF(contentRef.current, {
+            reportName: 'Tiempos de Proceso',
+            fileName: 'tiempos-proceso',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+        format ? handleExportExcel() : handleExportPDF();
+    };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
     if (!tiempos) return <p className="p-6 text-gray-500 font-medium">Sin datos disponibles</p>;
@@ -45,11 +86,17 @@ export const ReporteTiemposProceso: React.FC = () => {
                     <h1 className="text-xl font-bold text-gray-800">Analítica de Tiempos de Proceso</h1>
                     <p className="text-sm text-gray-500">Lead Time y cuellos de botella en operaciones</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Selectores */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Selector
@@ -180,6 +227,7 @@ export const ReporteTiemposProceso: React.FC = () => {
                 <p className="text-sm text-gray-600">
                     <span className="font-semibold">Total de pedidos analizados:</span> {tiempos.totalPedidos}
                 </p>
+            </div>
             </div>
         </div>
     );
