@@ -1,12 +1,12 @@
 using AutoMapper;
 using Back.Data;
+using Back.DTOS;
 using Back.Interfaces;
 using Back.Repositories;
 using Back.Repositories.Interfaces;
 using Back.Services;
 using Back.Services.Interfaces;
 using Back.Validators;
-using Back.DTOS;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +24,25 @@ namespace Back
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // ------------------------------------------------------------
+            // LOGGING (clave para ver algo en Azure Log Stream)
+            // ------------------------------------------------------------
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
+
+            // ------------------------------------------------------------
+            // URLS / PUERTO (Azure App Service en contenedor)
+            // Recomendado setear en Azure:
+            //   ASPNETCORE_URLS = http://0.0.0.0:8080
+            //   WEBSITES_PORT   = 8080
+            // Si no está seteado, fallback a 8080.
+            // ------------------------------------------------------------
+            var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+            if (string.IsNullOrWhiteSpace(urls))
+            {
+                builder.WebHost.UseUrls("http://0.0.0.0:8080");
+            }
 
             // 1. Configuración de Controladores y JSON
             builder.Services.AddControllers()
@@ -68,7 +87,6 @@ namespace Back
 
             // 4. AutoMapper y Validaciones
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
-
             builder.Services.AddFluentValidationAutoValidation();
 
             // Registro manual del/los validadores para evitar el error:
@@ -129,9 +147,9 @@ namespace Back
             });
 
             // Log seguro (sin user/password)
-            Console.WriteLine($"[SMTP Config] ✅ Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
+            Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
             if (string.IsNullOrEmpty(user))
-                Console.WriteLine($"[SMTP Config] ⚠️  ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
+                Console.WriteLine("[SMTP Config] ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
 
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
@@ -166,8 +184,12 @@ namespace Back
 
             var app = builder.Build();
 
+            // Logs útiles para Azure
+            app.Logger.LogInformation("Environment: {env}", app.Environment.EnvironmentName);
+            app.Logger.LogInformation("ASPNETCORE_URLS: {urls}", Environment.GetEnvironmentVariable("ASPNETCORE_URLS"));
+            app.Logger.LogInformation("WEBSITES_PORT: {port}", Environment.GetEnvironmentVariable("WEBSITES_PORT"));
+
             // 9. Seeding (SIEMPRE en startup, pero seguro: no borra existentes)
-            // En Production/Azure, DbInitializer verifica si ya está sembrado
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
             try
@@ -193,13 +215,26 @@ namespace Back
             }
 
             app.UseCors("AllowSpecificOrigins");
-            app.UseHttpsRedirection();
+
+            // En App Service (contenedor), a veces forzar HTTPS rompe el warmup interno.
+            // Si lo necesitás, dejalo solo en Dev o si lo habilitás por config.
+            var forceHttps = builder.Configuration.GetValue<bool>("ForceHttpsRedirection");
+            if (app.Environment.IsDevelopment() || forceHttps)
+            {
+                app.UseHttpsRedirection();
+            }
+
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Health endpoint
+            // Health endpoint (warmup probe)
             app.MapGet("/health", () => Results.Ok("ok"));
 
+            app.MapControllers();
+            app.Run();
+        }
+    }
+}
             app.MapControllers();
             app.Run();
         }
