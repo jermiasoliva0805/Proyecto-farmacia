@@ -5,12 +5,15 @@ import { Card } from '../../components/common/Card';
 import { getRankingClientesFacturacion } from '../../service/reporteService';
 import { ClienteFacturacionDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 export const ReporteFacturacion = () => {
     const [datos, setDatos] = useState<ClienteFacturacionDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -33,44 +36,55 @@ export const ReporteFacturacion = () => {
     const totalGeneral = datos.reduce((acc, curr) => acc + curr.totalFacturado, 0);
     const promedioGeneral = datos.length > 0 ? totalGeneral / datos.length : 0;
 
-    const handleExportExcel = () => {
-        if (!datos || datos.length === 0) {
-            alert('No hay datos');
-            return;
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!datos || datos.length === 0) {
+                alert('No hay datos');
+                return;
+            }
+            const dataExport = datos.map((c, i) => ({
+                'Posición': i + 1,
+                'Cliente': c.nombreCliente,
+                'Pedidos': c.cantidadPedidos,
+                'Facturación': c.totalFacturado,
+            }));
+            
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            exportToExcel(dataExport, {
+                reportName: 'Ranking de Facturación',
+                fileName: 'ranking-facturacion',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const dataExport = datos.map((c, i) => ({
-            'Posición': i + 1,
-            'Cliente': c.nombreCliente,
-            'Pedidos': c.cantidadPedidos,
-            'Facturación': c.totalFacturado,
-        }));
-        
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        exportToExcel(dataExport, {
-            reportName: 'Ranking de Facturación',
-            fileName: 'ranking-facturacion',
-            filters: { periodo: periodoLabel }
-        });
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido');
-            return;
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido');
+                return;
+            }
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            await exportToPDF(contentRef.current, {
+                reportName: 'Ranking de Facturación',
+                fileName: 'ranking-facturacion',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        await exportToPDF(contentRef.current, {
-            reportName: 'Ranking de Facturación',
-            fileName: 'ranking-facturacion',
-            filters: { periodo: periodoLabel }
-        });
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-        format ? handleExportExcel() : handleExportPDF();
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de facturación...</p>;
@@ -167,6 +181,15 @@ export const ReporteFacturacion = () => {
                 </table>
             </Card>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Ranking de Facturación"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

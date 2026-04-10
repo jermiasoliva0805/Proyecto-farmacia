@@ -24,10 +24,25 @@ const ACCENT_COLOR = '#8b5cf6'; // purple-500
  */
 const getUserName = (): string => {
     try {
+        // Intenta leer el usuario completo
         const userData = localStorage.getItem('user');
         if (userData) {
             const user = JSON.parse(userData);
-            return user.nombre || user.name || 'Usuario';
+            // Intenta con diferentes campos posibles
+            const nombre = user.nombre || user.name || user.nombreUsuario || user.nombreCompleto || 'Usuario';
+            return nombre.trim() || 'Usuario';
+        }
+        
+        // Si no está en 'user', intenta otros keys
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                // Decodifica el JWT para extraer el nombre
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.nombre || payload.name || 'Usuario';
+            } catch {
+                return 'Usuario';
+            }
         }
     } catch {
         return 'Usuario';
@@ -133,17 +148,21 @@ export const exportToExcel = (
 export const exportToPDF = async (
     htmlElement: HTMLElement | null,
     options: ExportOptions
-) => {
+): Promise<void> => {
     if (!htmlElement) {
         alert('No hay contenido para exportar');
         return;
     }
 
     try {
+        // Capturar con mejor resolución y sin elementos de filtro borrosos
         const canvas = await html2canvas(htmlElement, {
-            scale: 2,
+            scale: 3, // Mayor resolución
             useCORS: true,
             backgroundColor: '#ffffff',
+            logging: false,
+            allowTaint: true,
+            imageTimeout: 5000,
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -159,31 +178,60 @@ export const exportToPDF = async (
         // Márgenes
         const margin = 10;
         const contentWidth = pageWidth - margin * 2;
-        const contentHeight = (canvas.height * contentWidth) / canvas.width;
+        
+        // Ajustar altura proporcionalmente
+        const scaleFactor = contentWidth / canvas.width;
+        const contentHeight = canvas.height * scaleFactor;
 
         // Agregar cabecera
         addPDFHeader(pdf, options);
 
-        // Ajustar imagen al ancho disponible
+        // Posición inicial después de la cabecera
         let yPosition = 35;
-        pdf.addImage(
-            imgData,
-            'PNG',
-            margin,
-            yPosition,
-            contentWidth,
-            contentHeight
-        );
+        
+        // Si el contenido es muy largo, dividir en páginas
+        const maxHeightPerPage = pageHeight - yPosition - margin;
+        let remainingHeight = contentHeight;
+        let currentPage = 1;
+        let sourceY = 0;
 
-        // Agregar footer con paginación si es necesario
-        const totalPages = Math.ceil((yPosition + contentHeight) / pageHeight);
-        if (totalPages > 1) {
-            for (let i = 1; i <= totalPages; i++) {
-                pdf.setPage(i);
-                addPDFFooter(pdf, i.toString());
+        while (remainingHeight > 0) {
+            const heightToPrint = Math.min(remainingHeight, maxHeightPerPage);
+            
+            // Crear canvas parcial si es necesario
+            if (currentPage > 1) {
+                pdf.addPage();
+                yPosition = margin;
             }
-        } else {
-            addPDFFooter(pdf, '1');
+
+            // Dibujar porción de imagen
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = Math.min(canvas.height, (heightToPrint / scaleFactor));
+            
+            const ctx = sliceCanvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(
+                    canvas,
+                    0,
+                    sourceY,
+                    canvas.width,
+                    sliceCanvas.height,
+                    0,
+                    0,
+                    canvas.width,
+                    sliceCanvas.height
+                );
+            }
+
+            const sliceImgData = sliceCanvas.toDataURL('image/png');
+            pdf.addImage(sliceImgData, 'PNG', margin, yPosition, contentWidth, heightToPrint);
+
+            remainingHeight -= heightToPrint;
+            sourceY += sliceCanvas.height;
+            currentPage++;
+            
+            addPDFFooter(pdf, currentPage.toString());
         }
 
         // Descargar

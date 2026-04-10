@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, MapPin, User, TrendingUp, Package, Zap, ClipboardList, Clock, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 interface ReporteOperario {
     nombreOperario: string;
@@ -17,6 +18,8 @@ const ReporteOperarios = () => {
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState('7');
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -46,46 +49,57 @@ const ReporteOperarios = () => {
 
     useEffect(() => { fetchDatos(); }, [fetchDatos]);
 
-    const handleExportExcel = () => {
-        if (!datos || datos.length === 0) {
-            alert('No hay datos');
-            return;
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!datos || datos.length === 0) {
+                alert('No hay datos');
+                return;
+            }
+            const dataExport = datos.map(op => ({
+                'Operario': op.nombreOperario,
+                'Pedidos Totales': op.pedidosTotales,
+                'Dentro Umbral': op.dentroUmbral,
+                'Fuera Umbral': op.fueraUmbral,
+                'Tiempo Promedio (min)': op.tiempoPromedioMinutos.toFixed(2),
+                'Eficiencia': `${op.porcentajeEficiencia.toFixed(2)}%`,
+            }));
+            
+            const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
+            
+            exportToExcel(dataExport, {
+                reportName: 'Desempeño de Operarios',
+                fileName: 'desempeno-operarios',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const dataExport = datos.map(op => ({
-            'Operario': op.nombreOperario,
-            'Pedidos Totales': op.pedidosTotales,
-            'Dentro Umbral': op.dentroUmbral,
-            'Fuera Umbral': op.fueraUmbral,
-            'Tiempo Promedio (min)': op.tiempoPromedioMinutos.toFixed(2),
-            'Eficiencia': `${op.porcentajeEficiencia.toFixed(2)}%`,
-        }));
-        
-        const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
-        
-        exportToExcel(dataExport, {
-            reportName: 'Desempeño de Operarios',
-            fileName: 'desempeno-operarios',
-            filters: { periodo: periodoLabel }
-        });
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido');
-            return;
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido');
+                return;
+            }
+            const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
+            
+            await exportToPDF(contentRef.current, {
+                reportName: 'Desempeño de Operarios',
+                fileName: 'desempeno-operarios',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const periodoLabel = periodo === '7' ? 'Últimos 7 días' : periodo === '30' ? 'Últimos 30 días' : 'Últimos 90 días';
-        
-        await exportToPDF(contentRef.current, {
-            reportName: 'Desempeño de Operarios',
-            fileName: 'desempeno-operarios',
-            filters: { periodo: periodoLabel }
-        });
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-        format ? handleExportExcel() : handleExportPDF();
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     const totalPedidos = datos.reduce((acc, curr) => acc + curr.pedidosTotales, 0);
@@ -238,6 +252,15 @@ const ReporteOperarios = () => {
                 </div>
             </div>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Desempeño de Operarios"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

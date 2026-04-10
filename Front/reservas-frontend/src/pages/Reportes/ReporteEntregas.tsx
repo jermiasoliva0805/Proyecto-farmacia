@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/common/Card';
 import { Package, CheckCircle2, XCircle, DollarSign, Calendar, MapPin, Download } from 'lucide-react';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 interface EntregaPorCadeteDTO {
   idCadete: number;
@@ -20,6 +21,8 @@ export const ReporteEntregas: React.FC = () => {
   // Estados de los filtros
   const [periodo, setPeriodo] = useState("7"); 
   const [idSucursal, setIdSucursal] = useState<number | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const contentRef = useRef<HTMLDivElement>(null); 
 
@@ -60,46 +63,57 @@ export const ReporteEntregas: React.FC = () => {
     fetchReporte();
   }, [periodo, idSucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
 
-  const handleExportExcel = () => {
-    if (!reporte || reporte.length === 0) {
-      alert('No hay datos');
-      return;
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      if (!reporte || reporte.length === 0) {
+        alert('No hay datos');
+        return;
+      }
+      const dataExport = reporte.map(c => ({
+        'Cadete': c.nombreCadete,
+        'Pedidos Asignados': c.totalPedidosAsignados,
+        'Entregas Exitosas': c.entregasExitosas,
+        'Entregas Fallidas': c.entregasFallidas,
+        'Total Recaudado': c.totalRecaudado,
+        'Efectividad': `${c.porcentajeEfectividad.toFixed(2)}%`,
+      }));
+      
+      const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+      
+      exportToExcel(dataExport, {
+        reportName: 'Entregas por Cadete',
+        fileName: 'entregas-cadete',
+        filters: { periodo: periodoLabel }
+      });
+    } finally {
+      setIsExporting(false);
+      setShowExportDialog(false);
     }
-    const dataExport = reporte.map(c => ({
-      'Cadete': c.nombreCadete,
-      'Pedidos Asignados': c.totalPedidosAsignados,
-      'Entregas Exitosas': c.entregasExitosas,
-      'Entregas Fallidas': c.entregasFallidas,
-      'Total Recaudado': c.totalRecaudado,
-      'Efectividad': `${c.porcentajeEfectividad.toFixed(2)}%`,
-    }));
-    
-    const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-    
-    exportToExcel(dataExport, {
-      reportName: 'Entregas por Cadete',
-      fileName: 'entregas-cadete',
-      filters: { periodo: periodoLabel }
-    });
   };
 
   const handleExportPDF = async () => {
-    if (!contentRef.current) {
-      alert('No hay contenido');
-      return;
+    try {
+      setIsExporting(true);
+      if (!contentRef.current) {
+        alert('No hay contenido');
+        return;
+      }
+      const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+      
+      await exportToPDF(contentRef.current, {
+        reportName: 'Entregas por Cadete',
+        fileName: 'entregas-cadete',
+        filters: { periodo: periodoLabel }
+      });
+    } finally {
+      setIsExporting(false);
+      setShowExportDialog(false);
     }
-    const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-    
-    await exportToPDF(contentRef.current, {
-      reportName: 'Entregas por Cadete',
-      fileName: 'entregas-cadete',
-      filters: { periodo: periodoLabel }
-    });
   };
 
-  const handleExportClick = async () => {
-    const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-    format ? handleExportExcel() : handleExportPDF();
+  const handleExportClick = () => {
+    setShowExportDialog(true);
   };
 
   // Cálculos de totales (se recalculan automáticamente al cambiar el estado 'reporte')
@@ -199,6 +213,15 @@ export const ReporteEntregas: React.FC = () => {
         </>
       )}
       </div>
+    {/* Export Dialog Modal */}
+    <ExportDialog
+        isOpen={showExportDialog}
+        reportName="Entregas por Cadete"
+        onExcelClick={handleExportExcel}
+        onPdfClick={handleExportPDF}
+        onCancel={() => setShowExportDialog(false)}
+        isLoading={isExporting}
+    />
     </div>
   );
 };

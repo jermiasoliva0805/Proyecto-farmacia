@@ -4,12 +4,15 @@ import { Card } from '../../components/common/Card';
 import { getPedidosCancelados } from '../../service/reporteService';
 import { ReportePedidosCanceladosDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 export const ReporteCancelados = () => {
     const [reporte, setReporte] = useState<ReportePedidosCanceladosDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -35,68 +38,75 @@ export const ReporteCancelados = () => {
         cargarData();
     }, [periodo, idSucursal]);
 
-    const handleExportExcel = () => {
-        if (!reporte) {
-            alert('No hay datos para exportar');
-            return;
-        }
-
-        const dataExport = [
-            {
-                'Métrica': 'Total de Pedidos',
-                'Cantidad': reporte.totalPedidosCancelados,
-            },
-            {
-                'Métrica': 'Porcentaje del Total',
-                'Cantidad': `${reporte.porcentajeDelTotal.toFixed(2)}%`,
-            },
-            {
-                'Métrica': 'Monto Total',
-                'Cantidad': reporte.montoTotalCancelado,
-            },
-        ];
-
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
-                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
-
-        exportToExcel(dataExport, {
-            reportName: 'Pedidos Cancelados',
-            fileName: 'pedidos-cancelados',
-            filters: {
-                periodo: periodoLabel,
-                sucursal: sucursalLabel,
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!reporte) {
+                alert('No hay datos para exportar');
+                return;
             }
-        });
+
+            const dataExport = [
+                {
+                    'Métrica': 'Total de Pedidos',
+                    'Cantidad': reporte.totalPedidosCancelados,
+                },
+                {
+                    'Métrica': 'Porcentaje del Total',
+                    'Cantidad': `${reporte.porcentajeDelTotal.toFixed(2)}%`,
+                },
+                {
+                    'Métrica': 'Monto Total',
+                    'Cantidad': reporte.montoTotalCancelado,
+                },
+            ];
+
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                                 periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+            exportToExcel(dataExport, {
+                reportName: 'Pedidos Cancelados',
+                fileName: 'pedidos-cancelados',
+                filters: {
+                    periodo: periodoLabel,
+                    sucursal: sucursalLabel,
+                }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
+        }
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido para exportar');
-            return;
-        }
-
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
-                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
-
-        await exportToPDF(contentRef.current, {
-            reportName: 'Pedidos Cancelados',
-            fileName: 'pedidos-cancelados',
-            filters: {
-                periodo: periodoLabel,
-                sucursal: sucursalLabel,
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido para exportar');
+                return;
             }
-        });
+
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                                 periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+            await exportToPDF(contentRef.current, {
+                reportName: 'Pedidos Cancelados',
+                fileName: 'pedidos-cancelados',
+                filters: {
+                    periodo: periodoLabel,
+                    sucursal: sucursalLabel,
+                }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
+        }
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Deseas exportar a Excel? (OK = Excel | Cancelar = PDF)');
-        if (format) {
-            handleExportExcel();
-        } else {
-            await handleExportPDF();
-        }
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de pedidos cancelados...</p>;
@@ -184,6 +194,15 @@ export const ReporteCancelados = () => {
                 </p>
             </Card>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Pedidos Cancelados"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

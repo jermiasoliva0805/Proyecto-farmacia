@@ -4,12 +4,15 @@ import { Calendar, MapPin, Download } from 'lucide-react';
 import { getRankingClientes } from '../../service/reporteService';
 import { RankingClienteDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 export const RankingClientes: React.FC = () => {
     const [ranking, setRanking] = useState<RankingClienteDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -28,44 +31,55 @@ export const RankingClientes: React.FC = () => {
         fetchDatos();
     }, [periodo, idSucursal]);
 
-    const handleExportExcel = () => {
-        if (!ranking || ranking.length === 0) {
-            alert('No hay datos');
-            return;
+    const handleExportExcel = async () => {
+        setIsExporting(true);
+        try {
+            if (!ranking || ranking.length === 0) {
+                alert('No hay datos');
+                return;
+            }
+            const dataExport = ranking.map((c, i) => ({
+                'Posición': i + 1,
+                'Cliente': c.nombreCliente,
+                'Pedidos': c.cantidadPedidos,
+                'Monto Total': c.gastoTotal,
+            }));
+            
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            exportToExcel(dataExport, {
+                reportName: 'Ranking de Clientes Frecuentes',
+                fileName: 'ranking-clientes',
+                filters: { periodo: periodoLabel }
+            });
+            setShowExportDialog(false);
+        } finally {
+            setIsExporting(false);
         }
-        const dataExport = ranking.map((c, i) => ({
-            'Posición': i + 1,
-            'Cliente': c.nombreCliente,
-            'Pedidos': c.cantidadPedidos,
-            'Monto Total': c.gastoTotal,
-        }));
-        
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        exportToExcel(dataExport, {
-            reportName: 'Ranking de Clientes Frecuentes',
-            fileName: 'ranking-clientes',
-            filters: { periodo: periodoLabel }
-        });
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido');
-            return;
+        setIsExporting(true);
+        try {
+            if (!contentRef.current) {
+                alert('No hay contenido');
+                return;
+            }
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            await exportToPDF(contentRef.current, {
+                reportName: 'Ranking de Clientes Frecuentes',
+                fileName: 'ranking-clientes',
+                filters: { periodo: periodoLabel }
+            });
+            setShowExportDialog(false);
+        } finally {
+            setIsExporting(false);
         }
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        await exportToPDF(contentRef.current, {
-            reportName: 'Ranking de Clientes Frecuentes',
-            fileName: 'ranking-clientes',
-            filters: { periodo: periodoLabel }
-        });
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-        format ? handleExportExcel() : handleExportPDF();
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
@@ -146,6 +160,16 @@ export const RankingClientes: React.FC = () => {
                 </table>
             </Card>
             </div>
+
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Ranking de Clientes Frecuentes"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

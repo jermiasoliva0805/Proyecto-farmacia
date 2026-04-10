@@ -5,6 +5,7 @@ import { Card } from '../../components/common/Card';
 import { getTop10Productos } from '../../service/reporteService';
 import { TopProductosDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 const COLORS = [
     '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
@@ -18,6 +19,8 @@ export const ReporteProductos = () => {
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -36,44 +39,55 @@ export const ReporteProductos = () => {
         cargarData();
     }, [periodo, idSucursal]);
 
-    const handleExportExcel = () => {
-        if (!datos || datos.length === 0) {
-            alert('No hay datos para exportar');
-            return;
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!datos || datos.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            const dataExport = datos.map((p, i) => ({
+                'Posición': i + 1,
+                'Producto': p.nombreProducto,
+                'Cantidad Vendida': p.unidadesVendidas,
+                'Porcentaje': `${p.porcentaje.toFixed(2)}%`,
+            }));
+            
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            exportToExcel(dataExport, {
+                reportName: 'Top 10 Productos Más Vendidos',
+                fileName: 'top-productos',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const dataExport = datos.map((p, i) => ({
-            'Posición': i + 1,
-            'Producto': p.nombreProducto,
-            'Cantidad Vendida': p.unidadesVendidas,
-            'Porcentaje': `${p.porcentaje.toFixed(2)}%`,
-        }));
-        
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        exportToExcel(dataExport, {
-            reportName: 'Top 10 Productos Más Vendidos',
-            fileName: 'top-productos',
-            filters: { periodo: periodoLabel }
-        });
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido');
-            return;
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido');
+                return;
+            }
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            await exportToPDF(contentRef.current, {
+                reportName: 'Top 10 Productos Más Vendidos',
+                fileName: 'top-productos',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        await exportToPDF(contentRef.current, {
-            reportName: 'Top 10 Productos Más Vendidos',
-            fileName: 'top-productos',
-            filters: { periodo: periodoLabel }
-        });
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-        format ? handleExportExcel() : handleExportPDF();
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     const totalUnidades = datos.reduce((acc, curr) => acc + curr.unidadesVendidas, 0);
@@ -305,6 +319,15 @@ export const ReporteProductos = () => {
                 </table>
             </Card>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Top 10 Productos"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

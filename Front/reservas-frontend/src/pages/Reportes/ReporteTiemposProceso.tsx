@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { getReporteTiempos } from '../../service/reporteService';
 import { TiemposProcesoDTO, DetalleTiempoProcesoDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 export const ReporteTiemposProceso: React.FC = () => {
     const [tiempos, setTiempos] = useState<TiemposProcesoDTO | null>(null);
@@ -12,6 +13,8 @@ export const ReporteTiemposProceso: React.FC = () => {
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [idEstado, setIdEstado] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -30,42 +33,53 @@ export const ReporteTiemposProceso: React.FC = () => {
         fetchDatos();
     }, [periodo, idSucursal, idEstado]);
 
-    const handleExportExcel = () => {
-        if (!tiempos) {
-            alert('No hay datos para exportar');
-            return;
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!tiempos) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            const dataExport = tiempos.fases.map(f => ({
+                'Fase': f.nombre,
+                'Duración Promedio (min)': f.tiempoPromedio.toFixed(2),
+            }));
+            
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            exportToExcel(dataExport, {
+                reportName: 'Tiempos de Proceso',
+                fileName: 'tiempos-proceso',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const dataExport = tiempos.fases.map(f => ({
-            'Fase': f.nombre,
-            'Duración Promedio (min)': f.tiempoPromedio.toFixed(2),
-        }));
-        
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        exportToExcel(dataExport, {
-            reportName: 'Tiempos de Proceso',
-            fileName: 'tiempos-proceso',
-            filters: { periodo: periodoLabel }
-        });
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido');
-            return;
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido');
+                return;
+            }
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            
+            await exportToPDF(contentRef.current, {
+                reportName: 'Tiempos de Proceso',
+                fileName: 'tiempos-proceso',
+                filters: { periodo: periodoLabel }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
         }
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        
-        await exportToPDF(contentRef.current, {
-            reportName: 'Tiempos de Proceso',
-            fileName: 'tiempos-proceso',
-            filters: { periodo: periodoLabel }
-        });
     };
 
-    const handleExportClick = async () => {
-        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
-        format ? handleExportExcel() : handleExportPDF();
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
@@ -229,6 +243,15 @@ export const ReporteTiemposProceso: React.FC = () => {
                 </p>
             </div>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Tiempos de Proceso"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };

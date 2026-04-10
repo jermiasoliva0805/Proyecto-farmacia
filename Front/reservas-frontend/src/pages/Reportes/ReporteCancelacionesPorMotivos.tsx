@@ -5,6 +5,7 @@ import { Card } from '../../components/common/Card';
 import { getCancelacionesPorMotivo } from '../../service/reporteService';
 import { ReporteCancelacionesPorMotivoDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
+import { ExportDialog } from '../../components/ExportDialog';
 
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#ec4899', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981'];
 
@@ -13,6 +14,8 @@ export const ReporteCancelacionesPorMotivos = () => {
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     
     // Referencias para exportación
     const contentRef = useRef<HTMLDivElement>(null);
@@ -41,62 +44,68 @@ export const ReporteCancelacionesPorMotivos = () => {
     }, [periodo, idSucursal]);
 
     // Funciones de exportación
-    const handleExportExcel = () => {
-        if (!reporte) {
-            alert('No hay datos para exportar');
-            return;
-        }
-
-        const dataExport = reporte.detalleMotivos.map((motivo, index) => ({
-            '#': index + 1,
-            'Motivo': motivo.motivo,
-            'Cantidad': motivo.cantidad,
-            'Porcentaje': `${motivo.porcentaje.toFixed(2)}%`,
-            'Monto Perdido': motivo.montoPerdido,
-        }));
-
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
-                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
-
-        exportToExcel(dataExport, {
-            reportName: 'Cancelaciones por Motivo',
-            fileName: 'cancelaciones-por-motivo',
-            filters: {
-                periodo: periodoLabel,
-                sucursal: sucursalLabel,
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            if (!reporte) {
+                alert('No hay datos para exportar');
+                return;
             }
-        });
+
+            const dataExport = reporte.detalleMotivos.map((motivo, index) => ({
+                '#': index + 1,
+                'Motivo': motivo.motivo,
+                'Cantidad': motivo.cantidad,
+                'Porcentaje': `${motivo.porcentaje.toFixed(2)}%`,
+                'Monto Perdido': motivo.montoPerdido,
+            }));
+
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                                 periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+            exportToExcel(dataExport, {
+                reportName: 'Cancelaciones por Motivo',
+                fileName: 'cancelaciones-por-motivo',
+                filters: {
+                    periodo: periodoLabel,
+                    sucursal: sucursalLabel,
+                }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
+        }
     };
 
     const handleExportPDF = async () => {
-        if (!contentRef.current) {
-            alert('No hay contenido para exportar');
-            return;
-        }
-
-        const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
-                             periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-        const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
-
-        await exportToPDF(contentRef.current, {
-            reportName: 'Cancelaciones por Motivo',
-            fileName: 'cancelaciones-por-motivo',
-            filters: {
-                periodo: periodoLabel,
-                sucursal: sucursalLabel,
+        try {
+            setIsExporting(true);
+            if (!contentRef.current) {
+                alert('No hay contenido para exportar');
+                return;
             }
-        });
+
+            const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
+                                 periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
+
+            await exportToPDF(contentRef.current, {
+                reportName: 'Cancelaciones por Motivo',
+                fileName: 'cancelaciones-por-motivo',
+                filters: {
+                    periodo: periodoLabel,
+                    sucursal: sucursalLabel,
+                }
+            });
+        } finally {
+            setIsExporting(false);
+            setShowExportDialog(false);
+        }
     };
 
-    const handleExportClick = async () => {
-        // Mostrar opciones de formato
-        const format = window.confirm('¿Deseas exportar a Excel? (OK = Excel | Cancelar = PDF)');
-        if (format) {
-            handleExportExcel();
-        } else {
-            await handleExportPDF();
-        }
+    const handleExportClick = () => {
+        setShowExportDialog(true);
     };
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
@@ -251,6 +260,15 @@ export const ReporteCancelacionesPorMotivos = () => {
                 </table>
             </Card>
             </div>
+        {/* Export Dialog Modal */}
+        <ExportDialog
+            isOpen={showExportDialog}
+            reportName="Cancelaciones por Motivo"
+            onExcelClick={handleExportExcel}
+            onPdfClick={handleExportPDF}
+            onCancel={() => setShowExportDialog(false)}
+            isLoading={isExporting}
+        />
         </div>
     );
 };
