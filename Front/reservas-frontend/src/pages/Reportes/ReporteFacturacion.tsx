@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Calendar, MapPin, DollarSign, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, TrendingUp, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getRankingClientesFacturacion } from '../../service/reporteService';
 import { ClienteFacturacionDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 export const ReporteFacturacion = () => {
     const [datos, setDatos] = useState<ClienteFacturacionDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
    useEffect(() => {
     const cargarData = async () => {
@@ -30,6 +33,46 @@ export const ReporteFacturacion = () => {
     const totalGeneral = datos.reduce((acc, curr) => acc + curr.totalFacturado, 0);
     const promedioGeneral = datos.length > 0 ? totalGeneral / datos.length : 0;
 
+    const handleExportExcel = () => {
+        if (!datos || datos.length === 0) {
+            alert('No hay datos');
+            return;
+        }
+        const dataExport = datos.map((c, i) => ({
+            'Posición': i + 1,
+            'Cliente': c.nombreCliente,
+            'Pedidos': c.cantidadPedidos,
+            'Facturación': c.totalFacturado,
+        }));
+        
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        exportToExcel(dataExport, {
+            reportName: 'Ranking de Facturación',
+            fileName: 'ranking-facturacion',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido');
+            return;
+        }
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        await exportToPDF(contentRef.current, {
+            reportName: 'Ranking de Facturación',
+            fileName: 'ranking-facturacion',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+        format ? handleExportExcel() : handleExportPDF();
+    };
+
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de facturación...</p>;
 
     return (
@@ -40,11 +83,17 @@ export const ReporteFacturacion = () => {
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Facturación</h1>
                     <p className="text-sm text-gray-500">Visualiza métricas y estadísticas de facturación por cliente</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Selectores idénticos a los otros reportes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Selector
@@ -117,6 +166,7 @@ export const ReporteFacturacion = () => {
                     </tbody>
                 </table>
             </Card>
+            </div>
         </div>
     );
 };

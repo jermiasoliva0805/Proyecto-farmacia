@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/common/Card';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Download } from 'lucide-react';
 import { getRankingClientes } from '../../service/reporteService';
 import { RankingClienteDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 export const RankingClientes: React.FC = () => {
     const [ranking, setRanking] = useState<RankingClienteDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchDatos = async () => {
@@ -25,6 +28,46 @@ export const RankingClientes: React.FC = () => {
         fetchDatos();
     }, [periodo, idSucursal]);
 
+    const handleExportExcel = () => {
+        if (!ranking || ranking.length === 0) {
+            alert('No hay datos');
+            return;
+        }
+        const dataExport = ranking.map((c, i) => ({
+            'Posición': i + 1,
+            'Cliente': c.nombreCliente,
+            'Pedidos': c.cantidadPedidos,
+            'Monto Total': c.gastoTotal,
+        }));
+        
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        exportToExcel(dataExport, {
+            reportName: 'Ranking de Clientes Frecuentes',
+            fileName: 'ranking-clientes',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido');
+            return;
+        }
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        await exportToPDF(contentRef.current, {
+            reportName: 'Ranking de Clientes Frecuentes',
+            fileName: 'ranking-clientes',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+        format ? handleExportExcel() : handleExportPDF();
+    };
+
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte...</p>;
 
     return (
@@ -35,11 +78,17 @@ export const RankingClientes: React.FC = () => {
                     <h1 className="text-xl font-bold text-gray-800">Ranking de Clientes Frecuentes</h1>
                     <p className="text-sm text-gray-500">Top 10 clientes por volumen de pedidos</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Selectores - AHORA IGUALES AL DE ENTREGAS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Selector
@@ -96,6 +145,7 @@ export const RankingClientes: React.FC = () => {
                     </tbody>
                 </table>
             </Card>
+            </div>
         </div>
     );
 };

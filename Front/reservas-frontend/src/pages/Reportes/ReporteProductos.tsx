@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Calendar, MapPin, ShoppingCart, TrendingUp, Package } from 'lucide-react';
+import { Calendar, MapPin, ShoppingCart, TrendingUp, Package, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getTop10Productos } from '../../service/reporteService';
 import { TopProductosDTO } from '../../types/pedido.types';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 const COLORS = [
     '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
@@ -17,6 +18,8 @@ export const ReporteProductos = () => {
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+    
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const cargarData = async () => {
@@ -32,6 +35,46 @@ export const ReporteProductos = () => {
         };
         cargarData();
     }, [periodo, idSucursal]);
+
+    const handleExportExcel = () => {
+        if (!datos || datos.length === 0) {
+            alert('No hay datos para exportar');
+            return;
+        }
+        const dataExport = datos.map((p, i) => ({
+            'Posición': i + 1,
+            'Producto': p.nombreProducto,
+            'Cantidad Vendida': p.unidadesVendidas,
+            'Porcentaje': `${p.porcentaje.toFixed(2)}%`,
+        }));
+        
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        exportToExcel(dataExport, {
+            reportName: 'Top 10 Productos Más Vendidos',
+            fileName: 'top-productos',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportPDF = async () => {
+        if (!contentRef.current) {
+            alert('No hay contenido');
+            return;
+        }
+        const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+        
+        await exportToPDF(contentRef.current, {
+            reportName: 'Top 10 Productos Más Vendidos',
+            fileName: 'top-productos',
+            filters: { periodo: periodoLabel }
+        });
+    };
+
+    const handleExportClick = async () => {
+        const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+        format ? handleExportExcel() : handleExportPDF();
+    };
 
     const totalUnidades = datos.reduce((acc, curr) => acc + curr.unidadesVendidas, 0);
     const productoTop = datos.length > 0 ? datos[0] : null;
@@ -71,11 +114,17 @@ export const ReporteProductos = () => {
                     <h1 className="text-xl font-bold text-gray-800 tracking-tight">Top 10 Productos Más Vendidos</h1>
                     <p className="text-sm text-gray-500">Análisis de productos con mayor volumen de ventas</p>
                 </div>
-                <button className="bg-black text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-md">
+                <button 
+                    onClick={handleExportClick}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                    <Download size={16} />
                     Exportar Reporte
                 </button>
             </div>
 
+            {/* Contenido a exportar */}
+            <div ref={contentRef}>
             {/* Selectores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <Selector
@@ -255,6 +304,7 @@ export const ReporteProductos = () => {
                     </tbody>
                 </table>
             </Card>
+            </div>
         </div>
     );
 };

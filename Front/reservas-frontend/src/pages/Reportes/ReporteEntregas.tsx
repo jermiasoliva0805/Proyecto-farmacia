@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/common/Card';
-import { Package, CheckCircle2, XCircle, DollarSign, Calendar, MapPin } from 'lucide-react';
+import { Package, CheckCircle2, XCircle, DollarSign, Calendar, MapPin, Download } from 'lucide-react';
+import { exportToExcel, exportToPDF } from '../../service/exportService';
 
 interface EntregaPorCadeteDTO {
   idCadete: number;
@@ -18,7 +19,9 @@ export const ReporteEntregas: React.FC = () => {
 
   // Estados de los filtros
   const [periodo, setPeriodo] = useState("7"); 
-  const [idSucursal, setIdSucursal] = useState<number | null>(null); 
+  const [idSucursal, setIdSucursal] = useState<number | null>(null);
+  
+  const contentRef = useRef<HTMLDivElement>(null); 
 
   useEffect(() => {
     // Definimos la función de carga DENTRO para asegurar que tome los valores frescos de 'periodo' e 'idSucursal'
@@ -57,6 +60,48 @@ export const ReporteEntregas: React.FC = () => {
     fetchReporte();
   }, [periodo, idSucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
 
+  const handleExportExcel = () => {
+    if (!reporte || reporte.length === 0) {
+      alert('No hay datos');
+      return;
+    }
+    const dataExport = reporte.map(c => ({
+      'Cadete': c.nombreCadete,
+      'Pedidos Asignados': c.totalPedidosAsignados,
+      'Entregas Exitosas': c.entregasExitosas,
+      'Entregas Fallidas': c.entregasFallidas,
+      'Total Recaudado': c.totalRecaudado,
+      'Efectividad': `${c.porcentajeEfectividad.toFixed(2)}%`,
+    }));
+    
+    const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+    
+    exportToExcel(dataExport, {
+      reportName: 'Entregas por Cadete',
+      fileName: 'entregas-cadete',
+      filters: { periodo: periodoLabel }
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (!contentRef.current) {
+      alert('No hay contenido');
+      return;
+    }
+    const periodoLabel = periodo === "7" ? "Últimos 7 días" : periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
+    
+    await exportToPDF(contentRef.current, {
+      reportName: 'Entregas por Cadete',
+      fileName: 'entregas-cadete',
+      filters: { periodo: periodoLabel }
+    });
+  };
+
+  const handleExportClick = async () => {
+    const format = window.confirm('¿Exportar a Excel? (OK=Excel | Cancelar=PDF)');
+    format ? handleExportExcel() : handleExportPDF();
+  };
+
   // Cálculos de totales (se recalculan automáticamente al cambiar el estado 'reporte')
   const totalPedidos = reporte.reduce((acc, c) => acc + c.totalPedidosAsignados, 0);
   const totalExito = reporte.reduce((acc, c) => acc + c.entregasExitosas, 0);
@@ -71,8 +116,17 @@ export const ReporteEntregas: React.FC = () => {
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reportes y Análisis</h1>
           <p className="text-sm text-gray-500">Métricas de rendimiento de cadetes</p>
         </div>
+        <button 
+          onClick={handleExportClick}
+          className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+        >
+          <Download size={16} />
+          Exportar Reporte
+        </button>
       </div>
 
+      {/* Contenido a exportar */}
+      <div ref={contentRef}>
       {/* Selectores */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Selector
@@ -144,6 +198,7 @@ export const ReporteEntregas: React.FC = () => {
           </Card>
         </>
       )}
+      </div>
     </div>
   );
 };
