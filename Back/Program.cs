@@ -1,12 +1,12 @@
 using AutoMapper;
 using Back.Data;
-using Back.DTOS;
 using Back.Interfaces;
 using Back.Repositories;
 using Back.Repositories.Interfaces;
 using Back.Services;
 using Back.Services.Interfaces;
 using Back.Validators;
+using Back.DTOS;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,17 +26,17 @@ namespace Back
             var builder = WebApplication.CreateBuilder(args);
 
             // ------------------------------------------------------------
-            // LOGGING (clave para ver algo en Azure Log Stream)
+            // LOGGING: necesario para ver stdout en Azure (Log Stream)
             // ------------------------------------------------------------
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
             // ------------------------------------------------------------
-            // URLS / PUERTO (Azure App Service en contenedor)
-            // Recomendado setear en Azure:
-            //   ASPNETCORE_URLS = http://0.0.0.0:8080
+            // PUERTO / URLS (Azure contenedor)
+            // En Azure App Settings:
             //   WEBSITES_PORT   = 8080
-            // Si no está seteado, fallback a 8080.
+            //   ASPNETCORE_URLS = http://0.0.0.0:8080
+            // Fallback si no está seteado:
             // ------------------------------------------------------------
             var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
             if (string.IsNullOrWhiteSpace(urls))
@@ -74,9 +74,13 @@ namespace Back
                     {
                         new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
                         },
-                        Array.Empty<string>()
+                        System.Array.Empty<string>()
                     }
                 });
             });
@@ -90,7 +94,6 @@ namespace Back
             builder.Services.AddFluentValidationAutoValidation();
 
             // Registro manual del/los validadores para evitar el error:
-            // CS1061: IServiceCollection no contiene AddValidatorsFromAssemblyContaining
             builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterUserValidator>();
 
             // 5. Inyección de Repositorios
@@ -125,8 +128,7 @@ namespace Back
             builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
 
-            // 6a. SMTP Configuration - Lee del formato Azure (Smtp__Host) o appsettings (Smtp:Host)
-            // En Azure: usar Smtp__Host, Smtp__Port, Smtp__User, Smtp__Password, Smtp__EnableSsl
+            // 6a. SMTP Configuration
             static int GetInt(string? value, int fallback) => int.TryParse(value, out var v) ? v : fallback;
             static bool GetBool(string? value, bool fallback) => bool.TryParse(value, out var v) ? v : fallback;
 
@@ -189,18 +191,20 @@ namespace Back
             app.Logger.LogInformation("ASPNETCORE_URLS: {urls}", Environment.GetEnvironmentVariable("ASPNETCORE_URLS"));
             app.Logger.LogInformation("WEBSITES_PORT: {port}", Environment.GetEnvironmentVariable("WEBSITES_PORT"));
 
-            // 9. Seeding (SIEMPRE en startup, pero seguro: no borra existentes)
-            using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider;
-            try
+            // 9. Seeding
+            using (var scope = app.Services.CreateScope())
             {
-                var context = services.GetRequiredService<AppDbContext>();
-                DbInitializer.Initialize(context);
-            }
-            catch (Exception ex)
-            {
-                var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "Error al sembrar la base de datos.");
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppDbContext>();
+                    DbInitializer.Initialize(context);
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Error al sembrar la base de datos.");
+                }
             }
 
             // Swagger: habilitar en Development o si la config lo permite explícitamente
@@ -216,8 +220,8 @@ namespace Back
 
             app.UseCors("AllowSpecificOrigins");
 
-            // En App Service (contenedor), a veces forzar HTTPS rompe el warmup interno.
-            // Si lo necesitás, dejalo solo en Dev o si lo habilitás por config.
+            // En App Service (contenedor) a veces conviene NO forzar https interno.
+            // Si querés forzarlo, configurá ForceHttpsRedirection=true en appsettings/Azure.
             var forceHttps = builder.Configuration.GetValue<bool>("ForceHttpsRedirection");
             if (app.Environment.IsDevelopment() || forceHttps)
             {
@@ -227,14 +231,9 @@ namespace Back
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Health endpoint (warmup probe)
+            // Health endpoint
             app.MapGet("/health", () => Results.Ok("ok"));
 
-            app.MapControllers();
-            app.Run();
-        }
-    }
-}
             app.MapControllers();
             app.Run();
         }
