@@ -1,170 +1,486 @@
 using Back.Models;
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using CsvHelper;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using CsvHelper;
 using CsvHelper.Configuration;
 
 namespace Back.Data
 {
+    /// <summary>
+    /// DbInitializer: Semillado robusto, idempotente y tolerante a fallos.
+    /// - Ejecuta etapas independientes, cada una protegida con try-catch
+    /// - Si una etapa falla, continúa con las siguientes
+    /// - Idempotencia: solo inserta datos si no existen
+    /// - Contraseñas hasheadas con BCrypt
+    /// - Logging detallado para debuggeo en Azure
+    /// </summary>
     public static class DbInitializer
     {
         public static void Initialize(AppDbContext context)
         {
-            // IMPORTANTE (Producción/Azure):
-            // No borrar ni recrear la base en el startup.
-            // En su lugar: asegurar esquema existente (migraciones) y sembrar solo si falta.
-            context.Database.Migrate();
-
-            // Si ya hay usuarios (o cualquier tabla clave), asumimos que ya está sembrado.
-            // Ajustá esta condición si preferís otra tabla.
-            if (context.Usuarios.Any())
+            try
             {
-                Console.WriteLine("ℹ️ Base ya inicializada. Seed omitido.");
-                return;
+                Console.WriteLine("\n═══════════════════════════════════════════════════════════");
+                Console.WriteLine($"▶️ Iniciando DbInitializer (Seed de BD)");
+                Console.WriteLine($"📍 BaseDirectory: {AppDomain.CurrentDomain.BaseDirectory}");
+                Console.WriteLine($"📍 CurrentDirectory: {Directory.GetCurrentDirectory()}");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+
+                // PASO 1: EJECUTAR MIGRACIONES
+                Console.WriteLine("\n▶️ Ejecutando migraciones con context.Database.Migrate()...");
+                context.Database.Migrate();
+                Console.WriteLine("✅ Migraciones ejecutadas correctamente");
+
+                // PASO 2: SEMBRAMOS POR ETAPAS (cada una independiente y protegida)
+                SeedMotivosCancelacion(context);
+                SeedEstadosDePedidos(context);
+                var (localidad, barrio) = SeedLocalidadYBarrio(context);
+                var sucursal = SeedSucursal(context);
+                SeedProductos(context);
+                SeedUsuarios(context, sucursal);
+                SeedClientes(context, localidad, barrio);
+
+                // RESUMEN FINAL
+                Console.WriteLine("\n═══════════════════════════════════════════════════════════");
+                Console.WriteLine("✅ SEMILLADO COMPLETADO EXITOSAMENTE");
+                Console.WriteLine("═══════════════════════════════════════════════════════════\n");
             }
-
-            // 1. MOTIVOS DE CANCELACIÓN
-            context.MotivosCancelacion.AddRange(
-                new MotivoCancelacion { Nombre = "Arrepentimiento", Activo = true },
-                new MotivoCancelacion { Nombre = "Falta de stock", Activo = true },
-                new MotivoCancelacion { Nombre = "Error en el pago", Activo = true },
-                new MotivoCancelacion { Nombre = "Dirección incorrecta", Activo = true }
-            );
-            context.SaveChanges();
-
-            // 2. ESTADOS DE PEDIDO
-            context.EstadosDePedidos.AddRange(
-                new EstadoDePedido { NombreEstado = "Sin preparar", motivo_cancelacion = "N/A" },        // 1
-                new EstadoDePedido { NombreEstado = "Preparar pedido", motivo_cancelacion = "N/A" },    // 2
-                new EstadoDePedido { NombreEstado = "Demorado", motivo_cancelacion = "N/A" },           // 3
-                new EstadoDePedido { NombreEstado = "Listo para despachar", motivo_cancelacion = "N/A" }, // 4
-                new EstadoDePedido { NombreEstado = "Despachando", motivo_cancelacion = "N/A" },        // 5
-                new EstadoDePedido { NombreEstado = "En camino", motivo_cancelacion = "N/A" },          // 6
-                new EstadoDePedido { NombreEstado = "Entregado", motivo_cancelacion = "N/A" },          // 7
-                new EstadoDePedido { NombreEstado = "Entrega fallida", motivo_cancelacion = "N/A" },    // 8
-                new EstadoDePedido { NombreEstado = "Cancelado", motivo_cancelacion = "Arrepentimiento" } // 9
-            );
-            context.SaveChanges();
-
-            // 3. LOCALIDADES Y BARRIOS
-            var cordoba = new Localidad { Ciudad = "Córdoba", Provincia = "Córdoba", CodigoPostal = "5000" };
-            context.Localidades.Add(cordoba);
-            context.SaveChanges();
-
-            var barrioGral = new Barrio { Nombre = "Nueva Córdoba", IDLocalidad = cordoba.IDLocalidad };
-            context.Barrios.Add(barrioGral);
-            context.SaveChanges();
-
-            // 4. SUCURSALES
-            var suc = new Sucursal { NombreSucursal = "Farmacia General Paz Centro", Dirección = "Av. Colon 123", Teléfono = "3514445566" };
-            context.Sucursales.Add(suc);
-            context.SaveChanges();
-
-            // 4.1 PRODUCTOS - Cargando desde CSV
-            var rutaCSV = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv");
-            var listaProductos = CargarProductosDesdeCSV(rutaCSV);
-
-            if (listaProductos.Count == 0)
+            catch (Exception ex)
             {
-                // Fallback: productos hardcodeados si no encuentra el CSV
-                listaProductos = new List<Producto>
-                {
-                    new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m },
-                    new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, fragancia masculina", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m },
-                    new Producto { NombreProducto = "Shakira Amarillo EDP", Descripcion = "80ml, fragancia femenina", Categoria = "Perfumeria", CantidadProducto = 30, PrecioProducto = 45045m },
-                    new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824 - Afeitadora", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m },
-                    new Producto { NombreProducto = "Nebulizador Pistón", Descripcion = "ASPEN Nbb02-A-50 Silencioso", Categoria = "Electro", CantidadProducto = 20, PrecioProducto = 80330.58m },
-                    new Producto { NombreProducto = "Tensiometro Aneroide", Descripcion = "FEMMTO Kit con Estetoscopio", Categoria = "Electro", CantidadProducto = 25, PrecioProducto = 42274.33m },
-                    new Producto { NombreProducto = "Planchita Pelo Bellissima", Descripcion = "Ceramic Long Plates", Categoria = "Electro", CantidadProducto = 15, PrecioProducto = 75199m },
-                    new Producto { NombreProducto = "Alcohol en Gel 500ml", Descripcion = "Antibacterial con dosificador", Categoria = "Salud", CantidadProducto = 200, PrecioProducto = 3500m }
-                };
-                Console.WriteLine("⚠️ CSV no encontrado. Usando productos hardcodeados.");
+                // Este catch solo se ejecuta si algo falla ANTES de las etapas
+                Console.WriteLine($"\n❌ ERROR CRÍTICO EN DBINITIALIZER: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+                throw;
             }
-
-            context.Productos.AddRange(listaProductos);
-            context.SaveChanges();
-            Console.WriteLine($"✅ {listaProductos.Count} productos cargados exitosamente.");
-
-            // 5. USUARIOS
-            var userAdmin = new Usuario { Nombre = "Encargado", Apellido = "Sistema", UsuarioNombre = "encargado", Contraseña = "123", Rol = "Encargado", IDSucursal = suc.IDSucursal, Mail = "admin@test.com" };
-            var opAna = new Usuario { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "anaLop", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "ana@test.com" };
-            var opLuis = new Usuario { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "luis@test.com" };
-            var opMarta = new Usuario { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", IDSucursal = suc.IDSucursal, Mail = "marta@test.com" };
-            var cadete1 = new Usuario { Nombre = "Carlos", Apellido = "Martinez", UsuarioNombre = "carlos", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "carlos@test.com" };
-            var cadete2 = new Usuario { Nombre = "Pedro", Apellido = "Romero", UsuarioNombre = "pedro", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "pedro@test.com" };
-            var cadete3 = new Usuario { Nombre = "Sofia", Apellido = "Garcia", UsuarioNombre = "sofia", Contraseña = "123", Rol = "Cadete", IDSucursal = suc.IDSucursal, Mail = "sofia@test.com" };
-
-            context.Usuarios.AddRange(userAdmin, opAna, opLuis, opMarta, cadete1, cadete2, cadete3);
-            context.SaveChanges();
-
-            // 6. CLIENTES (Ampliados a 10 para reportes detallados)
-            var clientes = new List<Cliente>
-            {
-                new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@test.com" },
-                new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "San Martin 500", Mail = "maria@test.com" },
-                new Cliente { Nombre = "Carlos", Apellido = "Rodriguez", DNI = "31789456", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Av. Velez Sarsfield 1200", Mail = "carlos@test.com" },
-                new Cliente { Nombre = "Ana", Apellido = "Martinez", DNI = "33456789", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Ituzaingo 450", Mail = "ana@test.com" },
-                new Cliente { Nombre = "Roberto", Apellido = "Lopez", DNI = "34567890", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Colon 600", Mail = "roberto@test.com" },
-                new Cliente { Nombre = "Gabriela", Apellido = "Sanchez", DNI = "35678901", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Ruta Nacional 9 Km 10", Mail = "gabriela@test.com" },
-                new Cliente { Nombre = "Fernando", Apellido = "Diaz", DNI = "36789012", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle Hipólito Irigoyen 800", Mail = "fernando@test.com" },
-                new Cliente { Nombre = "Alejandra", Apellido = "Torres", DNI = "37890123", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Paseo Sobremonte 350", Mail = "alejandra@test.com" },
-                new Cliente { Nombre = "Jorge", Apellido = "Castro", DNI = "38901234", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Calle General Paz 950", Mail = "jorge@test.com" },
-                new Cliente { Nombre = "Patricia", Apellido = "Flores", DNI = "39012345", IDBarrio = barrioGral.IDBarrio, IDLocalidad = cordoba.IDLocalidad, Direccion = "Avenida Maipú 1100", Mail = "patricia@test.com" },
-            };
-
-            context.Clientes.AddRange(clientes);
-            context.SaveChanges();
-
-            Console.WriteLine("✅ Semillado inicial completado (sin reset de base).");
         }
 
-        // --- MÉTODOS AUXILIARES ---
-        private static List<Producto> CargarProductosDesdeCSV(string rutaCSVInicial)
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 1: MOTIVOS DE CANCELACIÓN
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedMotivosCancelacion(AppDbContext context)
         {
-            var productos = new List<Producto>();
-            string rutaCSV = null;
-
-            var rutasPosibles = new[]
+            try
             {
-                rutaCSVInicial,
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "Back", "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
-                "Data/SeedData/catalogo_perfumeria - Perfumeria.csv",
-                "./Data/SeedData/catalogo_perfumeria - Perfumeria.csv",
-            };
+                Console.WriteLine("\n▶️ Iniciando SeedMotivosCancelacion...");
 
-            Console.WriteLine($"🔍 Buscando CSV. BaseDirectory: {AppDomain.CurrentDomain.BaseDirectory}");
-            Console.WriteLine($"🔍 CurrentDirectory: {Directory.GetCurrentDirectory()}");
-
-            foreach (var ruta in rutasPosibles)
-            {
-                if (File.Exists(ruta))
+                var motivosACrear = new[]
                 {
-                    rutaCSV = ruta;
-                    Console.WriteLine($"✅ CSV encontrado en: {ruta}");
-                    break;
+                    new { Nombre = "Arrepentimiento", Activo = true },
+                    new { Nombre = "Falta de stock", Activo = true },
+                    new { Nombre = "Error en el pago", Activo = true },
+                    new { Nombre = "Dirección incorrecta", Activo = true }
+                };
+
+                int insertados = 0;
+                foreach (var motivo in motivosACrear)
+                {
+                    // IDEMPOTENCIA: chequear si existe por nombre
+                    if (!context.MotivosCancelacion.Any(m => m.Nombre == motivo.Nombre))
+                    {
+                        context.MotivosCancelacion.Add(new MotivoCancelacion
+                        {
+                            Nombre = motivo.Nombre,
+                            Activo = motivo.Activo
+                        });
+                        insertados++;
+                    }
+                }
+
+                if (insertados > 0)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ SeedMotivosCancelacion OK: {insertados} registros insertados");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ SeedMotivosCancelacion omitido: todos los motivos ya existen");
                 }
             }
-
-            if (rutaCSV == null)
+            catch (Exception ex)
             {
-                Console.WriteLine($"❌ CSV no encontrado en ninguna de las rutas buscadas");
-                return productos;
+                Console.WriteLine($"❌ Error en SeedMotivosCancelacion: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+                // NO relanzar excepción, continuar con la siguiente etapa
             }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 2: ESTADOS DE PEDIDO
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedEstadosDePedidos(AppDbContext context)
+        {
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedEstadosDePedidos...");
+
+                var estadosACrear = new[]
+                {
+                    new { NombreEstado = "Sin preparar", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Preparar pedido", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Demorado", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Listo para despachar", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Despachando", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "En camino", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Entregado", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Entrega fallida", motivo_cancelacion = "N/A" },
+                    new { NombreEstado = "Cancelado", motivo_cancelacion = "Arrepentimiento" }
+                };
+
+                int insertados = 0;
+                foreach (var estado in estadosACrear)
+                {
+                    // IDEMPOTENCIA: chequear si existe por nombre
+                    if (!context.EstadosDePedidos.Any(e => e.NombreEstado == estado.NombreEstado))
+                    {
+                        context.EstadosDePedidos.Add(new EstadoDePedido
+                        {
+                            NombreEstado = estado.NombreEstado,
+                            motivo_cancelacion = estado.motivo_cancelacion
+                        });
+                        insertados++;
+                    }
+                }
+
+                if (insertados > 0)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ SeedEstadosDePedidos OK: {insertados} registros insertados");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ SeedEstadosDePedidos omitido: todos los estados ya existen");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedEstadosDePedidos: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 3: LOCALIDADES Y BARRIOS
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static (Localidad localidad, Barrio barrio) SeedLocalidadYBarrio(AppDbContext context)
+        {
+            Localidad localidad = null;
+            Barrio barrio = null;
 
             try
             {
+                Console.WriteLine("\n▶️ Iniciando SeedLocalidadYBarrio...");
+
+                // Buscar Córdoba, si no existe crearla
+                localidad = context.Localidades.FirstOrDefault(l => l.Ciudad == "Córdoba");
+                if (localidad == null)
+                {
+                    localidad = new Localidad
+                    {
+                        Ciudad = "Córdoba",
+                        Provincia = "Córdoba",
+                        CodigoPostal = "5000"
+                    };
+                    context.Localidades.Add(localidad);
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ Localidad 'Córdoba' creada (ID: {localidad.IDLocalidad})");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ Localidad 'Córdoba' ya existe (ID: {localidad.IDLocalidad})");
+                }
+
+                // Buscar barrio, si no existe crearlo
+                barrio = context.Barrios.FirstOrDefault(b =>
+                    b.Nombre == "Nueva Córdoba" && b.IDLocalidad == localidad.IDLocalidad);
+                if (barrio == null)
+                {
+                    barrio = new Barrio
+                    {
+                        Nombre = "Nueva Córdoba",
+                        IDLocalidad = localidad.IDLocalidad
+                    };
+                    context.Barrios.Add(barrio);
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ Barrio 'Nueva Córdoba' creado (ID: {barrio.IDBarrio})");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ Barrio 'Nueva Córdoba' ya existe (ID: {barrio.IDBarrio})");
+                }
+
+                Console.WriteLine($"✅ SeedLocalidadYBarrio OK");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedLocalidadYBarrio: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+
+            return (localidad, barrio);
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 4: SUCURSAL
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static Sucursal SeedSucursal(AppDbContext context)
+        {
+            Sucursal sucursal = null;
+
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedSucursal...");
+
+                // IDEMPOTENCIA: buscar por nombre
+                sucursal = context.Sucursales.FirstOrDefault(s =>
+                    s.NombreSucursal == "Farmacia General Paz Centro");
+
+                if (sucursal == null)
+                {
+                    sucursal = new Sucursal
+                    {
+                        NombreSucursal = "Farmacia General Paz Centro",
+                        Dirección = "Av. Colon 123",
+                        Teléfono = "3514445566"
+                    };
+                    context.Sucursales.Add(sucursal);
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ Sucursal 'Farmacia General Paz Centro' creada (ID: {sucursal.IDSucursal})");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ Sucursal 'Farmacia General Paz Centro' ya existe (ID: {sucursal.IDSucursal})");
+                }
+
+                Console.WriteLine($"✅ SeedSucursal OK");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedSucursal: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+
+            return sucursal;
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 5: PRODUCTOS (desde CSV con fallback hardcodeado)
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedProductos(AppDbContext context)
+        {
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedProductos...");
+
+                // IDEMPOTENCIA: si ya hay productos, omitir todo
+                if (context.Productos.Any())
+                {
+                    int count = context.Productos.Count();
+                    Console.WriteLine($"ℹ️ SeedProductos omitido: la tabla ya contiene {count} productos");
+                    return;
+                }
+
+                // Cargar desde CSV
+                var listaProductos = CargarProductosDesdeCSV();
+
+                // Si CSV no devuelve datos (no encontrado o error), usar fallback
+                if (listaProductos.Count == 0)
+                {
+                    Console.WriteLine("⚠️ CSV sin resultados. Using fallback hardcodeado...");
+                    listaProductos = new List<Producto>
+                    {
+                        new Producto { NombreProducto = "EDP Balance By Dadatina", Descripcion = "70ml, Dadatina", Categoria = "Perfumeria", CantidadProducto = 50, PrecioProducto = 47900m },
+                        new Producto { NombreProducto = "Boos Intense Black EDP", Descripcion = "90ml, fragancia masculina", Categoria = "Perfumeria", CantidadProducto = 100, PrecioProducto = 52927m },
+                        new Producto { NombreProducto = "Shakira Amarillo EDP", Descripcion = "80ml, fragancia femenina", Categoria = "Perfumeria", CantidadProducto = 30, PrecioProducto = 45045m },
+                        new Producto { NombreProducto = "Oneblade Face+Body", Descripcion = "Philips QP2824 - Afeitadora", Categoria = "Electro", CantidadProducto = 30, PrecioProducto = 110932.79m },
+                        new Producto { NombreProducto = "Nebulizador Pistón", Descripcion = "ASPEN Nbb02-A-50 Silencioso", Categoria = "Electro", CantidadProducto = 20, PrecioProducto = 80330.58m },
+                        new Producto { NombreProducto = "Tensiometro Aneroide", Descripcion = "FEMMTO Kit con Estetoscopio", Categoria = "Electro", CantidadProducto = 25, PrecioProducto = 42274.33m },
+                        new Producto { NombreProducto = "Planchita Pelo Bellissima", Descripcion = "Ceramic Long Plates", Categoria = "Electro", CantidadProducto = 15, PrecioProducto = 75199m },
+                        new Producto { NombreProducto = "Alcohol en Gel 500ml", Descripcion = "Antibacterial con dosificador", Categoria = "Salud", CantidadProducto = 200, PrecioProducto = 3500m }
+                    };
+                }
+
+                context.Productos.AddRange(listaProductos);
+                context.SaveChanges();
+                Console.WriteLine($"✅ SeedProductos OK: {listaProductos.Count} productos cargados");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedProductos: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 6: USUARIOS
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedUsuarios(AppDbContext context, Sucursal sucursal)
+        {
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedUsuarios...");
+
+                if (sucursal == null)
+                {
+                    Console.WriteLine("⚠️ SeedUsuarios omitido: Sucursal no disponible");
+                    return;
+                }
+
+                var usuariosACrear = new[]
+                {
+                    new { Nombre = "Encargado", Apellido = "Sistema", UsuarioNombre = "encargado", Contraseña = "123", Rol = "Encargado", Mail = "admin@test.com" },
+                    new { Nombre = "Ana", Apellido = "Lopez", UsuarioNombre = "anaLop", Contraseña = "123", Rol = "Operario", Mail = "ana@test.com" },
+                    new { Nombre = "Luis", Apellido = "Gomez", UsuarioNombre = "luis", Contraseña = "123", Rol = "Operario", Mail = "luis@test.com" },
+                    new { Nombre = "Marta", Apellido = "Sosa", UsuarioNombre = "marta", Contraseña = "123", Rol = "Operario", Mail = "marta@test.com" },
+                    new { Nombre = "Carlos", Apellido = "Martinez", UsuarioNombre = "carlos", Contraseña = "123", Rol = "Cadete", Mail = "carlos@test.com" },
+                    new { Nombre = "Pedro", Apellido = "Romero", UsuarioNombre = "pedro", Contraseña = "123", Rol = "Cadete", Mail = "pedro@test.com" },
+                    new { Nombre = "Sofia", Apellido = "Garcia", UsuarioNombre = "sofia", Contraseña = "123", Rol = "Cadete", Mail = "sofia@test.com" },
+                };
+
+                int insertados = 0;
+                foreach (var usuarioData in usuariosACrear)
+                {
+                    // IDEMPOTENCIA: chequear si existe por UsuarioNombre
+                    if (!context.Usuarios.Any(u => u.UsuarioNombre == usuarioData.UsuarioNombre))
+                    {
+                        var usuario = new Usuario
+                        {
+                            Nombre = usuarioData.Nombre,
+                            Apellido = usuarioData.Apellido,
+                            UsuarioNombre = usuarioData.UsuarioNombre,
+                            // HASHEAR CON BCRYPT (no texto plano)
+                            Contraseña = BCrypt.Net.BCrypt.HashPassword(usuarioData.Contraseña),
+                            Rol = usuarioData.Rol,
+                            IDSucursal = sucursal.IDSucursal,
+                            Mail = usuarioData.Mail
+                        };
+                        context.Usuarios.Add(usuario);
+                        insertados++;
+                    }
+                }
+
+                if (insertados > 0)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ SeedUsuarios OK: {insertados} usuarios creados (contraseñas hasheadas con BCrypt)");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ SeedUsuarios omitido: todos los usuarios ya existen");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedUsuarios: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 7: CLIENTES
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedClientes(AppDbContext context, Localidad localidad, Barrio barrio)
+        {
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedClientes...");
+
+                if (localidad == null || barrio == null)
+                {
+                    Console.WriteLine("⚠️ SeedClientes omitido: Localidad o Barrio no disponibles");
+                    return;
+                }
+
+                // IDEMPOTENCIA: si ya hay clientes, omitir todo
+                if (context.Clientes.Any())
+                {
+                    int count = context.Clientes.Count();
+                    Console.WriteLine($"ℹ️ SeedClientes omitido: la tabla ya contiene {count} clientes");
+                    return;
+                }
+
+                var clientes = new List<Cliente>
+                {
+                    new Cliente { Nombre = "Juan", Apellido = "Perez", DNI = "30123456", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Belgrano 800", Mail = "juan@test.com" },
+                    new Cliente { Nombre = "Maria", Apellido = "Gonzalez", DNI = "32654321", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "San Martin 500", Mail = "maria@test.com" },
+                    new Cliente { Nombre = "Carlos", Apellido = "Rodriguez", DNI = "31789456", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Av. Velez Sarsfield 1200", Mail = "carlos@test.com" },
+                    new Cliente { Nombre = "Ana", Apellido = "Martinez", DNI = "33456789", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Calle Ituzaingo 450", Mail = "ana@test.com" },
+                    new Cliente { Nombre = "Roberto", Apellido = "Lopez", DNI = "34567890", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Avenida Colon 600", Mail = "roberto@test.com" },
+                    new Cliente { Nombre = "Gabriela", Apellido = "Sanchez", DNI = "35678901", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Ruta Nacional 9 Km 10", Mail = "gabriela@test.com" },
+                    new Cliente { Nombre = "Fernando", Apellido = "Diaz", DNI = "36789012", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Calle Hipólito Irigoyen 800", Mail = "fernando@test.com" },
+                    new Cliente { Nombre = "Alejandra", Apellido = "Torres", DNI = "37890123", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Paseo Sobremonte 350", Mail = "alejandra@test.com" },
+                    new Cliente { Nombre = "Jorge", Apellido = "Castro", DNI = "38901234", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Calle General Paz 950", Mail = "jorge@test.com" },
+                    new Cliente { Nombre = "Patricia", Apellido = "Flores", DNI = "39012345", IDBarrio = barrio.IDBarrio, IDLocalidad = localidad.IDLocalidad, Direccion = "Avenida Maipú 1100", Mail = "patricia@test.com" },
+                };
+
+                context.Clientes.AddRange(clientes);
+                context.SaveChanges();
+                Console.WriteLine($"✅ SeedClientes OK: {clientes.Count} clientes creados");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedClientes: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // MÉTODOS AUXILIARES
+        // ════════════════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Carga productos desde CSV. Completamente protegido: si falla, devuelve lista vacía.
+        /// No relanza excepciones.
+        /// </summary>
+        private static List<Producto> CargarProductosDesdeCSV()
+        {
+            var productos = new List<Producto>();
+
+            try
+            {
+                var rutasPosibles = new[]
+                {
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "..", "Back", "Data", "SeedData", "catalogo_perfumeria - Perfumeria.csv"),
+                    "Data/SeedData/catalogo_perfumeria - Perfumeria.csv",
+                    "./Data/SeedData/catalogo_perfumeria - Perfumeria.csv",
+                };
+
+                string rutaCSV = null;
+
+                // Buscar CSV en todas las rutas posibles
+                Console.WriteLine("  🔍 Buscando CSV de productos...");
+                foreach (var ruta in rutasPosibles)
+                {
+                    bool existe = File.Exists(ruta);
+                    Console.WriteLine($"    - {ruta} -> {(existe ? "✅ EXISTE" : "❌ no existe")}");
+                    if (existe)
+                    {
+                        rutaCSV = ruta;
+                        Console.WriteLine($"    ✅ CSV seleccionado: {ruta}");
+                        break;
+                    }
+                }
+
+                // Si no encuentra CSV, devolver lista vacía (sin lanzar excepción)
+                if (rutaCSV == null)
+                {
+                    Console.WriteLine("  ⚠️ CSV no encontrado en ninguna ruta");
+                    return productos;
+                }
+
+                // Leer CSV de forma segura
                 using (var reader = new StreamReader(rutaCSV, System.Text.Encoding.UTF8))
                 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
                     csv.Context.RegisterClassMap<ProductoCSVMap>();
                     var records = csv.GetRecords<ProductoCSV>().ToList();
-                    Console.WriteLine($"📄 Archivo leído: {records.Count} registros");
+                    Console.WriteLine($"  📄 CSV leído: {records.Count} registros totales");
 
                     foreach (var record in records)
                     {
@@ -177,7 +493,7 @@ namespace Back.Data
                             var precioStr = record.PrecioProducto.Trim()
                                 .Replace("\"", "")
                                 .Replace(",", ".");
-                            
+
                             if (!decimal.TryParse(precioStr, CultureInfo.InvariantCulture, out precio))
                                 precio = 0;
                         }
@@ -192,19 +508,24 @@ namespace Back.Data
                         });
                     }
 
-                    Console.WriteLine($"✅ Se cargaron {productos.Count} productos desde CSV");
+                    Console.WriteLine($"  ✅ Se parsearon {productos.Count} productos del CSV");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error al cargar CSV: {ex.Message}");
-                Console.WriteLine($"❌ Stack: {ex.StackTrace}");
+                Console.WriteLine($"  ❌ Excepción en CargarProductosDesdeCSV: {ex.Message}");
+                Console.WriteLine($"  ❌ StackTrace: {ex.StackTrace}");
+                Console.WriteLine("  ⚠️ Se devolverá lista vacía (el caller usará fallback)");
+                // NO relanzar, solo devolver lista vacía
             }
 
             return productos;
         }
 
-        // Clase auxiliar para mapear el CSV
+        // ════════════════════════════════════════════════════════════════════════════════
+        // CLASES AUXILIARES PARA CSV
+        // ════════════════════════════════════════════════════════════════════════════════
+
         private class ProductoCSV
         {
             public string IDProducto { get; set; }
@@ -214,7 +535,6 @@ namespace Back.Data
             public string PrecioProducto { get; set; }
         }
 
-        // Map para CsvHelper
         private sealed class ProductoCSVMap : ClassMap<ProductoCSV>
         {
             public ProductoCSVMap()
