@@ -49,6 +49,30 @@ jobs:
         with:
           name: node-app
 
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Create startup configuration for Azure App Service (Linux)
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "farmacia-frontend",
+            "version": "1.0.0",
+            "scripts": {
+              "start": "sh -c 'serve -s . -l ${PORT:-8080}'"
+            },
+            "dependencies": {
+              "serve": "14.2.4"
+            },
+            "engines": {
+              "node": ">=18"
+            }
+          }
+          EOF
+          npm install --omit=dev
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
