@@ -157,7 +157,13 @@ namespace Back
             builder.Services.AddTransient<EmailSender>();
 
             // 7. CORS - Orígenes permitidos desde configuración
-            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
+            // ✅ AGREGADO: el front de Azure en el fallback, por si AllowedOrigins no está configurado en Azure
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[]
+            {
+                "http://localhost:5173",
+                "https://farmacia-front-ayfhfze7bjcedgb9.chilecentral-01.azurewebsites.net"
+            };
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigins", policy =>
