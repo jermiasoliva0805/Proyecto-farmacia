@@ -61,7 +61,7 @@ jobs:
             "name": "farmacia-frontend",
             "version": "1.0.0",
             "scripts": {
-              "start": "serve -s . -l ${PORT:-8080}"
+              "start": "sh -c 'serve -s . -l ${PORT:-8080}'"
             },
             "dependencies": {
               "serve": "14.2.4"
