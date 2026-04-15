@@ -55,27 +55,6 @@ namespace Back
                     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
 
-            // 1a. CORS Configuration - Permitir requests desde el frontend
-            var allowedOrigins = new[]
-            {
-                "https://farmacia-front-ayfhfze7bjcedgb9.chilecentral-01.azurewebsites.net",
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://localhost:5000"
-            };
-
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowFrontend", policy =>
-                {
-                    policy
-                        .WithOrigins(allowedOrigins)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
-                });
-            });
-
             builder.Services.AddEndpointsApiExplorer();
 
             // 2. Configuración de Swagger
@@ -245,7 +224,7 @@ namespace Back
                 app.UseSwaggerUI();
             }
 
-            app.UseCors("AllowFrontend");
+            app.UseCors("AllowSpecificOrigins");
 
             // En App Service (contenedor) a veces conviene NO forzar https interno.
             // Si querés forzarlo, configurá ForceHttpsRedirection=true en appsettings/Azure.
