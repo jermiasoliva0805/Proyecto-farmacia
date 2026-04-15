@@ -23,9 +23,28 @@ namespace Back.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // Usamos el método definido en tu interfaz ILocationService
-            var localidades = await _localidadservice.GetAllLocalidadesAsync();
-            return Ok(localidades);
+            try
+            {
+                // Usamos el método definido en tu interfaz ILocalidadService
+                var localidades = await _localidadservice.GetAllLocalidadesAsync();
+                
+                // Mapear a DTO con camelCase para el frontend
+                var localidadesDTO = localidades.Select(l => new
+                {
+                    idLocalidad = l.IDLocalidad,
+                    ciudad = l.Ciudad,
+                    provincia = l.Provincia,
+                    codigoPostal = l.CodigoPostal
+                }).ToList();
+                
+                Console.WriteLine($"✅ Localidades devueltas: {localidadesDTO.Count}");
+                return Ok(localidadesDTO);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en GetAll localidades: {ex.Message}");
+                return StatusCode(500, new { message = $"Error al obtener localidades: {ex.Message}" });
+            }
         }
 
         // GET: api/localidades/zonas

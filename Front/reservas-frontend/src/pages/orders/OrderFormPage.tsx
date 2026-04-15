@@ -69,7 +69,10 @@ const OrderFormPage: React.FC = () => {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
-                }).then(res => res.ok ? res.json() : []).catch(err => {
+                }).then(res => {
+                    console.log(`📍 Respuesta /api/localidades: ${res.status}`);
+                    return res.ok ? res.json() : [];
+                }).catch(err => {
                     console.error('❌ Error al cargar localidades:', err);
                     return [];
                 })
@@ -81,12 +84,21 @@ const OrderFormPage: React.FC = () => {
             const sucursalesSeguro = Array.isArray(sucursalesData) ? sucursalesData : [];
             const localidadesSeguro = Array.isArray(localidadesData) ? localidadesData : [];
             
+            console.log('📦 Datos cargados:', {
+                clientes: clientesSeguro.length,
+                productos: productosSeguro.length,
+                sucursales: sucursalesSeguro.length,
+                localidades: localidadesSeguro.length,
+                localidadesDatos: localidadesSeguro
+            });
+            
             setClientes(clientesSeguro);
             setProductos(productosSeguro);
             setSucursales(sucursalesSeguro);
             setLocalidades(localidadesSeguro);
             
             // Auto-seleccionar Córdoba como localidad
+            console.log('🔍 Buscando Córdoba en localidades...');
             const cordoba = localidadesSeguro.find(
                 (loc: any) => loc.ciudad?.toLowerCase() === 'córdoba' || loc.ciudad?.toLowerCase() === 'cordoba'
             );
@@ -96,6 +108,7 @@ const OrderFormPage: React.FC = () => {
                 // Los barrios se cargarán automáticamente por el useEffect
             } else {
                 console.warn('⚠️ No se encontró Córdoba en localidades');
+                console.warn('Localidades disponibles:', localidadesSeguro.map((l: any) => ({ ciudad: l.ciudad, id: l.idLocalidad })));
             }
             
             // Pre-seleccionar la sucursal del usuario autenticado si es posible
