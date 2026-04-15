@@ -2,6 +2,8 @@
 using Back.Services.Interfaces;
 using Back.Data;
 using Back.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Back.Controllers
 {
@@ -25,25 +27,44 @@ namespace Back.Controllers
         {
             try
             {
-                // Usamos el método definido en tu interfaz ILocalidadService
-                var localidades = await _localidadservice.GetAllLocalidadesAsync();
+                Console.WriteLine("📍 Iniciando GetAll localidades...");
+                
+                // Intentar usar el servicio
+                IEnumerable<Localidad> localidades = null;
+                try
+                {
+                    localidades = await _localidadservice.GetAllLocalidadesAsync();
+                    Console.WriteLine($"✅ Servicio obtuvo {localidades?.Count()} localidades");
+                }
+                catch (Exception serviceEx)
+                {
+                    Console.WriteLine($"⚠️ Error en servicio ({serviceEx.Message}), usando DbContext directo...");
+                    localidades = await _context.Localidades.ToListAsync();
+                    Console.WriteLine($"✅ DbContext obtuvo {localidades?.Count()} localidades");
+                }
                 
                 // Mapear a DTO con camelCase para el frontend
-                var localidadesDTO = localidades.Select(l => new
-                {
-                    idLocalidad = l.IDLocalidad,
-                    ciudad = l.Ciudad,
-                    provincia = l.Provincia,
-                    codigoPostal = l.CodigoPostal
-                }).ToList();
+                var localidadesDTO = (localidades ?? Enumerable.Empty<Localidad>())
+                    .Select(l => new
+                    {
+                        idLocalidad = l.IDLocalidad,
+                        ciudad = l.Ciudad,
+                        provincia = l.Provincia,
+                        codigoPostal = l.CodigoPostal
+                    })
+                    .ToList();
                 
-                Console.WriteLine($"✅ Localidades devueltas: {localidadesDTO.Count}");
+                Console.WriteLine($"✅ Devolviendo {localidadesDTO.Count} localidades");
                 return Ok(localidadesDTO);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error en GetAll localidades: {ex.Message}");
-                return StatusCode(500, new { message = $"Error al obtener localidades: {ex.Message}" });
+                Console.WriteLine($"❌ Error crítico en GetAll: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { 
+                    message = $"Error al obtener localidades: {ex.Message}",
+                    stackTrace = ex.StackTrace
+                });
             }
         }
 

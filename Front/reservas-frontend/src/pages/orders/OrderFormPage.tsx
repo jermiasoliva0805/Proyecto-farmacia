@@ -69,9 +69,17 @@ const OrderFormPage: React.FC = () => {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
-                }).then(res => {
+                }).then(async res => {
                     console.log(`📍 Respuesta /api/localidades: ${res.status}`);
-                    return res.ok ? res.json() : [];
+                    const text = await res.text();
+                    console.log('📋 Respuesta raw:', text.substring(0, 500));
+                    try {
+                        return res.ok ? JSON.parse(text) : [];
+                    } catch (e) {
+                        console.error('❌ Error parseando JSON:', e);
+                        console.error('📋 Contenido:', text);
+                        return [];
+                    }
                 }).catch(err => {
                     console.error('❌ Error al cargar localidades:', err);
                     return [];
