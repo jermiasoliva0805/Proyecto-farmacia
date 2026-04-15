@@ -2,10 +2,28 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 /**
  * IMPORTANTE: 
- * Según tu Program.cs y launchSettings.json, el puerto HTTPS es 7075.
- * Si usas Vite, puedes crear un archivo .env con VITE_API_BASE_URL=https://localhost:7075/api
+ * En producción (Azure): Usa rutas relativas /api/...
+ * En desarrollo: Usa localhost o la variable VITE_API_BASE_URL
+ * 
+ * staticwebapp.config.json se encarga de la redirección real en Azure Static Web App
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+    // En development, usar la variable configurada
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    
+    // En producción (Azure Static Web App), staticwebapp.config.json redirige /api al backend
+    // Por eso usamos ruta relativa
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:5000/api';
+    }
+    
+    // Ruta relativa para Azure (staticwebapp.config.json la redirige)
+    return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
