@@ -58,16 +58,14 @@ namespace Back.Controllers
                     .Where(b => b.IDLocalidad == localidadId)
                     .Select(b => new
                     {
-                        b.IDBarrio,
-                        b.Nombre,
-                        b.ZonaId,
-                        ZonaNombre = b.Zona != null ? b.Zona.Nombre : null
+                        idBarrio = b.IDBarrio,
+                        nombre = b.Nombre,
+                        zonaId = b.ZonaId,
+                        zonaNombre = b.Zona != null ? b.Zona.Nombre : null
                     })
                     .ToList();
 
-                if (!barrios.Any())
-                    return NotFound(new { message = $"No hay barrios para la localidad {localidadId}" });
-
+                // Devolver array vacío en lugar de 404 (mejor UX)
                 return Ok(barrios);
             }
             catch (Exception ex)
@@ -87,10 +85,10 @@ namespace Back.Controllers
                     .Where(b => b.IDBarrio == barrioId)
                     .Select(b => new
                     {
-                        b.IDBarrio,
-                        b.Nombre,
-                        b.ZonaId,
-                        ZonaNombre = b.Zona != null ? b.Zona.Nombre : null
+                        idBarrio = b.IDBarrio,
+                        nombre = b.Nombre,
+                        zonaId = b.ZonaId,
+                        zonaNombre = b.Zona != null ? b.Zona.Nombre : null
                     })
                     .FirstOrDefault();
 

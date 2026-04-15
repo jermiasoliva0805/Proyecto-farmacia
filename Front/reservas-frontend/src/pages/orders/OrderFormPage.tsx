@@ -136,19 +136,26 @@ const OrderFormPage: React.FC = () => {
 
         const loadBarrios = async () => {
             try {
+                console.log(`📍 Cargando barrios para localidad ${localidadId}...`);
                 const response = await fetch(`/api/localidades/${localidadId}/barrios`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+                
+                const data = await response.json();
+                
                 if (response.ok) {
-                    const data = await response.json();
+                    console.log(`✅ Barrios cargados:`, data);
                     setBarrios(data || []);
                     setBarrioId('');
                     setZonaId(null);
+                } else {
+                    console.error(`⚠️ Error HTTP ${response.status}:`, data);
+                    setBarrios([]);
                 }
             } catch (error) {
-                console.error('Error al cargar barrios:', error);
+                console.error('❌ Error al cargar barrios:', error);
                 setBarrios([]);
             }
         };
@@ -465,9 +472,18 @@ const OrderFormPage: React.FC = () => {
                                         <select
                                             value={barrioId}
                                             onChange={(e) => setBarrioId(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            disabled={barrios.length === 0}
+                                            className={`w-full px-4 py-2 border rounded-lg ${
+                                                barrios.length === 0 
+                                                    ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' 
+                                                    : 'border-gray-300 focus:ring-2 focus:ring-blue-500'
+                                            }`}
                                         >
-                                            <option value="">-- {barrios.length > 0 ? 'Seleccionar Barrio' : 'Cargando barrios...'} --</option>
+                                            <option value="">
+                                                {barrios.length === 0 
+                                                    ? '⚠️ No hay barrios disponibles' 
+                                                    : '-- Seleccionar Barrio --'}
+                                            </option>
                                             {barrios.map(barrio => (
                                                 <option key={barrio.idBarrio} value={barrio.idBarrio}>
                                                     {barrio.nombre} {barrio.zonaNombre ? `(${barrio.zonaNombre})` : ''}
