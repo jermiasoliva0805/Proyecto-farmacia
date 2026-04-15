@@ -148,10 +148,12 @@ namespace Back
                 s.EnableSsl = enableSsl;
             });
 
-            // Log seguro (sin user/password)
+            // Log seguro (sin password)
             Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
             if (string.IsNullOrEmpty(user))
-                Console.WriteLine("[SMTP Config] ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
+                Console.WriteLine("[SMTP Config] ⚠️ ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
+            else
+                Console.WriteLine($"[SMTP Config] ✅ Usuario SMTP configurado: {user}");
 
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
