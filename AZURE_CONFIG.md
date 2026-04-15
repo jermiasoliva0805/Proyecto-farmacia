@@ -66,9 +66,9 @@ Para confirmar que todo está configurado correctamente:
 2. Crea un pedido o realiza cualquier acción que envíe email
 3. Busca mensajes como:
    ```
-   [SMTP Config] ✅ Host: smtp.gmail.com, Port: 587, EnableSsl: True
+   [SMTP Config] Host: smtp.gmail.com, Port: 587, EnableSsl: True
    [EmailSender] Enviando email a cliente@example.com via smtp.gmail.com:587
-   [EmailSender] ✅ Email enviado exitosamente
+   [EmailSender] ✅ Email enviado exitosamente a cliente@example.com
    ```
 
 Si ves `⚠️ ADVERTENCIA: Usuario SMTP no configurado`, significa que las variables `Smtp__*` no se cargaron. Verifica:
