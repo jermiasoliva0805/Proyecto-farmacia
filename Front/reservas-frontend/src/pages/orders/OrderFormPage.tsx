@@ -26,8 +26,8 @@ const OrderFormPage: React.FC = () => {
     const [puntoRetiro, setPuntoRetiro] = useState('');
     const [sucursalId, setSucursalId] = useState<string>('');
     
-    // Datos de zona y localidad
-    const [localidadId, setLocalidadId] = useState<string>('');
+    // Datos de zona y localidad - Córdoba es FIJA
+    const [localidadId, setLocalidadId] = useState<string>(''); // Se auto-selecciona con Córdoba
     const [barrioId, setBarrioId] = useState<string>('');
     const [zonaId, setZonaId] = useState<number | null>(null);
     
@@ -85,6 +85,18 @@ const OrderFormPage: React.FC = () => {
             setProductos(productosSeguro);
             setSucursales(sucursalesSeguro);
             setLocalidades(localidadesSeguro);
+            
+            // Auto-seleccionar Córdoba como localidad
+            const cordoba = localidadesSeguro.find(
+                (loc: any) => loc.ciudad?.toLowerCase() === 'córdoba' || loc.ciudad?.toLowerCase() === 'cordoba'
+            );
+            if (cordoba) {
+                console.log('✅ Córdoba auto-seleccionada:', cordoba.idLocalidad);
+                setLocalidadId(String(cordoba.idLocalidad));
+                // Los barrios se cargarán automáticamente por el useEffect
+            } else {
+                console.warn('⚠️ No se encontró Córdoba en localidades');
+            }
             
             // Pre-seleccionar la sucursal del usuario autenticado si es posible
             const userDataJson = localStorage.getItem('farmacia_user');
@@ -433,24 +445,15 @@ const OrderFormPage: React.FC = () => {
                                         placeholder="Seleccione sucursal..."
                                     />
 
-                                    {/* Localidad */}
+                                    {/* Localidad - Fija a Córdoba */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <MapPin size={16} className="inline mr-2" />
                                             Localidad
                                         </label>
-                                        <select
-                                            value={localidadId}
-                                            onChange={(e) => setLocalidadId(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">-- Seleccionar Localidad --</option>
-                                            {localidades.map(loc => (
-                                                <option key={loc.idLocalidad} value={loc.idLocalidad}>
-                                                    {loc.ciudad}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <div className="w-full px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg">
+                                            <p className="text-sm font-semibold text-blue-700">Córdoba</p>
+                                        </div>
                                     </div>
 
                                     {/* Barrio */}
@@ -463,9 +466,8 @@ const OrderFormPage: React.FC = () => {
                                             value={barrioId}
                                             onChange={(e) => setBarrioId(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                            disabled={!localidadId}
                                         >
-                                            <option value="">-- {localidadId ? 'Seleccionar Barrio' : 'Primero selecciona una localidad'} --</option>
+                                            <option value="">-- {barrios.length > 0 ? 'Seleccionar Barrio' : 'Cargando barrios...'} --</option>
                                             {barrios.map(barrio => (
                                                 <option key={barrio.idBarrio} value={barrio.idBarrio}>
                                                     {barrio.nombre} {barrio.zonaNombre ? `(${barrio.zonaNombre})` : ''}
