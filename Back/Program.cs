@@ -86,8 +86,19 @@ namespace Back
             });
 
             // 3. DB Context
+            // Prioridad: ConnectionStrings:DefaultConnection (appsettings / Azure Connection strings)
+            //            > DATABASE_CONNECTION_STRING (variable de entorno Azure Application settings)
+            var connectionString =
+                builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+                Console.WriteLine("[DB Config] ⚠️ ADVERTENCIA: ConnectionString no configurada. La app no funcionará correctamente.");
+            else
+                Console.WriteLine("[DB Config] ✅ ConnectionString configurada correctamente.");
+
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(connectionString));
 
             // 4. AutoMapper y Validaciones
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
@@ -176,7 +187,18 @@ namespace Back
             });
 
             // 8. SEGURIDAD JWT
-            var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value ?? "Clave_Super_Secreta_Farmacia_2024");
+            // Prioridad: AppSettings:Token (appsettings / Azure AppSettings__Token)
+            //            > JWT_TOKEN (variable de entorno Azure Application settings)
+            var jwtSecret =
+                builder.Configuration.GetSection("AppSettings:Token").Value
+                ?? Environment.GetEnvironmentVariable("JWT_TOKEN");
+
+            if (string.IsNullOrWhiteSpace(jwtSecret))
+                throw new InvalidOperationException(
+                    "JWT secret no configurado. Configure 'AppSettings:Token' en appsettings.json " +
+                    "o la variable de entorno 'JWT_TOKEN' / 'AppSettings__Token' en Azure.");
+
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
