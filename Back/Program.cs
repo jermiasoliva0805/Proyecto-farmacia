@@ -148,10 +148,18 @@ namespace Back
                 s.EnableSsl = enableSsl;
             });
 
-            // Log seguro (sin user/password)
-            Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
+            // Log seguro (sin mostrar user/password completos)
+            string SmtpStatus(string value, string varName) =>
+                string.IsNullOrEmpty(value) ? $"❌ NO configurado ({varName})" : "✅ configurado";
+
+            Console.WriteLine($"[SMTP Config] Host={(!string.IsNullOrEmpty(host) ? host : "❌ NO configurado (Smtp__Host)")}, Port={port}, EnableSsl={enableSsl}");
+            Console.WriteLine($"[SMTP Config] User={SmtpStatus(user, "Smtp__User")}, Password={SmtpStatus(password, "Smtp__Password")}");
+            if (string.IsNullOrEmpty(host))
+                Console.WriteLine("[SMTP Config] ⚠️ ADVERTENCIA: Host SMTP (Smtp__Host) no configurado. Los emails NO se enviarán.");
             if (string.IsNullOrEmpty(user))
-                Console.WriteLine("[SMTP Config] ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
+                Console.WriteLine("[SMTP Config] ⚠️ ADVERTENCIA: Usuario SMTP (Smtp__User) no configurado. Los emails NO se enviarán.");
+            if (string.IsNullOrEmpty(password))
+                Console.WriteLine("[SMTP Config] ⚠️ ADVERTENCIA: Contraseña SMTP (Smtp__Password) no configurada. Los emails NO se enviarán.");
 
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
