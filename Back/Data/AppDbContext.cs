@@ -17,6 +17,7 @@ namespace Back.Data
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Localidad> Localidades { get; set; }
         public DbSet<Barrio> Barrios { get; set; } // <-- NUEVA TABLA
+        public DbSet<Zona> Zonas { get; set; } // <-- NUEVA TABLA DE ZONAS
         public DbSet<EstadoDePedido> EstadosDePedidos { get; set; }
         public DbSet<IntentoDeEntrega> IntentosDeEntregas { get; set; }
         public DbSet<HistorialDeEstados> HistorialesDeEstados { get; set; }
@@ -34,6 +35,7 @@ namespace Back.Data
             modelBuilder.Entity<Cliente>().HasKey(c => c.IDCliente);
             modelBuilder.Entity<Localidad>().HasKey(l => l.IDLocalidad);
             modelBuilder.Entity<Barrio>().HasKey(b => b.IDBarrio); // PK para Barrio
+            modelBuilder.Entity<Zona>().HasKey(z => z.Id); // PK para Zona
             modelBuilder.Entity<EstadoDePedido>().HasKey(e => e.IDEstadoDePedido);
             modelBuilder.Entity<IntentoDeEntrega>().HasKey(i => i.IDIntentoDeEntrega);
             modelBuilder.Entity<HistorialDeEstados>().HasKey(h => h.IDHistorialEstados);
@@ -85,6 +87,29 @@ namespace Back.Data
                 .WithMany(e => e.Pedidos)
                 .HasForeignKey(p => p.IDEstadoDePedido)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // --- CONFIGURACIÓN DE RELACIONES CON ZONAS ---
+
+            // Relación Zona -> Barrios (Una zona tiene muchos barrios)
+            modelBuilder.Entity<Barrio>()
+                .HasOne(b => b.Zona)
+                .WithMany(z => z.Barrios)
+                .HasForeignKey(b => b.ZonaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Relación Zona -> Usuarios (Cadetes) (Una zona tiene muchos cadetes)
+            modelBuilder.Entity<Usuario>()
+                .HasOne(u => u.Zona)
+                .WithMany(z => z.Cadetes)
+                .HasForeignKey(u => u.ZonaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Relación Zona -> Pedidos (Una zona tiene muchos pedidos)
+            modelBuilder.Entity<Pedido>()
+                .HasOne(p => p.Zona)
+                .WithMany(z => z.Pedidos)
+                .HasForeignKey(p => p.ZonaId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             base.OnModelCreating(modelBuilder);
         }
