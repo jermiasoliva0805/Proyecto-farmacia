@@ -41,6 +41,8 @@ namespace Back.Data
                 SeedEstadosDePedidos(context);
                 var (localidad, barrio) = SeedLocalidadYBarrio(context);
                 var sucursal = SeedSucursal(context);
+                var zonas = SeedZonas(context);
+                SeedMapeoBarrios(context, zonas);
                 SeedProductos(context);
                 SeedUsuarios(context, sucursal);
                 SeedClientes(context, localidad, barrio);
@@ -268,7 +270,186 @@ namespace Back.Data
         }
 
         // ════════════════════════════════════════════════════════════════════════════════
-        // ETAPA 5: PRODUCTOS (desde CSV con fallback hardcodeado)
+        // ETAPA 5: ZONAS DE REPARTO
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static Dictionary<int, Zona> SeedZonas(AppDbContext context)
+        {
+            var zonas = new Dictionary<int, Zona>();
+
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedZonas...");
+
+                var zonasACrear = new[]
+                {
+                    new { Id = 1, Nombre = "Centro / N. Córdoba" },
+                    new { Id = 2, Nombre = "Norte / Noroeste" },
+                    new { Id = 3, Nombre = "Sur" },
+                    new { Id = 4, Nombre = "Este / Gral. Paz" },
+                    new { Id = 5, Nombre = "Oeste" }
+                };
+
+                int insertados = 0;
+                foreach (var zona in zonasACrear)
+                {
+                    // IDEMPOTENCIA: chequear si existe por nombre
+                    var zonaExistente = context.Zonas.FirstOrDefault(z => z.Nombre == zona.Nombre);
+                    if (zonaExistente == null)
+                    {
+                        var nuevaZona = new Zona { Nombre = zona.Nombre };
+                        context.Zonas.Add(nuevaZona);
+                        zonas[zona.Id] = nuevaZona;
+                        insertados++;
+                    }
+                    else
+                    {
+                        zonas[zona.Id] = zonaExistente;
+                    }
+                }
+
+                if (insertados > 0)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ SeedZonas OK: {insertados} zonas insertadas");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ SeedZonas omitido: todas las zonas ya existen");
+                }
+
+                // Recargar todas las zonas para usarlas en mapeo
+                zonas.Clear();
+                var allZonas = context.Zonas.ToList();
+                for (int i = 0; i < allZonas.Count; i++)
+                {
+                    zonas[i + 1] = allZonas[i];
+                }
+
+                Console.WriteLine($"✅ SeedZonas completado con {zonas.Count} zonas cargadas");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedZonas: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+
+            return zonas;
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 5B: MAPEO DE BARRIOS A ZONAS
+        // ════════════════════════════════════════════════════════════════════════════════
+        private static void SeedMapeoBarrios(AppDbContext context, Dictionary<int, Zona> zonas)
+        {
+            try
+            {
+                Console.WriteLine("\n▶️ Iniciando SeedMapeoBarrios (Mapeo de Barrios a Zonas)...");
+
+                // Obtener localidad Córdoba
+                var localidad = context.Localidades.FirstOrDefault(l => l.Ciudad == "Córdoba");
+                if (localidad == null)
+                {
+                    Console.WriteLine("ℹ️ SeedMapeoBarrios omitido: Localidad 'Córdoba' no existe");
+                    return;
+                }
+
+                // Mapeo de barrios a zonas
+                var mapeoBarrios = new Dictionary<string, int>
+                {
+                    // Zona 1: Centro / N. Córdoba
+                    { "Centro", 1 },
+                    { "Nueva Córdoba", 1 },
+                    { "Güemes", 1 },
+                    { "Alberdi", 1 },
+
+                    // Zona 2: Norte / Noroeste
+                    { "Alta Córdoba", 2 },
+                    { "Cerro de las Rosas", 2 },
+                    { "Argüello", 2 },
+                    { "Villa Belgrano", 2 },
+                    { "Cofico", 2 },
+
+                    // Zona 3: Sur
+                    { "Barrio Jardín", 3 },
+                    { "San Carlos", 3 },
+                    { "Villa El Libertador", 3 },
+                    { "Tejas del Sur", 3 },
+
+                    // Zona 4: Este / Gral. Paz
+                    { "General Paz", 4 },
+                    { "San Vicente", 4 },
+                    { "Pueyrredón", 4 },
+                    { "Juniors", 4 },
+
+                    // Zona 5: Oeste
+                    { "Alto Alberdi", 5 },
+                    { "Los Plátanos", 5 },
+                    { "Las Palmas", 5 },
+                    { "Villa Cabrera", 5 }
+                };
+
+                int actualizados = 0;
+                foreach (var mapeo in mapeoBarrios)
+                {
+                    var nombreBarrio = mapeo.Key;
+                    var idZona = mapeo.Value;
+
+                    // Obtener la zona
+                    if (!zonas.ContainsKey(idZona))
+                    {
+                        Console.WriteLine($"⚠️ Zona {idZona} no encontrada para barrio '{nombreBarrio}'");
+                        continue;
+                    }
+
+                    var zona = zonas[idZona];
+
+                    // Buscar o crear el barrio
+                    var barrio = context.Barrios.FirstOrDefault(b =>
+                        b.Nombre == nombreBarrio && b.IDLocalidad == localidad.IDLocalidad);
+
+                    if (barrio != null)
+                    {
+                        // Si el barrio ya existe pero no tiene zona asignada, actualizar
+                        if (barrio.ZonaId == null)
+                        {
+                            barrio.ZonaId = zona.Id;
+                            context.Barrios.Update(barrio);
+                            actualizados++;
+                        }
+                    }
+                    else
+                    {
+                        // Crear nuevo barrio con zona
+                        var nuevoBarrio = new Barrio
+                        {
+                            Nombre = nombreBarrio,
+                            IDLocalidad = localidad.IDLocalidad,
+                            ZonaId = zona.Id
+                        };
+                        context.Barrios.Add(nuevoBarrio);
+                        actualizados++;
+                    }
+                }
+
+                if (actualizados > 0)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine($"✅ SeedMapeoBarrios OK: {actualizados} barrios procesados");
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ SeedMapeoBarrios omitido: todos los barrios ya están mapeados");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error en SeedMapeoBarrios: {ex.Message}");
+                Console.WriteLine($"❌ StackTrace: {ex.StackTrace}");
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════════
+        // ETAPA 6: PRODUCTOS (desde CSV con fallback hardcodeado)
         // ════════════════════════════════════════════════════════════════════════════════
         private static void SeedProductos(AppDbContext context)
         {
@@ -316,7 +497,7 @@ namespace Back.Data
         }
 
         // ════════════════════════════════════════════════════════════════════════════════
-        // ETAPA 6: USUARIOS
+        // ETAPA 7: USUARIOS
         // ════════════════════════════════════════════════════════════════════════════════
         private static void SeedUsuarios(AppDbContext context, Sucursal sucursal)
         {
@@ -381,7 +562,7 @@ namespace Back.Data
         }
 
         // ════════════════════════════════════════════════════════════════════════════════
-        // ETAPA 7: CLIENTES
+        // ETAPA 8: CLIENTES
         // ════════════════════════════════════════════════════════════════════════════════
         private static void SeedClientes(AppDbContext context, Localidad localidad, Barrio barrio)
         {
