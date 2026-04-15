@@ -9,6 +9,7 @@ export interface RegisterDTO {
   rol: string;
   mail: string;
   idSucursal: number;
+  zonaId?: number | null; // Opcional: solo para cadetes
 }
 
 export interface UpdateUserDTO {
@@ -18,6 +19,7 @@ export interface UpdateUserDTO {
   rol?: string;
   mail?: string;
   idSucursal?: number;
+  zonaId?: number | null; // Opcional: solo para cadetes
 }
 
 export const usuariosService = {

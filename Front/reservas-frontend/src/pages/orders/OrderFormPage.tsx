@@ -26,10 +26,17 @@ const OrderFormPage: React.FC = () => {
     const [puntoRetiro, setPuntoRetiro] = useState('');
     const [sucursalId, setSucursalId] = useState<string>('');
     
+    // Datos de zona y localidad
+    const [localidadId, setLocalidadId] = useState<string>('');
+    const [barrioId, setBarrioId] = useState<string>('');
+    const [zonaId, setZonaId] = useState<number | null>(null);
+    
     // Datos cargados
     const [clientes, setClientes] = useState<ClientDTO[]>([]);
     const [productos, setProductos] = useState<ProductDTO[]>([]);
     const [sucursales, setSucursales] = useState<SucursalDTO[]>([]);
+    const [localidades, setLocalidades] = useState<Array<{ idLocalidad: number; ciudad: string }>>([]);
+    const [barrios, setBarrios] = useState<Array<{ idBarrio: number; nombre: string; zonaId: number | null; zonaNombre: string | null }>>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [saving, setSaving] = useState(false);
@@ -45,7 +52,7 @@ const OrderFormPage: React.FC = () => {
             
             console.log('🔄 Iniciando carga de datos...');
             
-            const [clientesData, productosData, sucursalesData] = await Promise.all([
+            const [clientesData, productosData, sucursalesData, localidadesData] = await Promise.all([
                 catalogoService.getClientes().catch(err => {
                     console.error('❌ Error al cargar clientes:', err);
                     return [];
@@ -57,6 +64,14 @@ const OrderFormPage: React.FC = () => {
                 catalogoService.getSucursales().catch(err => {
                     console.error('❌ Error al cargar sucursales:', err);
                     return [];
+                }),
+                fetch('/api/localidades', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }).then(res => res.ok ? res.json() : []).catch(err => {
+                    console.error('❌ Error al cargar localidades:', err);
+                    return [];
                 })
             ]);
             
@@ -64,10 +79,12 @@ const OrderFormPage: React.FC = () => {
             const clientesSeguro = Array.isArray(clientesData) ? clientesData : [];
             const productosSeguro = Array.isArray(productosData) ? productosData : [];
             const sucursalesSeguro = Array.isArray(sucursalesData) ? sucursalesData : [];
+            const localidadesSeguro = Array.isArray(localidadesData) ? localidadesData : [];
             
             setClientes(clientesSeguro);
             setProductos(productosSeguro);
             setSucursales(sucursalesSeguro);
+            setLocalidades(localidadesSeguro);
             
             // Pre-seleccionar la sucursal del usuario autenticado si es posible
             const userDataJson = localStorage.getItem('farmacia_user');
@@ -85,6 +102,9 @@ const OrderFormPage: React.FC = () => {
             if (sucursalesSeguro.length === 0) {
                 console.warn('⚠️ No hay sucursales disponibles');
             }
+            if (localidadesSeguro.length === 0) {
+                console.warn('⚠️ No hay localidades disponibles');
+            }
         } catch (error) {
             console.error('❌ Error al cargar datos:', error);
             setError('Error al cargar datos del servidor. Verifica tu conexión.');
@@ -92,6 +112,64 @@ const OrderFormPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Efecto: Cargar barrios cuando se selecciona localidad
+    useEffect(() => {
+        if (!localidadId) {
+            setBarrios([]);
+            setBarrioId('');
+            setZonaId(null);
+            return;
+        }
+
+        const loadBarrios = async () => {
+            try {
+                const response = await fetch(`/api/localidades/${localidadId}/barrios`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setBarrios(data || []);
+                    setBarrioId('');
+                    setZonaId(null);
+                }
+            } catch (error) {
+                console.error('Error al cargar barrios:', error);
+                setBarrios([]);
+            }
+        };
+
+        loadBarrios();
+    }, [localidadId]);
+
+    // Efecto: Cargar zona cuando se selecciona barrio
+    useEffect(() => {
+        if (!barrioId) {
+            setZonaId(null);
+            return;
+        }
+
+        const loadZona = async () => {
+            try {
+                const response = await fetch(`/api/localidades/barrio/${barrioId}/zona`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setZonaId(data.zonaId || null);
+                }
+            } catch (error) {
+                console.error('Error al cargar zona:', error);
+                setZonaId(null);
+            }
+        };
+
+        loadZona();
+    }, [barrioId]);
 
     const addProduct = () => {
         setItems([...items, { tempId: Date.now(), productId: '', quantity: 1 }]);
@@ -174,6 +252,11 @@ const OrderFormPage: React.FC = () => {
                         };
                     })
             };
+
+            // Agregar ZonaId si está disponible
+            if (zonaId) {
+                pedido.ZonaId = zonaId;
+            }
 
             // Agregar datos según tipo de cliente
             if (tipoCliente === 'existente') {
@@ -349,6 +432,61 @@ const OrderFormPage: React.FC = () => {
                                         }}
                                         placeholder="Seleccione sucursal..."
                                     />
+
+                                    {/* Localidad */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <MapPin size={16} className="inline mr-2" />
+                                            Localidad
+                                        </label>
+                                        <select
+                                            value={localidadId}
+                                            onChange={(e) => setLocalidadId(e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="">-- Seleccionar Localidad --</option>
+                                            {localidades.map(loc => (
+                                                <option key={loc.idLocalidad} value={loc.idLocalidad}>
+                                                    {loc.ciudad}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Barrio */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <MapPin size={16} className="inline mr-2" />
+                                            Barrio
+                                        </label>
+                                        <select
+                                            value={barrioId}
+                                            onChange={(e) => setBarrioId(e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            disabled={!localidadId}
+                                        >
+                                            <option value="">-- {localidadId ? 'Seleccionar Barrio' : 'Primero selecciona una localidad'} --</option>
+                                            {barrios.map(barrio => (
+                                                <option key={barrio.idBarrio} value={barrio.idBarrio}>
+                                                    {barrio.nombre} {barrio.zonaNombre ? `(${barrio.zonaNombre})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Zona (automática) */}
+                                    {zonaId && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Zona Asignada
+                                            </label>
+                                            <div className="w-full px-4 py-2 bg-green-50 border border-green-300 rounded-lg">
+                                                <p className="text-sm font-semibold text-green-700">
+                                                    ✓ Zona {zonaId} asignada automáticamente
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Medio de Pago */}
                                     <div>

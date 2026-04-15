@@ -37,11 +37,13 @@ const UsuariosPage = () => {
         contraseña: '',
         rol: 'Encargado',
         mail: '',
-        idSucursal: 1
+        idSucursal: 1,
+        zonaId: undefined
     });
 
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [zonas, setZonas] = useState<Array<{ id: number; nombre: string }>>([]);
+    const [loadingZonas, setLoadingZonas] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({}); const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // Auto-cerrar toast después de 3 segundos
     useEffect(() => {
@@ -179,7 +181,27 @@ const UsuariosPage = () => {
 
     useEffect(() => {
         fetchUsuarios();
+        fetchZonas();
     }, []);
+
+    const fetchZonas = async () => {
+        try {
+            setLoadingZonas(true);
+            const response = await fetch('/api/localidades/zonas', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setZonas(data || []);
+            }
+        } catch (error) {
+            console.error("Error al cargar zonas:", error);
+        } finally {
+            setLoadingZonas(false);
+        }
+    };
 
     const abrirModalEdicion = async (id: number) => {
         try {
@@ -191,7 +213,8 @@ const UsuariosPage = () => {
                 contraseña: '',
                 rol: usuario.rol,
                 mail: usuario.email,
-                idSucursal: 1
+                idSucursal: 1,
+                zonaId: undefined
             });
             setEditingId(id);
             setErrors({});
@@ -209,7 +232,8 @@ const UsuariosPage = () => {
             contraseña: '',
             rol: 'Encargado',
             mail: '',
-            idSucursal: 1
+            idSucursal: 1,
+            zonaId: undefined
         });
         setEditingId(null);
         setErrors({});
@@ -244,6 +268,11 @@ const UsuariosPage = () => {
                     idSucursal: formData.idSucursal
                 };
                 
+                // Incluir zonaId si es cadete
+                if (formData.rol === 'Cadete') {
+                    updateData.zonaId = formData.zonaId || null;
+                }
+                
                 // Solo incluir contraseña si se proporciona
                 if (formData.contraseña.trim()) {
                     updateData.contraseña = formData.contraseña;
@@ -253,14 +282,21 @@ const UsuariosPage = () => {
                 setToast({ message: "Usuario actualizado correctamente", type: 'success' });
             } else {
                 // Crear nuevo usuario
-                await usuariosService.createUsuario(formData);
+                const createData = { ...formData };
+                
+                // Si no es cadete, eliminar zonaId
+                if (createData.rol !== 'Cadete') {
+                    createData.zonaId = undefined;
+                }
+                
+                await usuariosService.createUsuario(createData);
                 setToast({ message: "Usuario registrado correctamente", type: 'success' });
             }
             
             setIsModalOpen(false);
             await fetchUsuarios();
             // Limpiamos el formulario
-            setFormData({ nombre: '', apellido: '', usuarioNombre: '', contraseña: '', rol: 'Encargado', mail: '', idSucursal: 1 });
+            setFormData({ nombre: '', apellido: '', usuarioNombre: '', contraseña: '', rol: 'Encargado', mail: '', idSucursal: 1, zonaId: undefined });
             setEditingId(null);
             setErrors({});
         } catch (error: any) {
@@ -446,6 +482,32 @@ const UsuariosPage = () => {
                                     <option value="Cadete">Cadete</option>
                                 </select>
                             </div>
+
+                            {/* Selector de Zona - Solo para Cadetes */}
+                            {formData.rol === 'Cadete' && (
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-400 uppercase">Zona de Reparto</label>
+                                    <select 
+                                        value={formData.zonaId || ''}
+                                        onChange={(e) => setFormData({...formData, zonaId: e.target.value ? parseInt(e.target.value) : undefined})}
+                                        className="w-full p-2 border border-emerald-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                                        disabled={loadingZonas || zonas.length === 0}
+                                    >
+                                        <option value="">-- Seleccionar Zona --</option>
+                                        {zonas.map(zona => (
+                                            <option key={zona.id} value={zona.id}>
+                                                {zona.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {zonas.length === 0 && !loadingZonas && (
+                                        <p className="text-red-500 text-xs mt-1">No hay zonas disponibles</p>
+                                    )}
+                                    {loadingZonas && (
+                                        <p className="text-gray-500 text-xs mt-1">Cargando zonas...</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="p-6 bg-gray-50 flex justify-end gap-3 border-t">
                             <button 
