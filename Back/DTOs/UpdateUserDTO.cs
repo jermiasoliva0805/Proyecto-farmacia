@@ -11,5 +11,6 @@ namespace Back.DTOS
         public string? Contraseña { get; set; }
         public string? Rol { get; set; }
         public int? IDSucursal { get; set; }
+        public int? ZonaId { get; set; } // Zona de reparto para cadetes
     }
 }

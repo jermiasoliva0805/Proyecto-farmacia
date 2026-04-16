@@ -64,7 +64,8 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Mail, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Contraseña, opt => opt.MapFrom(src => src.Contraseña))
                 .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
-                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal));
+                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
 
             // Mapeo de actualización de usuarios (UpdateUserDTO -> Usuario)
             CreateMap<UpdateUserDTO, Usuario>()
@@ -74,6 +75,7 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
                 .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
                 .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
+                .ForMember(dest => dest.ZonaId, opt => opt.Condition(src => src.ZonaId.HasValue))
                 .ForMember(dest => dest.Contraseña, opt => opt.Condition(src => src.Contraseña != null));
 
             // ==========================================================
