@@ -36,7 +36,7 @@ export const useCadetesPorZona = (pedidoId: number | null) => {
 
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_API_BASE_URL}/api/orders/cadetes-disponibles/${pedidoId}`,
+                    `${import.meta.env.VITE_API_BASE_URL}/orders/cadetes-disponibles/${pedidoId}`,
                     {
                         method: 'GET',
                         headers: {
