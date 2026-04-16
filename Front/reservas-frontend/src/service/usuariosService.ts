@@ -34,7 +34,8 @@ export const usuariosService = {
       nombreCompleto: u.nombreCompleto,
       email: u.email || u.mail,
       rol: u.rol,
-      nombreSucursal: u.nombreSucursal
+      nombreSucursal: u.nombreSucursal,
+      zonaId: u.zonaId
     }));
   },
 
