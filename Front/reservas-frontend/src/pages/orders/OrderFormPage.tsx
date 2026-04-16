@@ -4,6 +4,7 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useNavigate } from 'react-router-dom';
 import { pedidosService } from '@/service/PedidosService';
 import { catalogoService, SucursalDTO } from '@/service/catalogoService';
+import { api } from '@/service/api';
 import { ClientDTO, ProductDTO } from '@/types/common.types';
 
 const OrderFormPage: React.FC = () => {
@@ -65,25 +66,15 @@ const OrderFormPage: React.FC = () => {
                     console.error('❌ Error al cargar sucursales:', err);
                     return [];
                 }),
-                fetch('/api/localidades', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                }).then(async res => {
-                    console.log(`📍 Respuesta /api/localidades: ${res.status}`);
-                    const text = await res.text();
-                    console.log('📋 Respuesta raw:', text.substring(0, 500));
-                    try {
-                        return res.ok ? JSON.parse(text) : [];
-                    } catch (e) {
-                        console.error('❌ Error parseando JSON:', e);
-                        console.error('📋 Contenido:', text);
+                api.get<Array<{ idLocalidad: number; ciudad: string; provincia: string; codigoPostal: string }>>('/localidades')
+                    .then(res => {
+                        console.log('✅ Localidades cargadas:', res.data);
+                        return res.data;
+                    })
+                    .catch(err => {
+                        console.error('❌ Error al cargar localidades:', err);
                         return [];
-                    }
-                }).catch(err => {
-                    console.error('❌ Error al cargar localidades:', err);
-                    return [];
-                })
+                    })
             ]);
             
             // Asegurar que siempre sean arrays (no undefined)
@@ -158,23 +149,13 @@ const OrderFormPage: React.FC = () => {
         const loadBarrios = async () => {
             try {
                 console.log(`📍 Cargando barrios para localidad ${localidadId}...`);
-                const response = await fetch(`/api/localidades/${localidadId}/barrios`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const response = await api.get(`/localidades/${localidadId}/barrios`);
                 
-                const data = await response.json();
-                
-                if (response.ok) {
-                    console.log(`✅ Barrios cargados:`, data);
-                    setBarrios(data || []);
-                    setBarrioId('');
-                    setZonaId(null);
-                } else {
-                    console.error(`⚠️ Error HTTP ${response.status}:`, data);
-                    setBarrios([]);
-                }
+                const data = response.data;
+                console.log(`✅ Barrios cargados:`, data);
+                setBarrios(data || []);
+                setBarrioId('');
+                setZonaId(null);
             } catch (error) {
                 console.error('❌ Error al cargar barrios:', error);
                 setBarrios([]);
@@ -193,15 +174,8 @@ const OrderFormPage: React.FC = () => {
 
         const loadZona = async () => {
             try {
-                const response = await fetch(`/api/localidades/barrio/${barrioId}/zona`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setZonaId(data.zonaId || null);
-                }
+                const response = await api.get(`/localidades/barrio/${barrioId}/zona`);
+                setZonaId(response.data.zonaId || null);
             } catch (error) {
                 console.error('Error al cargar zona:', error);
                 setZonaId(null);

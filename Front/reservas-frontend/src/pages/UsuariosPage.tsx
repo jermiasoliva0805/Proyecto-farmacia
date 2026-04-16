@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { usuariosService, RegisterDTO } from '../service/usuariosService';
+import { api } from '../service/api';
 import { UserDTO } from '../types/auth.types';
 import { Plus, Pencil, Trash2, UserCircle } from 'lucide-react';
 
@@ -187,15 +188,8 @@ const UsuariosPage = () => {
     const fetchZonas = async () => {
         try {
             setLoadingZonas(true);
-            const response = await fetch('/api/localidades/zonas', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setZonas(data || []);
-            }
+            const response = await api.get('/localidades/zonas');
+            setZonas(response.data || []);
         } catch (error) {
             console.error("Error al cargar zonas:", error);
         } finally {
