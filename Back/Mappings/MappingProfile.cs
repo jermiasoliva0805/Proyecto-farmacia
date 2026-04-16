@@ -75,7 +75,7 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
                 .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
                 .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
-                .ForMember(dest => dest.ZonaId, opt => opt.Condition(src => src.ZonaId.HasValue))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId)) // Sin condición: mapea siempre
                 .ForMember(dest => dest.Contraseña, opt => opt.Condition(src => src.Contraseña != null));
 
             // ==========================================================
