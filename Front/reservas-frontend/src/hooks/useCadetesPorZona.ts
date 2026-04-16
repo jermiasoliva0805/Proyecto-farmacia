@@ -41,7 +41,7 @@ export const useCadetesPorZona = (pedidoId: number | null) => {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Authorization': `Bearer ${localStorage.getItem('farmacia_token')}`,
                         },
                     }
                 );
