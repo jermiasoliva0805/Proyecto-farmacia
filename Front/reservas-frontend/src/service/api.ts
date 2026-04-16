@@ -1,29 +1,23 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 /**
- * IMPORTANTE: 
- * En producción (Azure): Usa rutas relativas /api/...
- * En desarrollo: Usa localhost o la variable VITE_API_BASE_URL
- * 
- * staticwebapp.config.json se encarga de la redirección real en Azure Static Web App
+ * En Azure: Dos App Services separados, necesita URL completa del backend
+ * En desarrollo: Usa URL configurada o localhost
  */
 const getApiBaseUrl = () => {
-    // En development, usar la variable configurada
-    if (import.meta.env.VITE_API_BASE_URL) {
-        return import.meta.env.VITE_API_BASE_URL;
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isDev) {
+        return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
     }
     
-    // En producción (Azure Static Web App), staticwebapp.config.json redirige /api al backend
-    // Por eso usamos ruta relativa
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:5000/api';
-    }
-    
-    // Ruta relativa para Azure (staticwebapp.config.json la redirige)
-    return '/api';
+    // En Azure: URL completa del backend (App Service separado)
+    // IMPORTANTE: Esto puede fallar por CORS si no está configurado en el backend
+    return 'https://farmaciaapi-fghpeqfzgjgqcxdq.chilecentral-01.azurewebsites.net/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('🔌 API Base URL:', API_BASE_URL);
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
