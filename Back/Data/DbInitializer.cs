@@ -238,8 +238,6 @@ namespace Back.Data
                 Console.WriteLine("\n▶️ Iniciando SeedSucursal...");
 
                 // IDEMPOTENCIA: buscar por nombre
-                // Deshabilitada: Sucursal Centro
-                /*
                 sucursal = context.Sucursales.FirstOrDefault(s =>
                     s.NombreSucursal == "Farmacia General Paz Centro");
 
@@ -258,28 +256,6 @@ namespace Back.Data
                 else
                 {
                     Console.WriteLine($"ℹ️ Sucursal 'Farmacia General Paz Centro' ya existe (ID: {sucursal.IDSucursal})");
-                }
-                */
-
-                // Usar sucursal Norte por defecto
-                sucursal = context.Sucursales.FirstOrDefault(s =>
-                    s.NombreSucursal == "Farmacia General Paz Norte");
-
-                if (sucursal == null)
-                {
-                    sucursal = new Sucursal
-                    {
-                        NombreSucursal = "Farmacia General Paz Norte",
-                        Dirección = "Av. General Paz 500",
-                        Teléfono = "3514445577"
-                    };
-                    context.Sucursales.Add(sucursal);
-                    context.SaveChanges();
-                    Console.WriteLine($"✅ Sucursal 'Farmacia General Paz Norte' creada (ID: {sucursal.IDSucursal})");
-                }
-                else
-                {
-                    Console.WriteLine($"ℹ️ Sucursal 'Farmacia General Paz Norte' ya existe (ID: {sucursal.IDSucursal})");
                 }
 
                 Console.WriteLine($"✅ SeedSucursal OK");
