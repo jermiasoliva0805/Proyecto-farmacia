@@ -208,7 +208,7 @@ const UsuariosPage = () => {
                 rol: usuario.rol,
                 mail: usuario.email,
                 idSucursal: 1,
-                zonaId: undefined
+                zonaId: usuario.zonaId
             });
             setEditingId(id);
             setErrors({});

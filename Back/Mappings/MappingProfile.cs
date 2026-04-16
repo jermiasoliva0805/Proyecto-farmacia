@@ -54,7 +54,8 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}"))
                 .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
-                .ForMember(dest => dest.NombreSucursal, opt => opt.MapFrom(src => src.Sucursal != null ? src.Sucursal.NombreSucursal : "Sin Sucursal"));
+                .ForMember(dest => dest.NombreSucursal, opt => opt.MapFrom(src => src.Sucursal != null ? src.Sucursal.NombreSucursal : "Sin Sucursal"))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
 
             // Mapeo de creación de usuarios (RegisterDTO -> Usuario)
             CreateMap<Back.DTOS.RegisterDTO, Usuario>()
