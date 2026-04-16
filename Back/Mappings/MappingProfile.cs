@@ -113,6 +113,7 @@ namespace Back.Mappings
             // --- Mapeos de Creación de Pedidos ---
             CreateMap<CreateOrderDTO, Pedido>()
                 .ForMember(dest => dest.IDLocalidad, opt => opt.Ignore()) // Se obtiene del Cliente o del DTO
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId))
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
             
             CreateMap<OrderDetailDTO, DetalleDePedido>();
