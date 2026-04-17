@@ -139,6 +139,14 @@ export interface DetalleTiempoProcesoDTO {
     esAlertaDespacho: boolean;
 }
 
+export interface PedidosPorZonaDTO {
+    zonaId: number;
+    nombreZona: string;
+    cantidadPedidos: number;
+    porcentaje: number;
+    totalRecaudado: number;
+}
+
 export interface DetalleFormaPagoDTO {
     formaDePago: string;
     cantidadOperaciones: number;

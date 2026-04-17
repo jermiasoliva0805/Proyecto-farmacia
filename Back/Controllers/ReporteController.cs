@@ -92,8 +92,6 @@ namespace Back.Controllers
             }
         }
 
-        // ====== TU RAMA (ReportesNuevos2) ======
-
         [HttpGet("pedidos-cancelados")]
         public async Task<ActionResult<ReportePedidosCanceladosDTO>> GetPedidosCancelados(
             [FromQuery] DateTime? fechaDesde = null,
@@ -127,8 +125,6 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de cancelaciones por motivo", error = ex.Message });
             }
         }
-
-        // ====== MAIN ======
 
         [HttpGet("top-productos")]
         public async Task<ActionResult<List<TopProductosDTO>>> GetTop10Productos(
@@ -183,6 +179,29 @@ namespace Back.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error al obtener el reporte de formas de pago", error = ex.Message });
+            }
+        }
+
+        [HttpGet("pedidos-por-zona")]
+        public async Task<ActionResult<List<PedidosPorZonaDTO>>> GetPedidosPorZona(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
+
+                if (reporte == null)
+                {
+                    return Ok(new List<PedidosPorZonaDTO>());
+                }
+
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de pedidos por zona", error = ex.Message });
             }
         }
     }
