@@ -523,6 +523,47 @@ namespace Back.Repositories
             };
         }
 
+        public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null)
+        {
+            // Calcular fechas por defecto
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
+            var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
+
+            var query = _context.Pedidos
+                .Include(p => p.Zona)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .AsQueryable();
+
+            // Filtrar por sucursal si se especifica
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var pedidos = await query.ToListAsync();
+
+            // Agrupar por zona
+            var totalPedidos = pedidos.Count;
+            var reporte = pedidos
+                .Where(p => p.Zona != null) // Solo incluir pedidos con zona asignada
+                .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
+                .Select(g => new PedidosPorZonaDTO
+                {
+                    ZonaId = g.Key.ZonaId ?? 0,
+                    NombreZona = g.Key.Nombre,
+                    CantidadPedidos = g.Count(),
+                    Porcentaje = totalPedidos > 0 ? (g.Count() * 100.0m / totalPedidos) : 0,
+                    TotalRecaudado = g.Sum(p => p.Total)
+                })
+                .OrderByDescending(r => r.CantidadPedidos)
+                .ToList();
+
+            return reporte;
+        }
+
         public async Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync()
         {
             var csvUrl =
