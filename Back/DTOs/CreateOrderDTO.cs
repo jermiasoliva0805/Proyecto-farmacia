@@ -27,6 +27,9 @@ namespace Back.DTOs
         
         public string? PuntoRetiro { get; set; }
 
+        // Zona de reparto (se captura desde el barrio seleccionado)
+        public int? ZonaId { get; set; }
+
         // Aquí van los detalles del pedido (RF17)
         public List<OrderDetailDTO> Detalles { get; set; } = new List<OrderDetailDTO>();
     }

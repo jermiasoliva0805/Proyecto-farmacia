@@ -9,6 +9,7 @@ export interface RegisterDTO {
   rol: string;
   mail: string;
   idSucursal: number;
+  zonaId?: number | null; // Opcional: solo para cadetes
 }
 
 export interface UpdateUserDTO {
@@ -18,6 +19,7 @@ export interface UpdateUserDTO {
   rol?: string;
   mail?: string;
   idSucursal?: number;
+  zonaId?: number | null; // Opcional: solo para cadetes
 }
 
 export const usuariosService = {
@@ -32,7 +34,8 @@ export const usuariosService = {
       nombreCompleto: u.nombreCompleto,
       email: u.email || u.mail,
       rol: u.rol,
-      nombreSucursal: u.nombreSucursal
+      nombreSucursal: u.nombreSucursal,
+      zonaId: u.zonaId
     }));
   },
 
@@ -46,7 +49,8 @@ export const usuariosService = {
       nombreCompleto: u.nombreCompleto,
       email: u.email || u.mail,
       rol: u.rol,
-      nombreSucursal: u.nombreSucursal
+      nombreSucursal: u.nombreSucursal,
+      zonaId: u.zonaId
     };
   },
 
@@ -60,7 +64,8 @@ export const usuariosService = {
       Contraseña: data.contraseña,
       Rol: data.rol,
       Mail: data.mail,
-      IDSucursal: data.idSucursal
+      IDSucursal: data.idSucursal,
+      ZonaId: data.zonaId || null
     };
 
     const response = await api.post<any>('/usuarios', payload);
@@ -72,7 +77,8 @@ export const usuariosService = {
       nombreCompleto: u.nombreCompleto,
       email: u.email || u.mail,
       rol: u.rol,
-      nombreSucursal: u.nombreSucursal
+      nombreSucursal: u.nombreSucursal,
+      zonaId: u.zonaId
     };
   },
 
@@ -85,6 +91,7 @@ export const usuariosService = {
     if (data.rol !== undefined) payload.Rol = data.rol;
     if (data.mail !== undefined) payload.Mail = data.mail;
     if (data.idSucursal !== undefined) payload.IDSucursal = data.idSucursal;
+    if (data.zonaId !== undefined) payload.ZonaId = data.zonaId;
     
     await api.put(`/usuarios/${id}`, payload);
     

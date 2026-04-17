@@ -4,6 +4,7 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useNavigate } from 'react-router-dom';
 import { pedidosService } from '@/service/PedidosService';
 import { catalogoService, SucursalDTO } from '@/service/catalogoService';
+import { api } from '@/service/api';
 import { ClientDTO, ProductDTO } from '@/types/common.types';
 
 const OrderFormPage: React.FC = () => {
@@ -26,10 +27,17 @@ const OrderFormPage: React.FC = () => {
     const [puntoRetiro, setPuntoRetiro] = useState('');
     const [sucursalId, setSucursalId] = useState<string>('');
     
+    // Datos de zona y localidad - Córdoba es FIJA
+    const [localidadId, setLocalidadId] = useState<string>(''); // Se auto-selecciona con Córdoba
+    const [barrioId, setBarrioId] = useState<string>('');
+    const [zonaId, setZonaId] = useState<number | null>(null);
+    
     // Datos cargados
     const [clientes, setClientes] = useState<ClientDTO[]>([]);
     const [productos, setProductos] = useState<ProductDTO[]>([]);
     const [sucursales, setSucursales] = useState<SucursalDTO[]>([]);
+    const [localidades, setLocalidades] = useState<Array<{ idLocalidad: number; ciudad: string }>>([]);
+    const [barrios, setBarrios] = useState<Array<{ idBarrio: number; nombre: string; zonaId: number | null; zonaNombre: string | null }>>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [saving, setSaving] = useState(false);
@@ -45,7 +53,7 @@ const OrderFormPage: React.FC = () => {
             
             console.log('🔄 Iniciando carga de datos...');
             
-            const [clientesData, productosData, sucursalesData] = await Promise.all([
+            const [clientesData, productosData, sucursalesData, localidadesData] = await Promise.all([
                 catalogoService.getClientes().catch(err => {
                     console.error('❌ Error al cargar clientes:', err);
                     return [];
@@ -57,17 +65,50 @@ const OrderFormPage: React.FC = () => {
                 catalogoService.getSucursales().catch(err => {
                     console.error('❌ Error al cargar sucursales:', err);
                     return [];
-                })
+                }),
+                api.get<Array<{ idLocalidad: number; ciudad: string; provincia: string; codigoPostal: string }>>('/localidades')
+                    .then(res => {
+                        console.log('✅ Localidades cargadas:', res.data);
+                        return res.data;
+                    })
+                    .catch(err => {
+                        console.error('❌ Error al cargar localidades:', err);
+                        return [];
+                    })
             ]);
             
             // Asegurar que siempre sean arrays (no undefined)
             const clientesSeguro = Array.isArray(clientesData) ? clientesData : [];
             const productosSeguro = Array.isArray(productosData) ? productosData : [];
             const sucursalesSeguro = Array.isArray(sucursalesData) ? sucursalesData : [];
+            const localidadesSeguro = Array.isArray(localidadesData) ? localidadesData : [];
+            
+            console.log('📦 Datos cargados:', {
+                clientes: clientesSeguro.length,
+                productos: productosSeguro.length,
+                sucursales: sucursalesSeguro.length,
+                localidades: localidadesSeguro.length,
+                localidadesDatos: localidadesSeguro
+            });
             
             setClientes(clientesSeguro);
             setProductos(productosSeguro);
             setSucursales(sucursalesSeguro);
+            setLocalidades(localidadesSeguro);
+            
+            // Auto-seleccionar Córdoba como localidad
+            console.log('🔍 Buscando Córdoba en localidades...');
+            const cordoba = localidadesSeguro.find(
+                (loc: any) => loc.ciudad?.toLowerCase() === 'córdoba' || loc.ciudad?.toLowerCase() === 'cordoba'
+            );
+            if (cordoba) {
+                console.log('✅ Córdoba auto-seleccionada:', cordoba.idLocalidad);
+                setLocalidadId(String(cordoba.idLocalidad));
+                // Los barrios se cargarán automáticamente por el useEffect
+            } else {
+                console.warn('⚠️ No se encontró Córdoba en localidades');
+                console.warn('Localidades disponibles:', localidadesSeguro.map((l: any) => ({ ciudad: l.ciudad, id: l.idLocalidad })));
+            }
             
             // Pre-seleccionar la sucursal del usuario autenticado si es posible
             const userDataJson = localStorage.getItem('farmacia_user');
@@ -85,6 +126,9 @@ const OrderFormPage: React.FC = () => {
             if (sucursalesSeguro.length === 0) {
                 console.warn('⚠️ No hay sucursales disponibles');
             }
+            if (localidadesSeguro.length === 0) {
+                console.warn('⚠️ No hay localidades disponibles');
+            }
         } catch (error) {
             console.error('❌ Error al cargar datos:', error);
             setError('Error al cargar datos del servidor. Verifica tu conexión.');
@@ -92,6 +136,54 @@ const OrderFormPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Efecto: Cargar barrios cuando se selecciona localidad
+    useEffect(() => {
+        if (!localidadId) {
+            setBarrios([]);
+            setBarrioId('');
+            setZonaId(null);
+            return;
+        }
+
+        const loadBarrios = async () => {
+            try {
+                console.log(`📍 Cargando barrios para localidad ${localidadId}...`);
+                const response = await api.get(`/localidades/${localidadId}/barrios`);
+                
+                const data = response.data;
+                console.log(`✅ Barrios cargados:`, data);
+                setBarrios(data || []);
+                setBarrioId('');
+                setZonaId(null);
+            } catch (error) {
+                console.error('❌ Error al cargar barrios:', error);
+                setBarrios([]);
+            }
+        };
+
+        loadBarrios();
+    }, [localidadId]);
+
+    // Efecto: Cargar zona cuando se selecciona barrio
+    useEffect(() => {
+        if (!barrioId) {
+            setZonaId(null);
+            return;
+        }
+
+        const loadZona = async () => {
+            try {
+                const response = await api.get(`/localidades/barrio/${barrioId}/zona`);
+                setZonaId(response.data.zonaId || null);
+            } catch (error) {
+                console.error('Error al cargar zona:', error);
+                setZonaId(null);
+            }
+        };
+
+        loadZona();
+    }, [barrioId]);
 
     const addProduct = () => {
         setItems([...items, { tempId: Date.now(), productId: '', quantity: 1 }]);
@@ -174,6 +266,11 @@ const OrderFormPage: React.FC = () => {
                         };
                     })
             };
+
+            // Agregar ZonaId si está disponible
+            if (zonaId) {
+                pedido.ZonaId = zonaId;
+            }
 
             // Agregar datos según tipo de cliente
             if (tipoCliente === 'existente') {
@@ -349,6 +446,60 @@ const OrderFormPage: React.FC = () => {
                                         }}
                                         placeholder="Seleccione sucursal..."
                                     />
+
+                                    {/* Localidad - Fija a Córdoba */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <MapPin size={16} className="inline mr-2" />
+                                            Localidad
+                                        </label>
+                                        <div className="w-full px-4 py-2 bg-blue-50 border border-blue-300 rounded-lg">
+                                            <p className="text-sm font-semibold text-blue-700">Córdoba</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Barrio */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <MapPin size={16} className="inline mr-2" />
+                                            Barrio
+                                        </label>
+                                        <select
+                                            value={barrioId}
+                                            onChange={(e) => setBarrioId(e.target.value)}
+                                            disabled={barrios.length === 0}
+                                            className={`w-full px-4 py-2 border rounded-lg ${
+                                                barrios.length === 0 
+                                                    ? 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed' 
+                                                    : 'border-gray-300 focus:ring-2 focus:ring-blue-500'
+                                            }`}
+                                        >
+                                            <option value="">
+                                                {barrios.length === 0 
+                                                    ? '⚠️ No hay barrios disponibles' 
+                                                    : '-- Seleccionar Barrio --'}
+                                            </option>
+                                            {barrios.map(barrio => (
+                                                <option key={barrio.idBarrio} value={barrio.idBarrio}>
+                                                    {barrio.nombre} {barrio.zonaNombre ? `(${barrio.zonaNombre})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Zona (automática) */}
+                                    {zonaId && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Zona Asignada
+                                            </label>
+                                            <div className="w-full px-4 py-2 bg-green-50 border border-green-300 rounded-lg">
+                                                <p className="text-sm font-semibold text-green-700">
+                                                    ✓ Zona {zonaId} asignada automáticamente
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Medio de Pago */}
                                     <div>

@@ -35,7 +35,7 @@ const ReporteOperarios = () => {
             
             const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
             const response = await fetch(`${API_BASE}/Orders/reporte-tiempos-operarios?${params}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('farmacia_token')}` }
             });
             if (response.ok) {
                 const data = await response.json();

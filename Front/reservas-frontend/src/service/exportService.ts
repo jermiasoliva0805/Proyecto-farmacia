@@ -34,7 +34,7 @@ const getUserName = (): string => {
         }
         
         // Si no está en 'user', intenta otros keys
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('farmacia_token');
         if (token) {
             try {
                 // Decodifica el JWT para extraer el nombre

@@ -42,6 +42,19 @@ namespace Back.Repositories
                     pedido.Total = pedido.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
                 }
 
+                // 🔧 FIX: Asignar ZonaId basándose en el barrio del cliente
+                if (pedido.IDCliente > 0)
+                {
+                    var cliente = await _context.Clientes
+                        .Include(c => c.Barrio)
+                        .FirstOrDefaultAsync(c => c.IDCliente == pedido.IDCliente);
+
+                    if (cliente?.Barrio != null && cliente.Barrio.ZonaId.HasValue)
+                    {
+                        pedido.ZonaId = cliente.Barrio.ZonaId;
+                    }
+                }
+
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
 
