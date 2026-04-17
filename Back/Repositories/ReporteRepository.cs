@@ -532,9 +532,17 @@ namespace Back.Repositories
             var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
             var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
 
-            var query = _context.Pedidos
+            var queryBase = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.ZonaId != null)
+                .AsQueryable();
+
+            var totalPedidos = await queryBase.CountAsync();
+
+            if (totalPedidos == 0)
+                return new List<PedidosPorZonaDTO>();
+
+            var query = queryBase
                 .Include(p => p.Zona)
-                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null) // Solo pedidos con zona
                 .AsQueryable();
 
             // Filtrar por zona si se especifica
@@ -545,10 +553,7 @@ namespace Back.Repositories
 
             var pedidos = await query.ToListAsync();
 
-            // Calcular total DESPUÉS de todos los filtros para porcentaje correcto
-            var totalPedidos = pedidos.Count;
-            
-            if (totalPedidos == 0)
+            if (pedidos.Count == 0)
                 return new List<PedidosPorZonaDTO>();
 
             // Agrupar por zona
