@@ -522,7 +522,7 @@ namespace Back.Repositories
 
             var query = _context.Pedidos
                 .Include(p => p.Zona)
-                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null) // Solo pedidos con zona
                 .AsQueryable();
 
             // Filtrar por zona si se especifica
@@ -533,17 +533,21 @@ namespace Back.Repositories
 
             var pedidos = await query.ToListAsync();
 
-            // Agrupar por zona
+            // Calcular total DESPUÉS de todos los filtros para porcentaje correcto
             var totalPedidos = pedidos.Count;
+            
+            if (totalPedidos == 0)
+                return new List<PedidosPorZonaDTO>();
+
+            // Agrupar por zona
             var reporte = pedidos
-                .Where(p => p.Zona != null) // Solo incluir pedidos con zona asignada
                 .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
                 .Select(g => new PedidosPorZonaDTO
                 {
                     ZonaId = g.Key.ZonaId ?? 0,
                     NombreZona = g.Key.Nombre,
                     CantidadPedidos = g.Count(),
-                    Porcentaje = totalPedidos > 0 ? (g.Count() * 100.0m / totalPedidos) : 0,
+                    Porcentaje = (g.Count() * 100.0m / totalPedidos),
                     TotalRecaudado = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
