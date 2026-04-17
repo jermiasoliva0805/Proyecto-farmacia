@@ -46,7 +46,7 @@ export const ReporteFormasPago: React.FC = () => {
                 setLoading(true);
                 const ahora = new Date();
                 const desde = new Date(ahora);
-                desde.setDate(desde.getDate() - parseInt(periodo));
+                desde.setDate(desde.getDate() - parseInt(periodo, 10));
 
                 const fechaDesde = desde.toISOString().split('T')[0];
                 const fechaHasta = ahora.toISOString().split('T')[0];
@@ -161,7 +161,7 @@ export const ReporteFormasPago: React.FC = () => {
                             { value: '2', label: 'Sucursal Norte' }
                         ]}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                            setIdSucursal(e.target.value === '' ? null : parseInt(e.target.value))
+                            setIdSucursal(e.target.value === '' ? null : parseInt(e.target.value, 10))
                         }
                     />
                 </div>
