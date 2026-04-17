@@ -5,24 +5,45 @@
 Configure las siguientes variables de entorno en Azure App Service. Estos valores reemplazan automáticamente los valores por defecto en `appsettings.json`.
 
 ### 1. Base de Datos
+
+El código acepta **dos formas** de configurar la cadena de conexión (se usa la primera que encuentre):
+
+**Opción A (recomendada): Application setting**
 ```
 DATABASE_CONNECTION_STRING
 ```
+
+**Opción B: Connection string de Azure (sección "Connection strings" del portal)**
+```
+Nombre: DefaultConnection  (tipo: SQLAzure o Custom)
+```
+
 Ejemplo para Azure SQL Database:
 ```
 Server=tcp:your-server.database.windows.net,1433;Initial Catalog=FarmaciaDB;Persist Security Info=False;User ID=your-user;Password=your-password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
 ```
 
 ### 2. JWT Token
+
+El código acepta **dos formas** (se usa la primera que encuentre):
+
+**Opción A (recomendada): Application setting**
 ```
 JWT_TOKEN
 ```
+
+**Opción B: Application setting jerárquico**
+```
+AppSettings__Token
+```
+
 Generar una clave segura de al menos 64 caracteres. Ejemplo:
 ```
 your-super-secret-key-minimum-64-characters-long-for-jwt-authentication
 ```
 
 ### 3. Frontend URL
+
 ```
 FRONTEND_URL
 ```
@@ -44,7 +65,7 @@ En Azure App Service, usa el formato `Smtp__` (doble guion bajo) para variables 
 | `Smtp__EnableSsl` | `true` |
 
 ⚠️ **IMPORTANTE**: 
-- Usa `Smtp__` (doble guion bajo), NO `SMTP_` (guion bajo simple)
+- Usa `Smtp__` (doble guion bajo), NO `SMTP_HOST` ni `SMTP_USER` (formato incorrecto)
 - Para Gmail, NO uses tu contraseña regular. Usa una **contraseña de aplicación (App Password)**:
   1. Ve a https://myaccount.google.com/apppasswords
   2. Selecciona "Mail" y "Windows Computer"
@@ -59,12 +80,24 @@ En Azure App Service, usa el formato `Smtp__` (doble guion bajo) para variables 
 4. Click **Save** 
 5. La app se reiniciará automáticamente con las nuevas variables
 
+## Habilitar Application Logging (ver logs en tiempo real)
+
+Para ver los logs de la app (incluido `[SMTP Config]`, `[EmailSender]`) en **Log Stream**:
+
+1. Ir a **App Service → App Service Logs**
+2. En **Application Logging (File System)** → seleccionar **On** (nivel: Verbose o Information)
+3. Click **Save**
+4. Ir a **App Service → Log stream** para ver los logs en tiempo real
+
+> Sin este paso, el Log Stream solo muestra logs de Docker/Kudu pero no el stdout de la aplicación.
+
 ## Verificación rápida
 
 Para confirmar que todo está configurado correctamente:
 1. Ve a **App Service → Log stream**
 2. Reiniciá (o esperá el próximo arranque) y buscá estos mensajes de inicio:
    ```
+   [DB Config] ✅ ConnectionString configurada correctamente.
    [SMTP Config] Host: smtp.gmail.com, Port: 587, EnableSsl: True
    [SMTP Config] ✅ Usuario SMTP configurado: tu-email@gmail.com
    ```
@@ -137,7 +170,8 @@ az webapp config appsettings set \
 2. **En Azure**: 
    - Se carga `appsettings.json` como base
    - Las variables de entorno reemplazan automáticamente los valores
-   - El código en `Program.cs` prioriza: variables de entorno > appsettings.json > valores por defecto
+   - Para variables jerárquicas (ej. `Smtp:Host`) se usa doble guion bajo (`Smtp__Host`) en Azure
+   - Para `DATABASE_CONNECTION_STRING` y `JWT_TOKEN`, el código hace la resolución manualmente
 
 ## Resolución de problemas
 
@@ -171,12 +205,28 @@ Antes de profundizar, revisá estos puntos en orden:
    - Azure Portal → App Service → **Log stream**
    - Cambiá el estado de un pedido y buscá líneas `[EmailSender]`
 
+### ContainerTimeout / La app no arranca
+
+El error `ContainerTimeout` aparece cuando Azure no puede verificar que la app esté respondiendo:
+
+1. **Verificar que `DATABASE_CONNECTION_STRING` esté configurada** — Si no está, la app intenta conectar a SQL Server local (falla), y el arranque se demora hasta 30 segundos.
+2. **Verificar que WEBSITES_PORT o ASPNETCORE_URLS estén configurados** — Si no, la app escucha en el puerto 8080 por defecto (el código lo hace automáticamente).
+3. **Endpoint de health check**: La app expone `/health` que devuelve `200 OK` y sirve como verificación de que está corriendo.
+4. **Revisar logs**: Habilitar Application Logging (ver sección arriba) y verificar el Log Stream.
+
 ### Los emails no se envían
-- Revisá los logs en `App Service → Log stream`
+- Revisá los logs en `App Service → Log stream` (debe estar habilitado Application Logging)
 - Buscá mensajes de error SMTP
 - Verificá que `Smtp__User` y `Smtp__Password` sean correctos
-- Confirmá que el email del cliente no está vacío en la base de datos
+- Confirmá que el email del cliente (campo `Mail` en la tabla de clientes) no está vacío
 - Usá el formato `Smtp__*` (doble guion bajo), NO `SMTP_*`
+
+### No se ven logs de la app en Log Stream
+
+Solo aparecen logs de Docker/Kudu por defecto. Para ver logs de la aplicación:
+1. **App Service → App Service Logs → Application Logging (File System) → On**
+2. Click Save y esperar el reinicio
+3. Volver a **Log stream** — ahora verás `[SMTP Config]`, `[EmailSender]`, etc.
 
 ### Error: "Usuario SMTP no configurado"
 - La variable `Smtp__User` NO está en Azure Portal (o tiene un valor vacío)
@@ -195,3 +245,7 @@ Antes de profundizar, revisá estos puntos en orden:
 - Creá una nueva App Password en https://myaccount.google.com/apppasswords
 - NO uses tu contraseña regular de Gmail
 - Copiá la contraseña de 16 caracteres y pegala en `Smtp__Password`
+
+### Error: DB / Migraciones
+- Si ves `[DB Config] ⚠️ ADVERTENCIA: ConnectionString no configurada`, agrega `DATABASE_CONNECTION_STRING` en Application Settings de Azure
+- Verifica que la cadena de conexión apunte a Azure SQL, no a SQL Server local
