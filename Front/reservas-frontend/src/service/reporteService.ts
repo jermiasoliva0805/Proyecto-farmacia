@@ -188,3 +188,33 @@ export const getReporteFormasPago = async (
         throw error;
     }
 };
+
+export const getPedidosPorZona = async (
+    fechaDesde?: string,
+    fechaHasta?: string,
+    idZona: number | null = null
+): Promise<PedidosPorZonaDTO[]> => {
+    try {
+        const params: any = {};
+        
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+        
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+        
+        if (idZona !== null && idZona > 0) {
+            params.idZona = idZona;
+        }
+        
+        const response = await api.get<PedidosPorZonaDTO[]>('/reporte/pedidos-por-zona', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de pedidos por zona", error);
+        throw error;
+    }
+};
