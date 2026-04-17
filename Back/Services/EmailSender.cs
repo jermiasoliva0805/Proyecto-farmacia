@@ -44,11 +44,12 @@ namespace Back.Services
             int intentosMax = 3,
             string trackingUrl = null,
             string etiquetaLogistica = null,
-            List<string> nombresProductos = null)
+            List<string> nombresProductos = null,
+            string surveyUrl = null)
         {
             var html = _templates.BuildOrderStatusHtml(
                 brandName, nombreCliente, estadoDescripcion, numeroPedido, idEstado,
-                supportEmail, brandCode, intentoEntrega, intentosMax, trackingUrl, etiquetaLogistica, nombresProductos);
+                supportEmail, brandCode, intentoEntrega, intentosMax, trackingUrl, etiquetaLogistica, nombresProductos, surveyUrl);
 
             // Generar código personalizado para el asunto
             string codigoPersonalizado = (nombresProductos != null && nombresProductos.Count > 0)

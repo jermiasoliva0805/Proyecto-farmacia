@@ -17,7 +17,8 @@ namespace Back.Services
             int intentosMax = 3,
             string trackingUrl = null,
             string etiquetaLogistica = null,
-            List<string> nombresProductos = null)
+            List<string> nombresProductos = null,
+            string surveyUrl = null)
         {
             // Generar código personalizado si hay productos, sino usar el formato clásico
             var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
@@ -86,6 +87,16 @@ namespace Back.Services
             </td>
           </tr>
           {trackingButton}
+          {(string.IsNullOrEmpty(surveyUrl) ? "" : $@"
+          <tr>
+            <td style=""padding:16px 24px;text-align:center;background-color:#F0FDF4;border-top:1px solid #D1FAE5;border-bottom:1px solid #D1FAE5;"">
+              <p style=""margin:0 0 8px 0;font-weight:600;font-size:14px;color:#065F46;"">¿Cómo fue tu experiencia?</p>
+              <p style=""margin:0 0 12px 0;font-size:13px;color:#374151;"">Nos gustaría conocer tu opinión sobre la compra y entrega de tu pedido. ¡Solo te lleva un minuto!</p>
+              <a href=""{surveyUrl}"" style=""display:inline-block;background-color:#059669;color:#ffffff;padding:10px 28px;border-radius:6px;font-weight:600;text-decoration:none;font-size:14px;border:none;cursor:pointer;"">
+                Completar Encuesta de Satisfacción
+              </a>
+            </td>
+          </tr>")}
           <tr>
             <td style=""padding:8px 24px 24px;text-align:center;"">
               <span style=""display:inline-block;padding:10px 14px;border-radius:6px;background:{badgeColor};color:#ffffff;font-weight:600;font-size:14px;"">
