@@ -7,6 +7,7 @@ import {
     ReporteCancelacionesPorMotivoDTO,
     TopProductosDTO,
     TiemposProcesoDTO,
+    PedidosPorZonaDTO,
     ReporteFormasPagoDTO
 } from '../types/pedido.types';
 
@@ -160,6 +161,36 @@ export const getReporteTiempos = async (periodo: string, idSucursal: number | nu
     }
 };
 
+export const getPedidosPorZona = async (
+    fechaDesde?: string,
+    fechaHasta?: string,
+    idSucursal: number | null = null
+): Promise<PedidosPorZonaDTO[]> => {
+    try {
+        const params: any = {};
+        
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+        
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+        
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+        
+        const response = await api.get<PedidosPorZonaDTO[]>('/reporte/pedidos-por-zona', {
+            params: params
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de pedidos por zona", error);
+        throw error;
+    }
+};
+
 export const getReporteFormasPago = async (
     fechaDesde?: string,
     fechaHasta?: string,
@@ -187,6 +218,7 @@ export const getReporteFormasPago = async (
         console.error("Error al obtener reporte de formas de pago:", error);
         throw error;
     }
+<<<<<<< HEAD
 };
 
 export const getPedidosPorZona = async (
@@ -218,3 +250,6 @@ export const getPedidosPorZona = async (
         throw error;
     }
 };
+=======
+};
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd

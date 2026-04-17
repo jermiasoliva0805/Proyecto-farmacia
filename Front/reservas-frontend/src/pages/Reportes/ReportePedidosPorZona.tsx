@@ -7,11 +7,14 @@ import { PedidosPorZonaDTO } from '../../types/pedido.types';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
 import { ExportDialog } from '../../components/ExportDialog';
 
+<<<<<<< HEAD
 interface ZonaDTO {
     id: number;
     nombre: string;
 }
 
+=======
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
 const COLORS = [
     '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
     '#06b6d4', '#6366f1', '#f43f5e', '#14b8a6', '#f97316'
@@ -19,11 +22,18 @@ const COLORS = [
 
 export const ReportePedidosPorZona = () => {
     const [datos, setDatos] = useState<PedidosPorZonaDTO[]>([]);
+<<<<<<< HEAD
     const [zonas, setZonas] = useState<ZonaDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [fechaDesde, setFechaDesde] = useState<string>('');
     const [fechaHasta, setFechaHasta] = useState<string>('');
     const [idZona, setIdZona] = useState<number | null>(null);
+=======
+    const [loading, setLoading] = useState(true);
+    const [fechaDesde, setFechaDesde] = useState<string>('');
+    const [fechaHasta, setFechaHasta] = useState<string>('');
+    const [idSucursal, setIdSucursal] = useState<number | null>(null);
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
 
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -38,6 +48,7 @@ export const ReportePedidosPorZona = () => {
         
         setFechaDesde(hace30.toISOString().split('T')[0]);
         setFechaHasta(hoy.toISOString().split('T')[0]);
+<<<<<<< HEAD
 
         // Cargar zonas
         const cargarZonas = async () => {
@@ -51,6 +62,8 @@ export const ReportePedidosPorZona = () => {
         };
         
         cargarZonas();
+=======
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
     }, []);
 
     useEffect(() => {
@@ -59,7 +72,11 @@ export const ReportePedidosPorZona = () => {
             
             try {
                 setLoading(true);
+<<<<<<< HEAD
                 const res = await getPedidosPorZona(fechaDesde, fechaHasta, idZona);
+=======
+                const res = await getPedidosPorZona(fechaDesde, fechaHasta, idSucursal);
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                 setDatos(res || []);
             } catch (error) {
                 console.error("Error al cargar pedidos por zona:", error);
@@ -68,7 +85,11 @@ export const ReportePedidosPorZona = () => {
             }
         };
         cargarData();
+<<<<<<< HEAD
     }, [fechaDesde, fechaHasta, idZona]);
+=======
+    }, [fechaDesde, fechaHasta, idSucursal]);
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
 
     const handleExportExcel = async () => {
         try {
@@ -91,7 +112,11 @@ export const ReportePedidosPorZona = () => {
                 filters: { 
                     desde: fechaDesde,
                     hasta: fechaHasta,
+<<<<<<< HEAD
                     zona: idZona === null ? "Todas" : zonas.find(z => z.id === idZona)?.nombre || "N/A"
+=======
+                    sucursal: idSucursal === null ? "Todas" : idSucursal === 1 ? "Centro" : "Norte"
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                 }
             });
         } finally {
@@ -114,7 +139,11 @@ export const ReportePedidosPorZona = () => {
                 filters: { 
                     desde: fechaDesde,
                     hasta: fechaHasta,
+<<<<<<< HEAD
                     zona: idZona === null ? "Todas" : zonas.find(z => z.id === idZona)?.nombre || "N/A"
+=======
+                    sucursal: idSucursal === null ? "Todas" : idSucursal === 1 ? "Centro" : "Norte"
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                 }
             });
         } finally {
@@ -183,6 +212,7 @@ export const ReportePedidosPorZona = () => {
                     />
                     <Selector
                         icon={<MapPin size={18} />}
+<<<<<<< HEAD
                         label="Zona:"
                         type="select"
                         value={idZona !== null ? idZona.toString() : ""}
@@ -191,6 +221,17 @@ export const ReportePedidosPorZona = () => {
                             ...zonas.map(z => ({ value: z.id.toString(), label: z.nombre }))
                         ]}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdZona(e.target.value === "" ? null : parseInt(e.target.value))}
+=======
+                        label="Sucursal:"
+                        type="select"
+                        value={idSucursal !== null ? idSucursal.toString() : ""}
+                        options={[
+                            { value: "", label: "Todas las sucursales" },
+                            { value: "1", label: "Sucursal Centro" },
+                            { value: "2", label: "Sucursal Norte" },
+                        ]}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                     />
                 </div>
 
@@ -224,10 +265,17 @@ export const ReportePedidosPorZona = () => {
                 </div>
 
                 {/* Gráficos */}
+<<<<<<< HEAD
                 <div className="mb-8">
                     {/* Gráfico de Barras Horizontal - Pedidos */}
                     <Card className="p-6">
                         <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Pedidos por Zona</h3>
+=======
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    {/* Gráfico de Barras Horizontal - Pedidos */}
+                    <Card className="p-6">
+                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Pedidos por Zona (Top 10)</h3>
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={barData} layout="vertical" margin={{ left: 120, right: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -241,6 +289,26 @@ export const ReportePedidosPorZona = () => {
                             </BarChart>
                         </ResponsiveContainer>
                     </Card>
+<<<<<<< HEAD
+=======
+
+                    {/* Gráfico de Barras Horizontal - Ingresos */}
+                    <Card className="p-6">
+                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Ingresos por Zona (Top 10)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={barData} layout="vertical" margin={{ left: 120, right: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="nombre" type="category" tick={{ fontSize: 12 }} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+                                    formatter={(value: any) => value.toLocaleString('es-AR')}
+                                />
+                                <Bar dataKey="recaudado" fill="#10b981" name="Total Recaudado" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Card>
+>>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
                 </div>
 
                 {/* Leyenda de Zonas */}
