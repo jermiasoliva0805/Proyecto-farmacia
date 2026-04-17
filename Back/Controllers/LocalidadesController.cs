@@ -75,14 +75,25 @@ namespace Back.Controllers
         {
             try
             {
+                Console.WriteLine("📍 [GetZonas] Iniciando...");
+                
+                if (_context.Zonas == null)
+                {
+                    Console.WriteLine("❌ [GetZonas] DbContext.Zonas es null");
+                    return Ok(new List<object>());
+                }
+
                 var zonas = _context.Zonas
-                    .Select(z => new { z.Id, z.Nombre })
+                    .Select(z => new { id = z.Id, nombre = z.Nombre })
                     .ToList();
 
+                Console.WriteLine($"✅ [GetZonas] Encontradas {zonas.Count} zonas");
                 return Ok(zonas);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ [GetZonas] Error: {ex.Message}");
+                Console.WriteLine($"❌ [GetZonas] Stack: {ex.StackTrace}");
                 return StatusCode(500, new { message = $"Error al obtener zonas: {ex.Message}" });
             }
         }

@@ -43,10 +43,19 @@ export const ReportePedidosPorZona = () => {
         const cargarZonas = async () => {
             try {
                 const response = await fetch('/api/localidades/zonas');
+                
+                if (!response.ok) {
+                    console.error(`[GetZonas] Error HTTP ${response.status}: ${response.statusText}`);
+                    const text = await response.text();
+                    console.error(`[GetZonas] Response body:`, text.substring(0, 200));
+                    return;
+                }
+                
                 const data = await response.json();
+                console.log('[GetZonas] Zonas cargadas:', data);
                 setZonas(data || []);
             } catch (error) {
-                console.error('Error al cargar zonas:', error);
+                console.error('❌ Error al cargar zonas:', error);
             }
         };
         
