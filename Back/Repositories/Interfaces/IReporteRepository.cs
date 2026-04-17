@@ -56,19 +56,11 @@ namespace Back.Repositories.Interfaces
             int? idSucursal = null);
 
         /// <summary>
-<<<<<<< HEAD
         /// Obtiene el reporte de cantidad de pedidos por zonas con filtros opcionales
-=======
-        /// Obtiene el reporte de cantidad de pedidos por zonas
->>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
         /// </summary>
         Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
-<<<<<<< HEAD
             int? idZona = null);
-=======
-            int? idSucursal = null);
->>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
     }
 }

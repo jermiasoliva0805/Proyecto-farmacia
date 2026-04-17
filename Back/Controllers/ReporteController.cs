@@ -186,19 +186,11 @@ namespace Back.Controllers
         public async Task<ActionResult<List<PedidosPorZonaDTO>>> GetPedidosPorZona(
             [FromQuery] DateTime? fechaDesde = null,
             [FromQuery] DateTime? fechaHasta = null,
-<<<<<<< HEAD
             [FromQuery] int? idZona = null)
         {
             try
             {
                 var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idZona);
-=======
-            [FromQuery] int? idSucursal = null)
-        {
-            try
-            {
-                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
->>>>>>> 7b1011c84020762d4fa19d19571d6e6256869dbd
 
                 if (reporte == null)
                 {
