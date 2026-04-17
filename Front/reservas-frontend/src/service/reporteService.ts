@@ -180,9 +180,7 @@ export const getReporteFormasPago = async (
             params.idSucursal = idSucursal;
         }
 
-        const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', {
-            params: params
-        });
+        const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', { params });
 
         return response.data;
     } catch (error) {
