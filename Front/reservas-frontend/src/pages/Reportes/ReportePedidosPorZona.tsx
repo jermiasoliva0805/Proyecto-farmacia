@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Calendar, MapPin, Package, TrendingUp, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getPedidosPorZona } from '../../service/reporteService';
@@ -18,8 +18,7 @@ export const ReportePedidosPorZona = () => {
     const [fechaDesde, setFechaDesde] = useState<string>('');
     const [fechaHasta, setFechaHasta] = useState<string>('');
     const [idSucursal, setIdSucursal] = useState<number | null>(null);
-    const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    const [clickedIndex, setClickedIndex] = useState<number | null>(null);
+
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     
@@ -208,80 +207,49 @@ export const ReportePedidosPorZona = () => {
 
                 {/* Gráficos */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Gráfico de Pastel */}
+                    {/* Gráfico de Barras Horizontal - Pedidos */}
                     <Card className="p-6">
-                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Distribución Porcentual de Pedidos</h3>
-                        <div className="flex justify-center">
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={100}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell 
-                                                key={`cell-${index}`} 
-                                                fill={entry.fill}
-                                                onClick={() => setClickedIndex(clickedIndex === index ? null : index)}
-                                                onMouseEnter={() => !clickedIndex && setActiveIndex(index)}
-                                                onMouseLeave={() => !clickedIndex && setActiveIndex(null)}
-                                                style={{
-                                                    filter: (clickedIndex === index || activeIndex === index) ? 'drop-shadow(0 0 8px rgba(0,0,0,0.3))' : 'none',
-                                                    transition: 'filter 0.3s ease, transform 0.3s ease',
-                                                    cursor: 'pointer',
-                                                    transform: (clickedIndex === index || activeIndex === index) ? 'scale(1.05)' : 'scale(1)',
-                                                    transformOrigin: '50% 50%'
-                                                }}
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip 
-                                        formatter={(value) => `${value} pedidos`}
-                                        labelFormatter={(label) => `Zona: ${label}`}
-                                        contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </Card>
-
-                    {/* Gráfico de Barras */}
-                    <Card className="p-6">
-                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Pedidos y Recaudación por Zona</h3>
+                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Pedidos por Zona (Top 10)</h3>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={barData}>
+                            <BarChart data={barData} layout="vertical" margin={{ left: 120, right: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                <XAxis dataKey="nombre" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                                <YAxis yAxisId="left" tick={{ fontSize: 12 }} label={{ value: 'Pedidos', angle: -90, position: 'insideLeft' }} />
-                                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} label={{ value: 'Recaudación ($)', angle: 90, position: 'insideRight' }} />
+                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="nombre" type="category" tick={{ fontSize: 12 }} />
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                                     formatter={(value: any) => value.toLocaleString('es-AR')}
                                 />
-                                <Bar yAxisId="left" dataKey="pedidos" fill="#3b82f6" name="Cantidad de Pedidos" />
-                                <Bar yAxisId="right" dataKey="recaudado" fill="#10b981" name="Total Recaudado" />
+                                <Bar dataKey="pedidos" fill="#3b82f6" name="Cantidad de Pedidos" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Card>
+
+                    {/* Gráfico de Barras Horizontal - Ingresos */}
+                    <Card className="p-6">
+                        <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Ingresos por Zona (Top 10)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={barData} layout="vertical" margin={{ left: 120, right: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="nombre" type="category" tick={{ fontSize: 12 }} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+                                    formatter={(value: any) => value.toLocaleString('es-AR')}
+                                />
+                                <Bar dataKey="recaudado" fill="#10b981" name="Total Recaudado" />
                             </BarChart>
                         </ResponsiveContainer>
                     </Card>
                 </div>
 
-                {/* Leyenda del Gráfico de Pastel */}
+                {/* Leyenda de Zonas */}
                 <Card className="p-6 mb-8">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Leyenda de Zonas</h3>
+                    <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Resumen de Zonas</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {datos.map((zona, index) => (
                             <div
                                 key={index}
-                                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all cursor-pointer border ${
-                                    clickedIndex === index ? 'bg-blue-50 border-blue-200' : 'border-gray-100'
-                                }`}
-                                onClick={() => setClickedIndex(clickedIndex === index ? null : index)}
-                                onMouseEnter={() => !clickedIndex && setActiveIndex(index)}
-                                onMouseLeave={() => !clickedIndex && setActiveIndex(null)}
+                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all border border-gray-100"
                             >
                                 <div
                                     className="w-4 h-4 rounded-full flex-shrink-0"
