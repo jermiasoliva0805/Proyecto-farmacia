@@ -526,7 +526,6 @@ namespace Back.Repositories
         public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
-            int? idSucursal = null)
             int? idZona = null)
         {
             // Calcular fechas por defecto
@@ -538,10 +537,6 @@ namespace Back.Repositories
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null) // Solo pedidos con zona
                 .AsQueryable();
 
-            // Filtrar por sucursal si se especifica
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
             // Filtrar por zona si se especifica
             if (idZona.HasValue && idZona.Value > 0)
             {

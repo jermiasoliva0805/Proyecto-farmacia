@@ -56,18 +56,16 @@ namespace Back.Repositories.Interfaces
             int? idSucursal = null);
 
         /// <summary>
-        /// Obtiene el reporte de cantidad de pedidos por zonas
         /// Obtiene el reporte de cantidad de pedidos por zonas con filtros opcionales
         /// </summary>
         Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
-            int? idSucursal = null);
+            int? idZona = null);
 
         /// <summary>
         /// Obtiene el reporte consolidado de la encuesta de satisfacción desde Google Forms.
         /// </summary>
         Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync();
-            int? idZona = null);
     }
 }
