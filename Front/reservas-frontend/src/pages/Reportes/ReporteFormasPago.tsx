@@ -9,6 +9,27 @@ import { ReporteFormasPagoDTO } from '../../types/pedido.types';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
+interface SelectorOption {
+    value: string;
+    label: string;
+}
+
+interface SelectorProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    options: SelectorOption[];
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+interface MetricCardProps {
+    title: string;
+    value: string;
+    sub: string;
+    icon: React.ReactNode;
+    color?: string;
+}
+
 export const ReporteFormasPago: React.FC = () => {
     const [reporte, setReporte] = useState<ReporteFormasPagoDTO | null>(null);
     const [loading, setLoading] = useState(true);
@@ -220,7 +241,7 @@ export const ReporteFormasPago: React.FC = () => {
     );
 };
 
-const Selector = ({ icon, label, value, options, onChange }: any) => (
+const Selector = ({ icon, label, value, options, onChange }: SelectorProps) => (
     <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
             {icon} <span>{label}</span>
@@ -230,14 +251,14 @@ const Selector = ({ icon, label, value, options, onChange }: any) => (
             onChange={onChange}
             className="ml-2 px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer font-semibold text-gray-700"
         >
-            {options.map((opt: any) => (
+            {options.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
         </select>
     </div>
 );
 
-const MetricCard = ({ title, value, sub, icon, color = 'text-gray-900' }: any) => (
+const MetricCard = ({ title, value, sub, icon, color = 'text-gray-900' }: MetricCardProps) => (
     <Card className="p-5 flex justify-between items-start border-gray-100 shadow-sm">
         <div>
             <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">{title}</p>

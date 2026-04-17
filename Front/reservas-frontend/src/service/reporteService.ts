@@ -166,7 +166,7 @@ export const getReporteFormasPago = async (
     idSucursal: number | null = null
 ): Promise<ReporteFormasPagoDTO> => {
     try {
-        const params: any = {};
+        const params: Record<string, string | number> = {};
 
         if (fechaDesde) {
             params.fechaDesde = fechaDesde;
