@@ -333,6 +333,9 @@ namespace Back.Services
                     {
                         var trackingUrl = GenerarTrackingUrl(pedido.IDPedido);
                         var nombresProductos = ObtenerNombresProductos(pedido);
+                        var surveyUrl = estadoFinal == 7
+                            ? $"https://docs.google.com/forms/d/e/1FAIpQLSd-5dZ-nXPZQki795XHgcZwZOVo-J0Q9H89MtuBDljFlMV0xg/viewform?usp=pp_url&entry.1385219541={Uri.EscapeDataString(destinatario)}"
+                            : null;
                         await _emailSender.EnviarCorreoCambioEstadoHtml(
                             destinatario,
                             nombreCliente,
@@ -346,7 +349,8 @@ namespace Back.Services
                             intentosMax: 3,
                             trackingUrl: trackingUrl,
                             etiquetaLogistica: etiquetaLogistica,
-                            nombresProductos: nombresProductos
+                            nombresProductos: nombresProductos,
+                            surveyUrl: surveyUrl
                         );
                         Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
