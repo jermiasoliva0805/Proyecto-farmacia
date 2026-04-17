@@ -23,13 +23,23 @@ namespace Back.Repositories
 
                 // Actualizar el estado del pedido
                 pedido.IDEstadoDePedido = nuevoHistorial.IDEstadoDePedido;
-                pedido.EstadoActual = "Cancelado";
 
-                // Si se proporciona un pedido actualizado, copiar campos importantes
+                // Si se proporciona un pedido actualizado, copiar todos los campos importantes
                 if (pedidoActualizado != null)
                 {
+                    pedido.EstadoActual = pedidoActualizado.EstadoActual;
                     pedido.MotivoCancelacionId = pedidoActualizado.MotivoCancelacionId;
                     pedido.JustificacionCancelacion = pedidoActualizado.JustificacionCancelacion;
+                    pedido.FechaInicioArmado = pedidoActualizado.FechaInicioArmado;
+                    pedido.FechaFinArmado = pedidoActualizado.FechaFinArmado;
+                    pedido.FechaEntregaReal = pedidoActualizado.FechaEntregaReal;
+                    pedido.HoraEntregaReal = pedidoActualizado.HoraEntregaReal;
+                    pedido.IntentosEntregaFallida = pedidoActualizado.IntentosEntregaFallida;
+                }
+                else
+                {
+                    // Fallback: si no se proporciona pedido actualizado, usar descripción estándar
+                    pedido.EstadoActual = ObtenerDescripcionEstado(nuevoHistorial.IDEstadoDePedido);
                 }
 
                 _context.Pedidos.Update(pedido);
@@ -42,6 +52,25 @@ namespace Back.Repositories
                 System.Console.WriteLine($"Error en ActualizarEstadoAsync: {ex.Message}");
                 throw;
             }
+        }
+
+        // Helper para obtener la descripción del estado
+        private string ObtenerDescripcionEstado(int idEstado)
+        {
+            return idEstado switch
+            {
+                1 => "Sin preparar",
+                2 => "En Armado",
+                3 => "Preparado",
+                4 => "Listo para Despachar",
+                5 => "Despachando",
+                6 => "En camino",
+                7 => "Entregado",
+                8 => "Fallo en entrega",
+                9 => "Cancelado",
+                10 => "Cancelado",
+                _ => "Estado desconocido"
+            };
         }
     }
 }

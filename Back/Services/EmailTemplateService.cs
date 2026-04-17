@@ -87,7 +87,7 @@ namespace Back.Services
 
           <!-- Contenido principal -->
           <tr>
-            <td style=""padding:0 24px 16px;"">>
+            <td style=""padding:0 24px 16px;"">
               <div style=""background:{panelBg};border:1px solid {borderColor};border-radius:8px;padding:16px;font-size:15px;color:#374151;"">
                 <p style=""margin:0 0 8px 0;"">Hola <strong>{nombreCliente}</strong>,</p>
                 <p style=""margin:0;"">{MensajePrincipal(idEstado, pedidoCodigo, intentoEntrega, intentosMax)}</p>
@@ -99,7 +99,9 @@ namespace Back.Services
               {TextoAdicional(idEstado)}
             </td>
           </tr>
-          {trackingButton}          {surveyButton}          <tr>
+          {trackingButton}
+          {surveyButton}
+          <tr>
             <td style=""padding:8px 24px 24px;text-align:center;"">
               <span style=""display:inline-block;padding:10px 14px;border-radius:6px;background:{badgeColor};color:#ffffff;font-weight:600;font-size:14px;"">
                 Estado: {badgeText}
