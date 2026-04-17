@@ -42,7 +42,7 @@ export const ReportePedidosPorZona = () => {
         // Cargar zonas
         const cargarZonas = async () => {
             try {
-                const response = await fetch('/api/localidades/zonas');
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/localidades/zonas`);
                 
                 if (!response.ok) {
                     console.error(`[GetZonas] Error HTTP ${response.status}: ${response.statusText}`);
