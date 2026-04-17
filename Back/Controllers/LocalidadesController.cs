@@ -83,18 +83,98 @@ namespace Back.Controllers
                     return Ok(new List<object>());
                 }
 
+                var totalZonas = _context.Zonas.Count();
+                Console.WriteLine($"📊 [GetZonas] Total de zonas en BD: {totalZonas}");
+
                 var zonas = _context.Zonas
+                    .AsNoTracking()
+                    .ToList(); // Cargar en memoria
+
+                Console.WriteLine($"📋 [GetZonas] Zonas cargadas: {zonas.Count}");
+                foreach (var z in zonas)
+                {
+                    Console.WriteLine($"   - Zona {z.Id}: {z.Nombre}");
+                }
+
+                var zonasDto = zonas
                     .Select(z => new { id = z.Id, nombre = z.Nombre })
                     .ToList();
 
-                Console.WriteLine($"✅ [GetZonas] Encontradas {zonas.Count} zonas");
-                return Ok(zonas);
+                Console.WriteLine($"✅ [GetZonas] Devolviendo {zonasDto.Count} zonas");
+                return Ok(zonasDto);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ [GetZonas] Error: {ex.Message}");
                 Console.WriteLine($"❌ [GetZonas] Stack: {ex.StackTrace}");
-                return StatusCode(500, new { message = $"Error al obtener zonas: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener zonas: {ex.Message}", stackTrace = ex.StackTrace });
+            }
+        }
+
+        // GET: api/localidades/zonas-debug
+        // SOLO PARA DEBUG: Muestra todas las zonas con sus barrios
+        [HttpGet("zonas-debug")]
+        public IActionResult GetZonasDebug()
+        {
+            try
+            {
+                var zonas = _context.Zonas
+                    .AsNoTracking()
+                    .Include(z => z.Barrios)
+                    .ToList();
+
+                var resultado = zonas.Select(z => new
+                {
+                    id = z.Id,
+                    nombre = z.Nombre,
+                    barrios = z.Barrios.Select(b => new
+                    {
+                        idBarrio = b.IDBarrio,
+                        nombreBarrio = b.Nombre,
+                        idLocalidad = b.IDLocalidad
+                    }).ToList(),
+                    totalBarrios = z.Barrios.Count
+                }).ToList();
+
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        // GET: api/localidades/zonas-pedidos
+        // SOLO PARA DEBUG: Muestra todas las zonas con sus pedidos
+        [HttpGet("zonas-pedidos")]
+        public IActionResult GetZonasPedidos()
+        {
+            try
+            {
+                var zonas = _context.Zonas
+                    .AsNoTracking()
+                    .Include(z => z.Pedidos)
+                    .ToList();
+
+                var resultado = zonas.Select(z => new
+                {
+                    id = z.Id,
+                    nombre = z.Nombre,
+                    totalPedidos = z.Pedidos.Count,
+                    pedidos = z.Pedidos.Select(p => new
+                    {
+                        idPedido = p.IDPedido,
+                        estado = p.EstadoActual,
+                        fecha = p.Fecha,
+                        total = p.Total
+                    }).ToList()
+                }).ToList();
+
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
