@@ -168,5 +168,28 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de tiempos", error = ex.Message });
             }
         }
+
+        [HttpGet("pedidos-por-zona")]
+        public async Task<ActionResult<List<PedidosPorZonaDTO>>> GetPedidosPorZona(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
+                
+                if (reporte == null)
+                {
+                    return Ok(new List<PedidosPorZonaDTO>());
+                }
+
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de pedidos por zona", error = ex.Message });
+            }
+        }
     }
 }

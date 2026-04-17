@@ -138,3 +138,11 @@ export interface DetalleTiempoProcesoDTO {
     estadoFinal: string;
     esAlertaDespacho: boolean;
 }
+
+export interface PedidosPorZonaDTO {
+    zonaId: number;
+    nombreZona: string;
+    cantidadPedidos: number;
+    porcentaje: number;
+    totalRecaudado: number;
+}

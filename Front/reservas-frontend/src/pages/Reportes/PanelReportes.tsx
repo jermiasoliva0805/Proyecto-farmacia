@@ -7,6 +7,7 @@ import { ReporteCancelados } from './ReporteCancelados';
 import { ReporteCancelacionesPorMotivos } from './ReporteCancelacionesPorMotivos';
 import { ReporteProductos } from './ReporteProductos';
 import { ReporteTiemposProceso } from './ReporteTiemposProceso';
+import { ReportePedidosPorZona } from './ReportePedidosPorZona';
 
 
 export const PanelReportes = () => {
@@ -89,6 +90,15 @@ export const PanelReportes = () => {
                 >
                     Tiempos de Proceso
                 </button>
+
+                <button
+                    onClick={() => setTabActiva('pedidosPorZona')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'pedidosPorZona' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Pedidos por Zona
+                </button>
             </div>
 
             {/* Contenido Dinámico */}
@@ -101,6 +111,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'motivosCancelacion' && <ReporteCancelacionesPorMotivos />}
                 {tabActiva === 'productos' && <ReporteProductos />}
                 {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
+                {tabActiva === 'pedidosPorZona' && <ReportePedidosPorZona />}
             </div>
         </div>
     );

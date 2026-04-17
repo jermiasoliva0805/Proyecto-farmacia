@@ -46,5 +46,13 @@ namespace Back.Repositories.Interfaces
         /// Obtiene un reporte de tiempos de proceso con análisis de 4 fases críticas
         /// </summary>
         Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null);
+
+        /// <summary>
+        /// Obtiene el reporte de cantidad de pedidos por zonas
+        /// </summary>
+        Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
     }
 }
