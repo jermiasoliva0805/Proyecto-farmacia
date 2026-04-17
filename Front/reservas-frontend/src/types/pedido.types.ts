@@ -138,3 +138,16 @@ export interface DetalleTiempoProcesoDTO {
     estadoFinal: string;
     esAlertaDespacho: boolean;
 }
+
+export interface DetalleFormaPagoDTO {
+    formaDePago: string;
+    cantidadOperaciones: number;
+    porcentaje: number;
+    montoTotal: number;
+}
+
+export interface ReporteFormasPagoDTO {
+    totalOperaciones: number;
+    totalMonto: number;
+    distribucionFormasPago: DetalleFormaPagoDTO[];
+}
