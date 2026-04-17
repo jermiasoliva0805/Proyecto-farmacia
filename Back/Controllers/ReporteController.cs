@@ -168,5 +168,22 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de tiempos", error = ex.Message });
             }
         }
+
+        [HttpGet("formas-pago")]
+        public async Task<ActionResult<ReporteFormasPagoDTO>> GetReporteFormasPago(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de formas de pago", error = ex.Message });
+            }
+        }
     }
 }
