@@ -146,3 +146,16 @@ export interface PedidosPorZonaDTO {
     porcentaje: number;
     totalRecaudado: number;
 }
+
+export interface DetalleFormaPagoDTO {
+    formaDePago: string;
+    cantidadOperaciones: number;
+    porcentaje: number;
+    montoTotal: number;
+}
+
+export interface ReporteFormasPagoDTO {
+    totalOperaciones: number;
+    totalMonto: number;
+    distribucionFormasPago: DetalleFormaPagoDTO[];
+}

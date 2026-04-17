@@ -463,6 +463,54 @@ namespace Back.Repositories
             };
         }
 
+        public async Task<ReporteFormasPagoDTO> GetReporteFormasPagoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null)
+        {
+            // Calcular rangos de fecha
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
+            var hasta = fechaHasta ?? DateTime.Now;
+            var hastaAjustado = hasta.AddDays(1).AddSeconds(-1);
+
+            // Construir query base
+            var query = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hastaAjustado)
+                .AsQueryable();
+
+            // Aplicar filtro de sucursal si está especificado
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            }
+
+            var pedidos = await query.ToListAsync();
+
+            // Calcular totales
+            var totalOperaciones = pedidos.Count;
+            var totalMonto = pedidos.Sum(p => p.Total);
+
+            // Agrupar por forma de pago y calcular estadísticas
+            var distribucion = pedidos
+                .GroupBy(p => p.FormaDePago)
+                .Select(g => new DetalleFormaPagoDTO
+                {
+                    FormaDePago = g.Key,
+                    CantidadOperaciones = g.Count(),
+                    MontoTotal = g.Sum(p => p.Total),
+                    Porcentaje = totalOperaciones > 0 ? (g.Count() * 100m) / totalOperaciones : 0
+                })
+                .OrderByDescending(d => d.CantidadOperaciones)
+                .ToList();
+
+            return new ReporteFormasPagoDTO
+            {
+                TotalOperaciones = totalOperaciones,
+                TotalMonto = totalMonto,
+                DistribucionFormasPago = distribucion
+            };
+        }
+
         public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,

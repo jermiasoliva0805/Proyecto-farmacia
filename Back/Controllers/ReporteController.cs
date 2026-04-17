@@ -169,6 +169,23 @@ namespace Back.Controllers
             }
         }
 
+        [HttpGet("formas-pago")]
+        public async Task<ActionResult<ReporteFormasPagoDTO>> GetReporteFormasPago(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesde, fechaHasta, idSucursal);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de formas de pago", error = ex.Message });
+            }
+        }
+
         [HttpGet("pedidos-por-zona")]
         public async Task<ActionResult<List<PedidosPorZonaDTO>>> GetPedidosPorZona(
             [FromQuery] DateTime? fechaDesde = null,
@@ -178,7 +195,7 @@ namespace Back.Controllers
             try
             {
                 var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
-                
+
                 if (reporte == null)
                 {
                     return Ok(new List<PedidosPorZonaDTO>());

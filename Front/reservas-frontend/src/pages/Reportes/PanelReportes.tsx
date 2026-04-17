@@ -8,6 +8,7 @@ import { ReporteCancelacionesPorMotivos } from './ReporteCancelacionesPorMotivos
 import { ReporteProductos } from './ReporteProductos';
 import { ReporteTiemposProceso } from './ReporteTiemposProceso';
 import { ReportePedidosPorZona } from './ReportePedidosPorZona';
+import { ReporteFormasPago } from './ReporteFormasPago';
 
 
 export const PanelReportes = () => {
@@ -92,6 +93,15 @@ export const PanelReportes = () => {
                 </button>
 
                 <button
+                    onClick={() => setTabActiva('formasPago')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'formasPago' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Formas de Pago
+                </button>
+
+                <button
                     onClick={() => setTabActiva('pedidosPorZona')}
                     className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
                         tabActiva === 'pedidosPorZona' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
@@ -111,6 +121,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'motivosCancelacion' && <ReporteCancelacionesPorMotivos />}
                 {tabActiva === 'productos' && <ReporteProductos />}
                 {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
+                {tabActiva === 'formasPago' && <ReporteFormasPago />}
                 {tabActiva === 'pedidosPorZona' && <ReportePedidosPorZona />}
             </div>
         </div>

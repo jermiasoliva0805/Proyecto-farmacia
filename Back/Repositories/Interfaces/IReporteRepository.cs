@@ -48,6 +48,14 @@ namespace Back.Repositories.Interfaces
         Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null);
 
         /// <summary>
+        /// Obtiene el reporte de formas de pago más utilizadas (RF6.10)
+        /// </summary>
+        Task<ReporteFormasPagoDTO> GetReporteFormasPagoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idSucursal = null);
+
+        /// <summary>
         /// Obtiene el reporte de cantidad de pedidos por zonas
         /// </summary>
         Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
