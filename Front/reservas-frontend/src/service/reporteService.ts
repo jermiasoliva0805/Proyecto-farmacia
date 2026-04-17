@@ -7,7 +7,8 @@ import {
     ReporteCancelacionesPorMotivoDTO,
     TopProductosDTO,
     TiemposProcesoDTO,
-    ReporteFormasPagoDTO
+    ReporteFormasPagoDTO,
+    ReporteEncuestaSatisfaccionDTO
 } from '../types/pedido.types';
 
 export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
@@ -185,6 +186,16 @@ export const getReporteFormasPago = async (
         return response.data;
     } catch (error) {
         console.error("Error al obtener reporte de formas de pago:", error);
+        throw error;
+    }
+};
+
+export const getReporteEncuestaSatisfaccion = async (): Promise<ReporteEncuestaSatisfaccionDTO> => {
+    try {
+        const response = await api.get<ReporteEncuestaSatisfaccionDTO>('/reporte/encuesta-satisfaccion');
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de encuesta de satisfacción:", error);
         throw error;
     }
 };

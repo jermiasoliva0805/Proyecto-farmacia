@@ -2,10 +2,15 @@ using Back.Data;
 using Back.DTOs;
 using Back.Models;
 using Back.Repositories.Interfaces;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Proyecto_farmacia.DTOs;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,10 +19,17 @@ namespace Back.Repositories
     public class ReporteRepository : IReporteRepository
     {
         private readonly AppDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public ReporteRepository(AppDbContext context)
+        public ReporteRepository(
+            AppDbContext context,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
@@ -508,6 +520,116 @@ namespace Back.Repositories
                 TotalOperaciones = totalOperaciones,
                 TotalMonto = totalMonto,
                 DistribucionFormasPago = distribucion
+            };
+        }
+
+        public async Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync()
+        {
+            var csvUrl =
+                _configuration["GoogleForms:SurveyResponsesCsvUrl"]
+                ?? Environment.GetEnvironmentVariable("GOOGLE_FORMS_SURVEY_RESPONSES_CSV_URL");
+
+            if (string.IsNullOrWhiteSpace(csvUrl))
+            {
+                throw new InvalidOperationException(
+                    "No está configurada la URL CSV de respuestas de Google Forms. Configure 'GoogleForms:SurveyResponsesCsvUrl' o 'GOOGLE_FORMS_SURVEY_RESPONSES_CSV_URL'.");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            var csvData = await client.GetStringAsync(csvUrl);
+
+            using var stringReader = new StringReader(csvData);
+            using var csv = new CsvReader(stringReader, new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                BadDataFound = null,
+                MissingFieldFound = null,
+                HeaderValidated = null
+            });
+
+            if (!csv.Read() || !csv.ReadHeader())
+            {
+                return new ReporteEncuestaSatisfaccionDTO();
+            }
+
+            var headers = csv.HeaderRecord ?? Array.Empty<string>();
+
+            if (headers.Length <= 1)
+            {
+                return new ReporteEncuestaSatisfaccionDTO();
+            }
+
+            var resultadosPorPregunta = new Dictionary<int, Dictionary<string, int>>();
+            var totalRespuestasFormulario = 0;
+
+            for (int i = 1; i < headers.Length; i++)
+            {
+                resultadosPorPregunta[i] = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            while (csv.Read())
+            {
+                var filaTieneDatos = false;
+
+                for (int i = 1; i < headers.Length; i++)
+                {
+                    var respuesta = csv.GetField(i)?.Trim();
+                    if (string.IsNullOrWhiteSpace(respuesta))
+                    {
+                        continue;
+                    }
+
+                    filaTieneDatos = true;
+
+                    if (!resultadosPorPregunta[i].ContainsKey(respuesta))
+                    {
+                        resultadosPorPregunta[i][respuesta] = 0;
+                    }
+
+                    resultadosPorPregunta[i][respuesta]++;
+                }
+
+                if (filaTieneDatos)
+                {
+                    totalRespuestasFormulario++;
+                }
+            }
+
+            var preguntas = new List<PreguntaEncuestaDTO>();
+
+            for (int i = 1; i < headers.Length; i++)
+            {
+                var pregunta = headers[i]?.Trim();
+                if (string.IsNullOrWhiteSpace(pregunta))
+                {
+                    continue;
+                }
+
+                var totalPorPregunta = resultadosPorPregunta[i].Values.Sum();
+                var opciones = resultadosPorPregunta[i]
+                    .Select(x => new OpcionRespuestaEncuestaDTO
+                    {
+                        Respuesta = x.Key,
+                        Cantidad = x.Value,
+                        Porcentaje = totalPorPregunta > 0
+                            ? Math.Round((x.Value * 100m) / totalPorPregunta, 2)
+                            : 0
+                    })
+                    .OrderByDescending(x => x.Cantidad)
+                    .ThenBy(x => x.Respuesta)
+                    .ToList();
+
+                preguntas.Add(new PreguntaEncuestaDTO
+                {
+                    Pregunta = pregunta,
+                    TotalRespuestas = totalPorPregunta,
+                    Opciones = opciones
+                });
+            }
+
+            return new ReporteEncuestaSatisfaccionDTO
+            {
+                TotalRespuestas = totalRespuestasFormulario,
+                Preguntas = preguntas
             };
         }
     }

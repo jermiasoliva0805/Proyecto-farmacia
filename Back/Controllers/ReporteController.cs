@@ -185,5 +185,19 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de formas de pago", error = ex.Message });
             }
         }
+
+        [HttpGet("encuesta-satisfaccion")]
+        public async Task<ActionResult<ReporteEncuestaSatisfaccionDTO>> GetReporteEncuestaSatisfaccion()
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteEncuestaSatisfaccionAsync();
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de encuesta de satisfacción", error = ex.Message });
+            }
+        }
     }
 }
