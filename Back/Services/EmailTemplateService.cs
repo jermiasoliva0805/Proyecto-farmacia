@@ -17,7 +17,8 @@ namespace Back.Services
             int intentosMax = 3,
             string trackingUrl = null,
             string etiquetaLogistica = null,
-            List<string> nombresProductos = null)
+            List<string> nombresProductos = null,
+            string urlEncuesta = null)
         {
             // Generar código personalizado si hay productos, sino usar el formato clásico
             var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
@@ -40,7 +41,20 @@ namespace Back.Services
               </a>
             </td>
           </tr>";
-
+            // ✅ NUEVO: Botón de encuesta SOLO para estado Entregado (7)
+            var surveyButton = (idEstado == 7 && !string.IsNullOrEmpty(urlEncuesta)) ? $@"
+          <tr>
+            <td style=""padding:16px 24px;text-align:center;"">
+              <a href=""{urlEncuesta}"" style=""display:inline-block;background-color:#3B82F6;color:#ffffff;padding:12px 32px;border-radius:6px;font-weight:600;text-decoration:none;font-size:14px;border:none;cursor:pointer;"">
+                📝 Danos tu Opinión sobre tu Compra
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style=""padding:0 24px 16px;text-align:center;color:#6B7280;font-size:13px;"">
+              Tu opinión nos ayuda a mejorar el servicio. ¡Gracias!
+            </td>
+          </tr>" : "";
             var sb = new StringBuilder();
             sb.Append($@"
 <!DOCTYPE html>
@@ -85,8 +99,7 @@ namespace Back.Services
               {TextoAdicional(idEstado)}
             </td>
           </tr>
-          {trackingButton}
-          <tr>
+          {trackingButton}          {surveyButton}          <tr>
             <td style=""padding:8px 24px 24px;text-align:center;"">
               <span style=""display:inline-block;padding:10px 14px;border-radius:6px;background:{badgeColor};color:#ffffff;font-weight:600;font-size:14px;"">
                 Estado: {badgeText}
