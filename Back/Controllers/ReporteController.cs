@@ -92,8 +92,6 @@ namespace Back.Controllers
             }
         }
 
-        // ====== TU RAMA (ReportesNuevos2) ======
-
         [HttpGet("pedidos-cancelados")]
         public async Task<ActionResult<ReportePedidosCanceladosDTO>> GetPedidosCancelados(
             [FromQuery] DateTime? fechaDesde = null,
@@ -127,8 +125,6 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de cancelaciones por motivo", error = ex.Message });
             }
         }
-
-        // ====== MAIN ======
 
         [HttpGet("top-productos")]
         public async Task<ActionResult<List<TopProductosDTO>>> GetTop10Productos(
