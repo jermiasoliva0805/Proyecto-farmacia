@@ -101,7 +101,7 @@ Para confirmar que todo está configurado correctamente:
    [DB Config] ✅ ConnectionString configurada correctamente.
    [SMTP Config] Host: smtp.gmail.com, Port: 587, EnableSsl: True
    [EmailSender] Enviando email a cliente@example.com via smtp.gmail.com:587
-   [EmailSender] ✅ Email enviado exitosamente
+   [EmailSender] ✅ Email enviado exitosamente a cliente@example.com
    ```
 
 Si ves `⚠️ ADVERTENCIA: Usuario SMTP no configurado`, significa que las variables `Smtp__*` no se cargaron. Verifica:
