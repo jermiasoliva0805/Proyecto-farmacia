@@ -2,10 +2,15 @@ using Back.Data;
 using Back.DTOs;
 using Back.Models;
 using Back.Repositories.Interfaces;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Proyecto_farmacia.DTOs;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,10 +19,17 @@ namespace Back.Repositories
     public class ReporteRepository : IReporteRepository
     {
         private readonly AppDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public ReporteRepository(AppDbContext context)
+        public ReporteRepository(
+            AppDbContext context,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
@@ -514,6 +526,7 @@ namespace Back.Repositories
         public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
+            int? idSucursal = null)
             int? idZona = null)
         {
             // Calcular fechas por defecto
@@ -525,6 +538,10 @@ namespace Back.Repositories
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null) // Solo pedidos con zona
                 .AsQueryable();
 
+            // Filtrar por sucursal si se especifica
+            if (idSucursal.HasValue && idSucursal.Value > 0)
+            {
+                query = query.Where(p => p.IDSucursal == idSucursal.Value);
             // Filtrar por zona si se especifica
             if (idZona.HasValue && idZona.Value > 0)
             {
@@ -554,6 +571,116 @@ namespace Back.Repositories
                 .ToList();
 
             return reporte;
+        }
+
+        public async Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync()
+        {
+            var csvUrl =
+                _configuration["GoogleForms:SurveyResponsesCsvUrl"]
+                ?? Environment.GetEnvironmentVariable("GOOGLE_FORMS_SURVEY_RESPONSES_CSV_URL");
+
+            if (string.IsNullOrWhiteSpace(csvUrl))
+            {
+                throw new InvalidOperationException(
+                    "No está configurada la URL CSV de respuestas de Google Forms. Configure 'GoogleForms:SurveyResponsesCsvUrl' o 'GOOGLE_FORMS_SURVEY_RESPONSES_CSV_URL'.");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            var csvData = await client.GetStringAsync(csvUrl);
+
+            using var stringReader = new StringReader(csvData);
+            using var csv = new CsvReader(stringReader, new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                BadDataFound = null,
+                MissingFieldFound = null,
+                HeaderValidated = null
+            });
+
+            if (!csv.Read() || !csv.ReadHeader())
+            {
+                return new ReporteEncuestaSatisfaccionDTO();
+            }
+
+            var headers = csv.HeaderRecord ?? Array.Empty<string>();
+
+            if (headers.Length <= 1)
+            {
+                return new ReporteEncuestaSatisfaccionDTO();
+            }
+
+            var resultadosPorPregunta = new Dictionary<int, Dictionary<string, int>>();
+            var totalRespuestasFormulario = 0;
+
+            while (csv.Read())
+            {
+                var filaTieneDatos = false;
+
+                for (int i = 1; i < headers.Length; i++)
+                {
+                    var respuesta = csv.GetField(i)?.Trim();
+                    if (string.IsNullOrWhiteSpace(respuesta))
+                    {
+                        continue;
+                    }
+
+                    filaTieneDatos = true;
+
+                    if (!resultadosPorPregunta.TryGetValue(i, out var respuestasPregunta))
+                    {
+                        respuestasPregunta = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                        resultadosPorPregunta[i] = respuestasPregunta;
+                    }
+
+                    respuestasPregunta[respuesta] = respuestasPregunta.GetValueOrDefault(respuesta, 0) + 1;
+                }
+
+                if (filaTieneDatos)
+                {
+                    totalRespuestasFormulario++;
+                }
+            }
+
+            var preguntas = new List<PreguntaEncuestaDTO>();
+
+            for (int i = 1; i < headers.Length; i++)
+            {
+                var pregunta = headers[i]?.Trim();
+                if (string.IsNullOrWhiteSpace(pregunta))
+                {
+                    continue;
+                }
+
+                var respuestasPregunta = resultadosPorPregunta.TryGetValue(i, out var respuestasRegistradas)
+                    ? respuestasRegistradas
+                    : null;
+
+                var totalPorPregunta = respuestasPregunta?.Values.Sum() ?? 0;
+                var opciones = (respuestasPregunta ?? new Dictionary<string, int>())
+                    .Select(x => new OpcionRespuestaEncuestaDTO
+                    {
+                        Respuesta = x.Key,
+                        Cantidad = x.Value,
+                        Porcentaje = totalPorPregunta > 0
+                            ? Math.Round((x.Value * 100m) / totalPorPregunta, 2)
+                            : 0
+                    })
+                    .OrderByDescending(x => x.Cantidad)
+                    .ThenBy(x => x.Respuesta)
+                    .ToList();
+
+                preguntas.Add(new PreguntaEncuestaDTO
+                {
+                    Pregunta = pregunta,
+                    TotalRespuestas = totalPorPregunta,
+                    Opciones = opciones
+                });
+            }
+
+            return new ReporteEncuestaSatisfaccionDTO
+            {
+                TotalRespuestas = totalRespuestasFormulario,
+                Preguntas = preguntas
+            };
         }
     }
 }

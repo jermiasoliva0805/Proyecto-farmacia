@@ -7,8 +7,9 @@ import {
     ReporteCancelacionesPorMotivoDTO,
     TopProductosDTO,
     TiemposProcesoDTO,
-    PedidosPorZonaDTO,
-    ReporteFormasPagoDTO
+    ReporteFormasPagoDTO,
+    ReporteEncuestaSatisfaccionDTO,
+    PedidosPorZonaDTO
 } from '../types/pedido.types';
 
 export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
@@ -197,6 +198,35 @@ export const getReporteFormasPago = async (
     idSucursal: number | null = null
 ): Promise<ReporteFormasPagoDTO> => {
     try {
+        const params: Record<string, string | number> = {};
+
+        if (fechaDesde) {
+            params.fechaDesde = fechaDesde;
+        }
+
+        if (fechaHasta) {
+            params.fechaHasta = fechaHasta;
+        }
+
+        if (idSucursal !== null && idSucursal > 0) {
+            params.idSucursal = idSucursal;
+        }
+
+        const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', { params });
+
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de formas de pago:", error);
+        throw error;
+    }
+};
+
+export const getReporteEncuestaSatisfaccion = async (): Promise<ReporteEncuestaSatisfaccionDTO> => {
+    try {
+        const response = await api.get<ReporteEncuestaSatisfaccionDTO>('/reporte/encuesta-satisfaccion');
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener reporte de encuesta de satisfacción:", error);
         const params: any = {};
         if (fechaDesde) params.fechaDesde = fechaDesde;
         if (fechaHasta) params.fechaHasta = fechaHasta;

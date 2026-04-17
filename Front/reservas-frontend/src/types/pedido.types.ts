@@ -159,3 +159,20 @@ export interface ReporteFormasPagoDTO {
     totalMonto: number;
     distribucionFormasPago: DetalleFormaPagoDTO[];
 }
+
+export interface OpcionRespuestaEncuestaDTO {
+    respuesta: string;
+    cantidad: number;
+    porcentaje: number;
+}
+
+export interface PreguntaEncuestaDTO {
+    pregunta: string;
+    totalRespuestas: number;
+    opciones: OpcionRespuestaEncuestaDTO[];
+}
+
+export interface ReporteEncuestaSatisfaccionDTO {
+    totalRespuestas: number;
+    preguntas: PreguntaEncuestaDTO[];
+}

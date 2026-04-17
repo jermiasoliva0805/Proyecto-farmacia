@@ -186,6 +186,11 @@ namespace Back.Controllers
         public async Task<ActionResult<List<PedidosPorZonaDTO>>> GetPedidosPorZona(
             [FromQuery] DateTime? fechaDesde = null,
             [FromQuery] DateTime? fechaHasta = null,
+            [FromQuery] int? idSucursal = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
             [FromQuery] int? idZona = null)
         {
             try
@@ -202,6 +207,20 @@ namespace Back.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error al obtener el reporte de pedidos por zona", error = ex.Message });
+            }
+        }
+
+        [HttpGet("encuesta-satisfaccion")]
+        public async Task<ActionResult<ReporteEncuestaSatisfaccionDTO>> GetReporteEncuestaSatisfaccion()
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReporteEncuestaSatisfaccionAsync();
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de encuesta de satisfacción", error = ex.Message });
             }
         }
     }

@@ -9,6 +9,7 @@ import { ReporteProductos } from './ReporteProductos';
 import { ReporteTiemposProceso } from './ReporteTiemposProceso';
 import { ReportePedidosPorZona } from './ReportePedidosPorZona';
 import { ReporteFormasPago } from './ReporteFormasPago';
+import { ReporteEncuestaSatisfaccion } from './ReporteEncuestaSatisfaccion';
 
 
 export const PanelReportes = () => {
@@ -109,6 +110,15 @@ export const PanelReportes = () => {
                 >
                     Pedidos por Zona
                 </button>
+
+                <button
+                    onClick={() => setTabActiva('encuestaSatisfaccion')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'encuestaSatisfaccion' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Encuesta de Satisfacción
+                </button>
             </div>
 
             {/* Contenido Dinámico */}
@@ -123,6 +133,7 @@ export const PanelReportes = () => {
                 {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
                 {tabActiva === 'formasPago' && <ReporteFormasPago />}
                 {tabActiva === 'pedidosPorZona' && <ReportePedidosPorZona />}
+                {tabActiva === 'encuestaSatisfaccion' && <ReporteEncuestaSatisfaccion />}
             </div>
         </div>
     );

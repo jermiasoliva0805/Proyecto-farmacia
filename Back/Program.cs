@@ -56,6 +56,7 @@ namespace Back
                 });
 
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddHttpClient();
 
             // 2. Configuración de Swagger
             builder.Services.AddSwaggerGen(c =>
