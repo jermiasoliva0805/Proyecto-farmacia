@@ -6,6 +6,14 @@ import { exportToExcel, exportToPDF } from '../../service/exportService';
 import { getReporteEncuestaSatisfaccion } from '../../service/reporteService';
 import { ReporteEncuestaSatisfaccionDTO } from '../../types/pedido.types';
 
+interface MetricCardProps {
+    title: string;
+    value: string;
+    sub: string;
+    icon: React.ReactNode;
+    color?: string;
+}
+
 export const ReporteEncuestaSatisfaccion: React.FC = () => {
     const [reporte, setReporte] = useState<ReporteEncuestaSatisfaccionDTO | null>(null);
     const [loading, setLoading] = useState(true);
@@ -167,7 +175,7 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
     );
 };
 
-const MetricCard = ({ title, value, sub, icon, color = 'text-gray-900' }: any) => (
+const MetricCard = ({ title, value, sub, icon, color = 'text-gray-900' }: MetricCardProps) => (
     <Card className="p-5 flex justify-between items-start border-gray-100 shadow-sm">
         <div>
             <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">{title}</p>

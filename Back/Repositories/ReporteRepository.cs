@@ -561,11 +561,6 @@ namespace Back.Repositories
             var resultadosPorPregunta = new Dictionary<int, Dictionary<string, int>>();
             var totalRespuestasFormulario = 0;
 
-            for (int i = 1; i < headers.Length; i++)
-            {
-                resultadosPorPregunta[i] = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            }
-
             while (csv.Read())
             {
                 var filaTieneDatos = false;
@@ -580,12 +575,13 @@ namespace Back.Repositories
 
                     filaTieneDatos = true;
 
-                    if (!resultadosPorPregunta[i].ContainsKey(respuesta))
+                    if (!resultadosPorPregunta.TryGetValue(i, out var respuestasPregunta))
                     {
-                        resultadosPorPregunta[i][respuesta] = 0;
+                        respuestasPregunta = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                        resultadosPorPregunta[i] = respuestasPregunta;
                     }
 
-                    resultadosPorPregunta[i][respuesta]++;
+                    respuestasPregunta[respuesta] = respuestasPregunta.GetValueOrDefault(respuesta, 0) + 1;
                 }
 
                 if (filaTieneDatos)
@@ -604,8 +600,12 @@ namespace Back.Repositories
                     continue;
                 }
 
-                var totalPorPregunta = resultadosPorPregunta[i].Values.Sum();
-                var opciones = resultadosPorPregunta[i]
+                var respuestasPregunta = resultadosPorPregunta.TryGetValue(i, out var respuestasRegistradas)
+                    ? respuestasRegistradas
+                    : null;
+
+                var totalPorPregunta = respuestasPregunta?.Values.Sum() ?? 0;
+                var opciones = (respuestasPregunta ?? new Dictionary<string, int>())
                     .Select(x => new OpcionRespuestaEncuestaDTO
                     {
                         Respuesta = x.Key,
