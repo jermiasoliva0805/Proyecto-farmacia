@@ -140,15 +140,26 @@ namespace Back
             builder.Services.AddScoped<ClientProductRelationService>();
 
             // 6a. SMTP Configuration
+            // Prioridad: Smtp:* (appsettings / Azure Smtp__*) > SMTP_* (env vars legacy) > defaults
             static int GetInt(string? value, int fallback) => int.TryParse(value, out var v) ? v : fallback;
             static bool GetBool(string? value, bool fallback) => bool.TryParse(value, out var v) ? v : fallback;
 
             var smtpConfig = builder.Configuration.GetSection("Smtp");
-            var host = smtpConfig["Host"] ?? "smtp.gmail.com";
-            var port = GetInt(smtpConfig["Port"], 587);
-            var user = smtpConfig["User"] ?? "";
-            var password = smtpConfig["Password"] ?? "";
-            var enableSsl = GetBool(smtpConfig["EnableSsl"], true);
+            var host = smtpConfig["Host"]
+                ?? Environment.GetEnvironmentVariable("SMTP_HOST")
+                ?? "smtp.gmail.com";
+            var port = GetInt(
+                smtpConfig["Port"] ?? Environment.GetEnvironmentVariable("SMTP_PORT"),
+                587);
+            var user = smtpConfig["User"]
+                ?? Environment.GetEnvironmentVariable("SMTP_USER")
+                ?? "";
+            var password = smtpConfig["Password"]
+                ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
+                ?? "";
+            var enableSsl = GetBool(
+                smtpConfig["EnableSsl"] ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL"),
+                true);
 
             builder.Services.Configure<SmtpSettings>(s =>
             {
