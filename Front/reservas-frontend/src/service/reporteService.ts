@@ -165,7 +165,7 @@ export const getReporteTiempos = async (periodo: string, idSucursal: number | nu
 export const getPedidosPorZona = async (
     fechaDesde?: string,
     fechaHasta?: string,
-    idSucursal: number | null = null
+    idZona: number | null = null
 ): Promise<PedidosPorZonaDTO[]> => {
     try {
         const params: any = {};
@@ -178,8 +178,8 @@ export const getPedidosPorZona = async (
             params.fechaHasta = fechaHasta;
         }
         
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
+        if (idZona !== null && idZona > 0) {
+            params.idZona = idZona;
         }
         
         const response = await api.get<PedidosPorZonaDTO[]>('/reporte/pedidos-por-zona', {
@@ -227,6 +227,14 @@ export const getReporteEncuestaSatisfaccion = async (): Promise<ReporteEncuestaS
         return response.data;
     } catch (error) {
         console.error("Error al obtener reporte de encuesta de satisfacción:", error);
+        const params: any = {};
+        if (fechaDesde) params.fechaDesde = fechaDesde;
+        if (fechaHasta) params.fechaHasta = fechaHasta;
+        if (idSucursal !== null && idSucursal > 0) params.idSucursal = idSucursal;
+        const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', { params });
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener reporte de formas de pago', error);
         throw error;
     }
 };

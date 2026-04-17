@@ -191,6 +191,11 @@ namespace Back.Controllers
             try
             {
                 var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idSucursal);
+            [FromQuery] int? idZona = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idZona);
 
                 if (reporte == null)
                 {

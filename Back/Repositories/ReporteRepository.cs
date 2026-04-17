@@ -527,6 +527,7 @@ namespace Back.Repositories
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
             int? idSucursal = null)
+            int? idZona = null)
         {
             // Calcular fechas por defecto
             var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
@@ -541,6 +542,10 @@ namespace Back.Repositories
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
+            // Filtrar por zona si se especifica
+            if (idZona.HasValue && idZona.Value > 0)
+            {
+                query = query.Where(p => p.ZonaId == idZona.Value);
             }
 
             var pedidos = await query.ToListAsync();
