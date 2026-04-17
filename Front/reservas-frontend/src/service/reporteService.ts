@@ -227,14 +227,6 @@ export const getReporteEncuestaSatisfaccion = async (): Promise<ReporteEncuestaS
         return response.data;
     } catch (error) {
         console.error("Error al obtener reporte de encuesta de satisfacción:", error);
-        const params: any = {};
-        if (fechaDesde) params.fechaDesde = fechaDesde;
-        if (fechaHasta) params.fechaHasta = fechaHasta;
-        if (idSucursal !== null && idSucursal > 0) params.idSucursal = idSucursal;
-        const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', { params });
-        return response.data;
-    } catch (error) {
-        console.error('Error al obtener reporte de formas de pago', error);
         throw error;
     }
 };

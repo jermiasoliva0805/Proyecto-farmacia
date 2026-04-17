@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Back.Repositories
@@ -526,7 +527,6 @@ namespace Back.Repositories
         public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
-            int? idSucursal = null)
             int? idZona = null)
         {
             // Calcular fechas por defecto
@@ -538,11 +538,6 @@ namespace Back.Repositories
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null) // Solo pedidos con zona
                 .AsQueryable();
 
-            // Filtrar por sucursal si se especifica
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            // Filtrar por zona si se especifica
             if (idZona.HasValue && idZona.Value > 0)
             {
                 query = query.Where(p => p.ZonaId == idZona.Value);
@@ -608,15 +603,123 @@ namespace Back.Repositories
                 return new ReporteEncuestaSatisfaccionDTO();
             }
 
+            var metadatosHeaders = headers
+                .Select((header, index) => new
+                {
+                    Index = index,
+                    HeaderNormalizado = NormalizarTexto(header)
+                })
+                .ToList();
+
+            var indiceTimestamp = 0;
+            var indicesColumnasIdentificacion = metadatosHeaders
+                .Where(x => x.Index > 0 && EsColumnaIdentificacionCliente(x.HeaderNormalizado))
+                .Select(x => x.Index)
+                .ToHashSet();
+
+            var indicesColumnasExcluir = new HashSet<int>(indicesColumnasIdentificacion) { indiceTimestamp };
+
+            var requiereValidacionCompra = indicesColumnasIdentificacion.Count > 0;
+            var idsPedidosConCompra = new HashSet<int>();
+            var mailsConCompra = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var telefonosConCompra = new HashSet<string>(StringComparer.Ordinal);
+            var dnisConCompra = new HashSet<string>(StringComparer.Ordinal);
+
+            if (requiereValidacionCompra)
+            {
+                var compras = await _context.Pedidos
+                    .Select(p => new
+                    {
+                        p.IDPedido,
+                        Mail = p.Cliente.Mail,
+                        Telefono = p.Cliente.Telefono,
+                        Dni = p.Cliente.DNI
+                    })
+                    .ToListAsync();
+
+                idsPedidosConCompra = compras
+                    .Select(x => x.IDPedido)
+                    .ToHashSet();
+
+                mailsConCompra = compras
+                    .Select(x => NormalizarTexto(x.Mail))
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                telefonosConCompra = compras
+                    .Select(x => NormalizarNumero(x.Telefono))
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToHashSet(StringComparer.Ordinal);
+
+                dnisConCompra = compras
+                    .Select(x => NormalizarNumero(x.Dni))
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToHashSet(StringComparer.Ordinal);
+            }
+
             var resultadosPorPregunta = new Dictionary<int, Dictionary<string, int>>();
             var totalRespuestasFormulario = 0;
 
             while (csv.Read())
             {
                 var filaTieneDatos = false;
+                var esClienteConCompra = !requiereValidacionCompra;
+
+                foreach (var indexColumna in indicesColumnasIdentificacion)
+                {
+                    var headerNormalizado = metadatosHeaders[indexColumna].HeaderNormalizado;
+                    var respuestaIdentificacion = csv.GetField(indexColumna)?.Trim();
+
+                    if (string.IsNullOrWhiteSpace(respuestaIdentificacion))
+                    {
+                        continue;
+                    }
+
+                    if (EsColumnaMail(headerNormalizado) &&
+                        mailsConCompra.Contains(NormalizarTexto(respuestaIdentificacion)))
+                    {
+                        esClienteConCompra = true;
+                        break;
+                    }
+
+                    if (EsColumnaTelefono(headerNormalizado) &&
+                        telefonosConCompra.Contains(NormalizarNumero(respuestaIdentificacion)))
+                    {
+                        esClienteConCompra = true;
+                        break;
+                    }
+
+                    if (EsColumnaDni(headerNormalizado) &&
+                        dnisConCompra.Contains(NormalizarNumero(respuestaIdentificacion)))
+                    {
+                        esClienteConCompra = true;
+                        break;
+                    }
+
+                    if (EsColumnaIdPedido(headerNormalizado))
+                    {
+                        var respuestaNumerica = NormalizarNumero(respuestaIdentificacion);
+                        if (int.TryParse(respuestaNumerica, out var idPedido) &&
+                            idsPedidosConCompra.Contains(idPedido))
+                        {
+                            esClienteConCompra = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!esClienteConCompra)
+                {
+                    continue;
+                }
 
                 for (int i = 1; i < headers.Length; i++)
                 {
+                    if (indicesColumnasExcluir.Contains(i))
+                    {
+                        continue;
+                    }
+
                     var respuesta = csv.GetField(i)?.Trim();
                     if (string.IsNullOrWhiteSpace(respuesta))
                     {
@@ -644,6 +747,11 @@ namespace Back.Repositories
 
             for (int i = 1; i < headers.Length; i++)
             {
+                if (indicesColumnasExcluir.Contains(i))
+                {
+                    continue;
+                }
+
                 var pregunta = headers[i]?.Trim();
                 if (string.IsNullOrWhiteSpace(pregunta))
                 {
@@ -681,6 +789,76 @@ namespace Back.Repositories
                 TotalRespuestas = totalRespuestasFormulario,
                 Preguntas = preguntas
             };
+        }
+
+        private static bool EsColumnaIdentificacionCliente(string headerNormalizado)
+        {
+            return EsColumnaMail(headerNormalizado)
+                || EsColumnaTelefono(headerNormalizado)
+                || EsColumnaDni(headerNormalizado)
+                || EsColumnaIdPedido(headerNormalizado);
+        }
+
+        private static bool EsColumnaMail(string headerNormalizado)
+        {
+            return headerNormalizado.Contains("correo")
+                || headerNormalizado.Contains("email")
+                || headerNormalizado.Contains("mail");
+        }
+
+        private static bool EsColumnaTelefono(string headerNormalizado)
+        {
+            return headerNormalizado.Contains("telefono")
+                || headerNormalizado.Contains("celular")
+                || headerNormalizado.Contains("whatsapp");
+        }
+
+        private static bool EsColumnaDni(string headerNormalizado)
+        {
+            return headerNormalizado.Contains("dni")
+                || headerNormalizado.Contains("documento");
+        }
+
+        private static bool EsColumnaIdPedido(string headerNormalizado)
+        {
+            return (headerNormalizado.Contains("pedido") || headerNormalizado.Contains("orden"))
+                && (headerNormalizado.Contains("id") || headerNormalizado.Contains("numero"));
+        }
+
+        private static string NormalizarTexto(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                return string.Empty;
+            }
+
+            var normalizado = valor.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalizado.Length);
+
+            foreach (var ch in normalizado)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                {
+                    continue;
+                }
+
+                if (char.IsLetterOrDigit(ch))
+                {
+                    sb.Append(ch);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string NormalizarNumero(string? valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                return string.Empty;
+            }
+
+            return new string(valor.Where(char.IsDigit).ToArray());
         }
     }
 }

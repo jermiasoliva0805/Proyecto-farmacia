@@ -62,12 +62,11 @@ namespace Back.Repositories.Interfaces
         Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null,
-            int? idSucursal = null);
+            int? idZona = null);
 
         /// <summary>
         /// Obtiene el reporte consolidado de la encuesta de satisfacción desde Google Forms.
         /// </summary>
         Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync();
-            int? idZona = null);
     }
 }
