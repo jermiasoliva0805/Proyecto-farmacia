@@ -10,6 +10,7 @@ export interface UserDTO {
     email: string;
     rol: 'Encargado' | 'Operario' | 'Cadete';
     nombreSucursal: string;
+    zonaId?: number | null;  // Zona de reparto para cadetes
 }
 
 export interface AuthResponse {

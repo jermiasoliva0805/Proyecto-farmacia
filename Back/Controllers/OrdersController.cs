@@ -1,6 +1,8 @@
 using Back.DTOs;
 using Back.Services.Interfaces;
 using Back.Repositories.Interfaces;
+using Back.Data;
+using Back.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -20,19 +22,22 @@ namespace Back.Controllers
         private readonly IPedidoRepository _pedidoRepository;
         private readonly ICancellationService _cancellationService;
         private readonly IOrderService _orderService;
+        private readonly AppDbContext _context;
 
         public OrdersController(
             IOrderStatusService statusService,
             ITrackingService trackingService,
             IPedidoRepository pedidoRepository,
             ICancellationService cancellationService,
-            IOrderService orderService)
+            IOrderService orderService,
+            AppDbContext context)
         {
             _statusService = statusService;
             _trackingService = trackingService;
             _pedidoRepository = pedidoRepository;
             _cancellationService = cancellationService;
             _orderService = orderService;
+            _context = context;
         }
 
         // ==========================================
@@ -154,6 +159,58 @@ namespace Back.Controllers
                 return BadRequest(new { message = "No se pudo asignar el cadete. Verifique que el pedido esté listo." });
 
             return Ok(new { message = "Cadete asignado correctamente." });
+        }
+
+        // ==========================================
+        // SECCIÓN: FILTRADO DE CADETES POR ZONA
+        // ==========================================
+
+        /// <summary>
+        /// Obtiene todos los cadetes disponibles (activos) para una zona específica.
+        /// Filtra por la zona del pedido y cadetes que estén activos/disponibles.
+        /// </summary>
+        [Authorize]
+        [HttpGet("cadetes-disponibles/{pedidoId}")]
+        public IActionResult GetCadetesDisponibles(int pedidoId)
+        {
+            try
+            {
+                // 1. Obtener el pedido y su zona
+                var pedido = _context.Pedidos.FirstOrDefault(p => p.IDPedido == pedidoId);
+                if (pedido == null)
+                    return NotFound(new { message = $"El pedido con ID {pedidoId} no fue encontrado." });
+
+                // 2. Si el pedido no tiene zona asignada, devolver error
+                if (pedido.ZonaId == null)
+                    return BadRequest(new { message = "El pedido no tiene una zona de reparto asignada." });
+
+                // 3. Filtrar cadetes: que sean de la misma zona, estén activos y sean cadetes
+                var cadetesAptos = _context.Usuarios
+                    .Where(u => u.ZonaId == pedido.ZonaId && 
+                               u.IsDeleted == false &&
+                               (u.Rol == "Cadete" || u.Rol == "cadete")) // Flexible con mayúsculas/minúsculas
+                    .Select(u => new
+                    {
+                        u.IDUsuario,
+                        u.Nombre,
+                        u.Apellido,
+                        u.UsuarioNombre,
+                        u.Rol,
+                        u.Mail,
+                        u.ZonaId,
+                        RequiereAsignacionZona = u.ZonaId == null
+                    })
+                    .ToList();
+
+                if (!cadetesAptos.Any())
+                    return Ok(new List<object>()); // DevolvemosLista vacía si no hay cadetes disponibles
+
+                return Ok(cadetesAptos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener cadetes: {ex.Message}" });
+            }
         }
 
         // ==========================================

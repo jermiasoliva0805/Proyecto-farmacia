@@ -419,7 +419,7 @@ namespace Back.Services
                             nombreCliente,
                             estadoDescripcion,
                             pedido.IDPedido,
-                            5,                                  // Despachando
+                            9,                                  // Cancelado
                             "Farmacia General Paz",
                             "contacto@farmaciageneralpaz.com",
                             "FGP",

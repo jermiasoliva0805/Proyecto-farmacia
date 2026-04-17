@@ -1,11 +1,23 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 /**
- * IMPORTANTE: 
- * Según tu Program.cs y launchSettings.json, el puerto HTTPS es 7075.
- * Si usas Vite, puedes crear un archivo .env con VITE_API_BASE_URL=https://localhost:7075/api
+ * En Azure: Dos App Services separados, necesita URL completa del backend
+ * En desarrollo: Usa URL configurada o localhost
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isDev) {
+        return import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    }
+    
+    // En Azure: URL completa del backend (App Service separado)
+    // IMPORTANTE: Esto puede fallar por CORS si no está configurado en el backend
+    return 'https://farmaciaapi-fghpeqfzgjgqcxdq.chilecentral-01.azurewebsites.net/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+console.log('🔌 API Base URL:', API_BASE_URL);
 
 export const api = axios.create({
     baseURL: API_BASE_URL,

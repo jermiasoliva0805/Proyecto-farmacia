@@ -17,5 +17,8 @@ namespace Back.DTOs
 
         // Ref: Entidad Sucursal - "Permite segmentar la operación por ubicación".
         public string NombreSucursal { get; set; }
+        
+        // Zona de reparto (para cadetes)
+        public int? ZonaId { get; set; }
     }
 }

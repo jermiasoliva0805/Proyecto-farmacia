@@ -54,7 +54,8 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}"))
                 .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
-                .ForMember(dest => dest.NombreSucursal, opt => opt.MapFrom(src => src.Sucursal != null ? src.Sucursal.NombreSucursal : "Sin Sucursal"));
+                .ForMember(dest => dest.NombreSucursal, opt => opt.MapFrom(src => src.Sucursal != null ? src.Sucursal.NombreSucursal : "Sin Sucursal"))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
 
             // Mapeo de creación de usuarios (RegisterDTO -> Usuario)
             CreateMap<Back.DTOS.RegisterDTO, Usuario>()
@@ -64,7 +65,8 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Mail, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Contraseña, opt => opt.MapFrom(src => src.Contraseña))
                 .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
-                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal));
+                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
 
             // Mapeo de actualización de usuarios (UpdateUserDTO -> Usuario)
             CreateMap<UpdateUserDTO, Usuario>()
@@ -74,6 +76,7 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
                 .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
                 .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId)) // Sin condición: mapea siempre
                 .ForMember(dest => dest.Contraseña, opt => opt.Condition(src => src.Contraseña != null));
 
             // ==========================================================
@@ -110,6 +113,7 @@ namespace Back.Mappings
             // --- Mapeos de Creación de Pedidos ---
             CreateMap<CreateOrderDTO, Pedido>()
                 .ForMember(dest => dest.IDLocalidad, opt => opt.Ignore()) // Se obtiene del Cliente o del DTO
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId))
                 .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
             
             CreateMap<OrderDetailDTO, DetalleDePedido>();

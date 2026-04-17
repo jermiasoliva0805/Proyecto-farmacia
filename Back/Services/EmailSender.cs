@@ -1,8 +1,7 @@
-﻿using System.Net;
-using System.Net.Mail;
-using System.Threading.Tasks;
+﻿using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
-using System;
+using MimeKit;
 
 namespace Back.Services
 {
@@ -20,14 +19,14 @@ namespace Back.Services
         // Texto plano (compatibilidad)
         public async Task EnviarCorreoCambioEstado(string destinatario, string nombreCliente, string estadoPedido, int numeroPedido)
         {
-            var mail = new MailMessage
+            var mail = new MimeMessage();
+            mail.From.Add(new MailboxAddress("Farmacia General Paz", _smtpSettings.User));
+            mail.To.Add(MailboxAddress.Parse(destinatario));
+            mail.Subject = $"Estado de tu pedido #{numeroPedido}";
+            mail.Body = new TextPart("plain")
             {
-                From = new MailAddress(_smtpSettings.User, "Farmacia General Paz"),
-                Subject = $"Estado de tu pedido #{numeroPedido}",
-                Body = $"Hola {nombreCliente},\n\nEl estado de tu pedido #{numeroPedido} cambió a: {estadoPedido}.\n\n¡Gracias por confiar en nosotros!.",
-                IsBodyHtml = false
+                Text = $"Hola {nombreCliente},\n\nEl estado de tu pedido #{numeroPedido} cambió a: {estadoPedido}.\n\n¡Gracias por confiar en nosotros!."
             };
-            mail.To.Add(destinatario);
             await Send(mail);
         }
 
@@ -61,14 +60,11 @@ namespace Back.Services
             // Formato: "Estado del Pedido · Tu Pedido #JUANDIAZ-PAR-IBU-ASP-0002"
             var asunto = $"{estadoDescripcion} · Tu Pedido {codigoPersonalizado}";
 
-            var mail = new MailMessage
-            {
-                From = new MailAddress(_smtpSettings.User, brandName),
-                Subject = asunto,
-                Body = html,
-                IsBodyHtml = true
-            };
-            mail.To.Add(destinatario);
+            var mail = new MimeMessage();
+            mail.From.Add(new MailboxAddress(brandName, _smtpSettings.User));
+            mail.To.Add(MailboxAddress.Parse(destinatario));
+            mail.Subject = asunto;
+            mail.Body = new TextPart("html") { Text = html };
 
             await Send(mail);
         }
@@ -102,14 +98,11 @@ namespace Back.Services
                     ? _templates.GenerarCodigoPersonalizado(nombreCliente, nombresProductos, numeroPedido)
                     : $"#{numeroPedido:D6}";
 
-                var mail = new MailMessage
-                {
-                    From = new MailAddress(_smtpSettings.User, brandName),
-                    Subject = $"Pedido Recibido · Tu Pedido {codigoPersonalizado}",
-                    Body = html,
-                    IsBodyHtml = true
-                };
-                mail.To.Add(destinatario);
+                var mail = new MimeMessage();
+                mail.From.Add(new MailboxAddress(brandName, _smtpSettings.User));
+                mail.To.Add(MailboxAddress.Parse(destinatario));
+                mail.Subject = $"Pedido Recibido · Tu Pedido {codigoPersonalizado}";
+                mail.Body = new TextPart("html") { Text = html };
 
                 await Send(mail);
                 Console.WriteLine($"[EmailSender] Email de tracking enviado exitosamente a {destinatario} para el pedido #{numeroPedido}");
@@ -121,7 +114,7 @@ namespace Back.Services
             }
         }
 
-        private async Task Send(MailMessage mail)
+        private async Task Send(MimeMessage mail)
         {
             // Validar configuración SMTP
             if (string.IsNullOrWhiteSpace(_smtpSettings.Host))
@@ -136,24 +129,18 @@ namespace Back.Services
                 return;
             }
 
-            using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
-            {
-                EnableSsl = _smtpSettings.EnableSsl,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpSettings.User, _smtpSettings.Password),
-                Timeout = 20000 // 20 segundos timeout
-            };
-
             try
             {
                 Console.WriteLine($"[EmailSender] Enviando email a {string.Join(",", mail.To)} via {_smtpSettings.Host}:{_smtpSettings.Port}");
-                await client.SendMailAsync(mail);
+
+                using var client = new SmtpClient();
+                // SecureSocketOptions.StartTls fuerza STARTTLS en el puerto 587
+                await client.ConnectAsync(_smtpSettings.Host, _smtpSettings.Port, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(_smtpSettings.User, _smtpSettings.Password);
+                await client.SendAsync(mail);
+                await client.DisconnectAsync(true);
+
                 Console.WriteLine($"[EmailSender] ✅ Email enviado exitosamente a {string.Join(",", mail.To)}");
-            }
-            catch (SmtpException ex)
-            {
-                Console.WriteLine($"[EmailSender] ❌ Error SMTP ({ex.StatusCode}): {ex.Message}");
-                throw;
             }
             catch (Exception ex)
             {

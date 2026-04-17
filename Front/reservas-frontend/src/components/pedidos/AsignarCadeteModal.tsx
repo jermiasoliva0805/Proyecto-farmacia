@@ -8,6 +8,7 @@ import { usuariosService } from '../../service/usuariosService';
 import { pedidosService } from '../../service/PedidosService';
 import { UserDTO } from '../../types/auth.types';
 import { OrderSummaryDTO } from '../../types/pedido.types';
+import { useCadetesPorZona } from '../../hooks/useCadetesPorZona';
 
 interface AsignarCadeteModalProps {
     isOpen: boolean;
@@ -23,25 +24,18 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
     onSuccess,
 }) => {
     const { user } = useAuth();
-    const [cadetes, setCadetes] = useState<UserDTO[]>([]);
     const [selectedCadete, setSelectedCadete] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
 
-    useEffect(() => {
-        if (isOpen) {
-            loadCadetes();
-        }
-    }, [isOpen]);
+    // Hook personalizado para obtener cadetes disponibles por zona del pedido
+    const { cadetes, loading: loadingCadetes, error: errorCadetes } = useCadetesPorZona(
+        isOpen ? pedido.idPedido : null
+    );
 
-    const loadCadetes = async () => {
-        try {
-            const data = await usuariosService.getUsuariosByRol('Cadete');
-            setCadetes(data);
-        } catch (err) {
-            setError('Error al cargar la lista de cadetes');
-        }
-    };
+    useEffect(() => {
+        setError(errorCadetes || '');
+    }, [errorCadetes]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,17 +81,34 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
                     </div>
                 </div>
 
+                {/* Indicador de carga de cadetes */}
+                {loadingCadetes && (
+                    <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                )}
+
                 {/* Selección de Cadete */}
-                <Select
-                    label="Seleccionar Cadete"
-                    value={selectedCadete}
-                    onChange={(e) => setSelectedCadete(e.target.value)}
-                    options={cadetes.map(cadete => ({
-                        value: cadete.id.toString(),
-                        label: `${cadete.nombreCompleto} - ${cadete.nombreSucursal}`,
-                    }))}
-                    required
-                />
+                {!loadingCadetes && (
+                    <Select
+                        label="Seleccionar Cadete"
+                        value={selectedCadete}
+                        onChange={(e) => setSelectedCadete(e.target.value)}
+                        options={cadetes.map(cadete => ({
+                            value: cadete.idUsuario.toString(),
+                            label: `${cadete.nombre} ${cadete.apellido}`,
+                        }))}
+                        required
+                        disabled={cadetes.length === 0 || loadingCadetes}
+                    />
+                )}
+
+                {/* Mensaje si no hay cadetes disponibles */}
+                {!loadingCadetes && cadetes.length === 0 && (
+                    <Alert type="warning">
+                        No hay cadetes disponibles en la zona de este pedido.
+                    </Alert>
+                )}
 
                 {/* Botones */}
                 <div className="flex gap-3 justify-end pt-4">
@@ -105,7 +116,7 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
                         type="button"
                         variant="secondary"
                         onClick={onClose}
-                        disabled={loading}
+                        disabled={loading || loadingCadetes}
                     >
                         Cancelar
                     </Button>
@@ -113,6 +124,7 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
                         type="submit"
                         variant="success"
                         isLoading={loading}
+                        disabled={cadetes.length === 0 || !selectedCadete || loadingCadetes}
                     >
                         Asignar Cadete
                     </Button>

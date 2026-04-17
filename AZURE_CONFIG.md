@@ -205,6 +205,7 @@ Antes de profundizar, revisá estos puntos en orden:
    - Azure Portal → App Service → **Log stream**
    - Cambiá el estado de un pedido y buscá líneas `[EmailSender]`
 
+
 ### ContainerTimeout / La app no arranca
 
 El error `ContainerTimeout` aparece cuando Azure no puede verificar que la app esté respondiendo:
@@ -234,6 +235,7 @@ Solo aparecen logs de Docker/Kudu por defecto. Para ver logs de la aplicación:
 - Recargá la app: `az webapp restart -g farmacia-app -n farmaciaapi`
 
 ### Error: "Host SMTP no configurado" o emails silenciosos
+
 - Las variables `Smtp__*` no se cargaron
 - Verificá que usés `Smtp__Host` (NO `SMTP_HOST`)
 - En Azure Portal → Configuración → Configuración de la aplicación

@@ -26,6 +26,9 @@ namespace Back.Models
         public int IDEstadoDePedido { get; set; }
         public int IDUsuario { get; set; }
         public int IDSucursal { get; set; }
+        
+        // FK para Zona de reparto (zona donde se entrega el pedido)
+        public int? ZonaId { get; set; }
 
         // Nuevo: contador de intentos de entrega fallida
         public int IntentosEntregaFallida { get; set; } = 0;
@@ -39,6 +42,9 @@ namespace Back.Models
         public EstadoDePedido EstadoDePedido { get; set; } = null!;
         public Usuario Usuario { get; set; } = null!;
         public Sucursal Sucursal { get; set; } = null!;
+        
+        [ForeignKey("ZonaId")]
+        public Zona? Zona { get; set; } = null;
 
         public ICollection<DetalleDePedido> Detalles { get; set; } = new List<DetalleDePedido>();
         public ICollection<HistorialDeEstados> HistorialDeEstados { get; set; } = new List<HistorialDeEstados>();

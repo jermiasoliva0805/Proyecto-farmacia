@@ -19,6 +19,14 @@ namespace Back.Models
 
         [ForeignKey("IDSucursal")] // Esto vincula la propiedad IDSucursal con el objeto Sucursal
         public Sucursal Sucursal { get; set; } = null!;
+
+        // Relación con Zona (Para filtrado de cadetes por zona de reparto)
+        public int? ZonaId { get; set; }
+
+        [ForeignKey("ZonaId")]
+        public Zona? Zona { get; set; } = null;
+
+        // Propiedades de navegación
         public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
         public ICollection<IntentoDeEntrega> IntentosDeEntrega { get; set; } = new List<IntentoDeEntrega>();
     }
