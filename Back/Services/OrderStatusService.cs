@@ -67,6 +67,36 @@ namespace Back.Services
             return nombres;
         }
 
+        /// <summary>
+        /// Genera una URL pre-llenada de Google Forms para la encuesta de satisfacción
+        /// El email del cliente se pre-llena automáticamente en el formulario
+        /// </summary>
+        private string GenerarUrlEncuestaGoogle(string emailCliente)
+        {
+            try
+            {
+                // URL base de Google Forms
+                var baseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSd-5dZ-nXPZQki795XHgcZwZOVo-J0Q9H89MtuBDljFlMV0xg/viewform";
+                
+                // ID del campo de email en Google Forms
+                var emailFieldId = "entry.1385219541";
+                
+                // Escapear el email para que sea seguro en URL (espacios, caracteres especiales)
+                var emailEscapado = Uri.EscapeDataString(emailCliente);
+                
+                // Construir URL completa con parámetro pre-llenado
+                var urlCompleta = $"{baseUrl}?{emailFieldId}={emailEscapado}";
+                
+                Console.WriteLine($"[OrderStatusService] URL Encuesta generada para: {emailCliente}");
+                return urlCompleta;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error generando URL encuesta: {ex.Message}");
+                return null;
+            }
+        }
+
         // 1. ASIGNAR OPERARIO (encargado) - Pasa de Sin preparar (1) a Preparar pedido (2)
         public async Task<bool> AsignarOperarioAsync(AssignOperatorDTO dto)
         {
@@ -327,6 +357,13 @@ namespace Back.Services
                     pedido.IDCliente, 
                     pedido.IDPedido);
 
+                // ✅ NUEVO: Generar URL de encuesta SOLO si el estado es Entregado (7)
+                string urlEncuesta = null;
+                if (estadoFinal == 7 && !string.IsNullOrWhiteSpace(destinatario))
+                {
+                    urlEncuesta = GenerarUrlEncuestaGoogle(destinatario);
+                }
+
                 if (!string.IsNullOrWhiteSpace(destinatario))
                 {
                     try
@@ -346,7 +383,8 @@ namespace Back.Services
                             intentosMax: 3,
                             trackingUrl: trackingUrl,
                             etiquetaLogistica: etiquetaLogistica,
-                            nombresProductos: nombresProductos
+                            nombresProductos: nombresProductos,
+                            urlEncuesta: urlEncuesta  // ✅ NUEVO: Pasar URL de encuesta
                         );
                         Console.WriteLine($"[EmailSender] Email enviado correctamente al cliente: {destinatario}");
                     }
