@@ -114,7 +114,13 @@ export const ReporteFormasPago: React.FC = () => {
         value: item.cantidadOperaciones
     }));
 
-    const formaPrincipal = reporte.distribucionFormasPago[0];
+    const formaPrincipal = reporte.distribucionFormasPago.length > 0
+        ? reporte.distribucionFormasPago[0]
+        : null;
+    const formaPrincipalLabel = formaPrincipal?.formaDePago ?? '—';
+    const formaPrincipalSub = formaPrincipal
+        ? `${formaPrincipal.porcentaje.toFixed(1)}% del total`
+        : 'Sin datos';
 
     return (
         <div className="p-6 bg-[#f8f9fa] min-h-screen">
@@ -177,8 +183,8 @@ export const ReporteFormasPago: React.FC = () => {
                     />
                     <MetricCard
                         title="Forma principal"
-                        value={formaPrincipal ? formaPrincipal.formaDePago : '—'}
-                        sub={formaPrincipal ? `${formaPrincipal.porcentaje.toFixed(1)}% del total` : 'Sin datos'}
+                        value={formaPrincipalLabel}
+                        sub={formaPrincipalSub}
                         icon={<CreditCard className="text-purple-500" size={24} />}
                         color="text-purple-600"
                     />
