@@ -524,52 +524,76 @@ namespace Back.Repositories
         }
 
         public async Task<List<PedidosPorZonaDTO>> GetReportePedidosPorZonaAsync(
-    DateTime? fechaDesde = null,
-    DateTime? fechaHasta = null,
-    int? idZona = null)
-{
-    // Calcular fechas por defecto
-    var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
-    var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
-
-    var queryBase = _context.Pedidos
-        .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null)
-        .AsQueryable();
-
-    var totalPedidos = await queryBase.CountAsync();
-
-    if (totalPedidos == 0)
-        return new List<PedidosPorZonaDTO>();
-
-    // Filtrar por zona si se especifica
-    if (idZona.HasValue && idZona.Value > 0)
-    {
-        queryBase = queryBase.Where(p => p.ZonaId == idZona.Value);
-    }
-
-    var pedidos = await queryBase
-        .Include(p => p.Zona)
-        .ToListAsync();
-
-    if (idZona.HasValue && idZona.Value > 0 && pedidos.Count == 0)
-        return new List<PedidosPorZonaDTO>();
-
-    // Agrupar por zona
-    var reporte = pedidos
-        .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
-        .Select(g => new PedidosPorZonaDTO
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null,
+            int? idZona = null)
         {
-            ZonaId = g.Key.ZonaId ?? 0,
-            NombreZona = g.Key.Nombre,
-            CantidadPedidos = g.Count(),
-            Porcentaje = (g.Count() * 100.0m / totalPedidos),
-            TotalRecaudado = g.Sum(p => p.Total)
-        })
-        .OrderByDescending(r => r.CantidadPedidos)
-        .ToList();
+            // Calcular fechas por defecto
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
+            var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
 
-    return reporte;
-}
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Filtro: desde={desde:yyyy-MM-dd}, hasta={hasta:yyyy-MM-dd}, idZona={idZona}");
+
+            var queryBase = _context.Pedidos
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null)
+                .AsQueryable();
+
+            var totalPedidos = await queryBase.CountAsync();
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Total pedidos en rango (con zona): {totalPedidos}");
+
+            if (totalPedidos == 0)
+                return new List<PedidosPorZonaDTO>();
+
+            // Verificar cuántas zonas hay
+            var zonasConPedidos = await queryBase
+                .Select(p => new { p.ZonaId, p.Zona.Nombre })
+                .Distinct()
+                .ToListAsync();
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Zonas con pedidos: {zonasConPedidos.Count}");
+            foreach (var z in zonasConPedidos)
+            {
+                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.Nombre}");
+            }
+
+            // Filtrar por zona si se especifica
+            if (idZona.HasValue && idZona.Value > 0)
+            {
+                queryBase = queryBase.Where(p => p.ZonaId == idZona.Value);
+                var pedidosPorZona = await queryBase.CountAsync();
+                Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos para zona {idZona}: {pedidosPorZona}");
+            }
+
+            var pedidos = await queryBase
+                .Include(p => p.Zona)
+                .ToListAsync();
+
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos cargados después de filtros: {pedidos.Count}");
+
+            if (pedidos.Count == 0)
+                return new List<PedidosPorZonaDTO>();
+
+            // Agrupar por zona
+            var reporte = pedidos
+                .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
+                .Select(g => new PedidosPorZonaDTO
+                {
+                    ZonaId = g.Key.ZonaId ?? 0,
+                    NombreZona = g.Key.Nombre,
+                    CantidadPedidos = g.Count(),
+                    Porcentaje = (g.Count() * 100.0m / totalPedidos),
+                    TotalRecaudado = g.Sum(p => p.Total)
+                })
+                .OrderByDescending(r => r.CantidadPedidos)
+                .ToList();
+
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Reporte final: {reporte.Count} zonas");
+            foreach (var r in reporte)
+            {
+                Console.WriteLine($"  - {r.NombreZona}: {r.CantidadPedidos} pedidos ({r.Porcentaje:F1}%)");
+            }
+
+            return reporte;
+        }
 
         public async Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync()
         {
