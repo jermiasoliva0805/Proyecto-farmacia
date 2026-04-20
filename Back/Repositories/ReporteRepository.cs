@@ -535,24 +535,25 @@ namespace Back.Repositories
             Console.WriteLine($"[GetReportePedidosPorZonaAsync] Filtro: desde={desde:yyyy-MM-dd}, hasta={hasta:yyyy-MM-dd}, idZona={idZona}");
 
             var queryBase = _context.Pedidos
-                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
             var totalPedidos = await queryBase.CountAsync();
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Total pedidos en rango (con zona): {totalPedidos}");
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Total pedidos en rango: {totalPedidos}");
 
             if (totalPedidos == 0)
                 return new List<PedidosPorZonaDTO>();
 
             // Verificar cuántas zonas hay
             var zonasConPedidos = await queryBase
-                .Select(p => new { p.ZonaId, p.Zona.Nombre })
+                .Include(p => p.Zona)
+                .Select(p => new { p.ZonaId, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
                 .Distinct()
                 .ToListAsync();
             Console.WriteLine($"[GetReportePedidosPorZonaAsync] Zonas con pedidos: {zonasConPedidos.Count}");
             foreach (var z in zonasConPedidos)
             {
-                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.Nombre}");
+                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.NombreZona}");
             }
 
             // Filtrar por zona si se especifica
@@ -574,11 +575,11 @@ namespace Back.Repositories
 
             // Agrupar por zona
             var reporte = pedidos
-                .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
+                .GroupBy(p => new { p.ZonaId, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
                 .Select(g => new PedidosPorZonaDTO
                 {
                     ZonaId = g.Key.ZonaId ?? 0,
-                    NombreZona = g.Key.Nombre,
+                    NombreZona = g.Key.NombreZona,
                     CantidadPedidos = g.Count(),
                     Porcentaje = (g.Count() * 100.0m / totalPedidos),
                     TotalRecaudado = g.Sum(p => p.Total)
