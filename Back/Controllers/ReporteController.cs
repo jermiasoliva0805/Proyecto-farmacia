@@ -239,15 +239,16 @@ namespace Back.Controllers
                 Console.WriteLine($"\n[DEBUG PEDIDOS] Rango: {desde:yyyy-MM-dd} a {hasta:yyyy-MM-dd}");
                 Console.WriteLine($"[DEBUG PEDIDOS] Total de pedidos: {pedidos.Count}");
 
-                var agrupadosPorZona = new Dictionary<int?, List<dynamic>>();
+                var agrupadosPorZona = new Dictionary<string, List<dynamic>>();
                 
                 foreach (var pedido in pedidos)
                 {
-                    if (!agrupadosPorZona.ContainsKey(pedido.ZonaId))
+                    string clave = pedido.ZonaId?.ToString() ?? "NULL";
+                    if (!agrupadosPorZona.ContainsKey(clave))
                     {
-                        agrupadosPorZona[pedido.ZonaId] = new List<dynamic>();
+                        agrupadosPorZona[clave] = new List<dynamic>();
                     }
-                    agrupadosPorZona[pedido.ZonaId].Add(pedido);
+                    agrupadosPorZona[clave].Add(pedido);
                 }
                 
                 Console.WriteLine($"[DEBUG PEDIDOS] Agrupado por ZonaId:");
