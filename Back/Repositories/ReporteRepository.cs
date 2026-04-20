@@ -666,22 +666,35 @@ namespace Back.Repositories
 
             // Filtrar solo los que fueron entregados después de la fecha estimada
             var pedidosFueraDeplazo = pedidosEntregados
-                .Where(p => p.FechaEntregaReal.HasValue && 
-                           p.FechaEntregaReal.Value > p.FechaEntregaEstimada)
+                .Where(p => {
+                    // Si FechaEntregaEstimada no fue calculada (pedidos antiguos), calcularla ahora
+                    var fechaEstimada = (p.FechaEntregaEstimada == DateTime.MinValue) 
+                        ? DateTimeHelper.CalcularFechaEntregaEstimada(p.Fecha)
+                        : p.FechaEntregaEstimada;
+                    
+                    return p.FechaEntregaReal.HasValue && p.FechaEntregaReal.Value > fechaEstimada;
+                })
                 .ToList();
 
             // Construir los detalles
             var detalles = pedidosFueraDeplazo
-                .Select(p => new DetallePedidoFueraDeplazo
-                {
-                    IDPedido = p.IDPedido,
-                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
-                    NombreCadete = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
-                    FechaCreacion = p.Fecha,
-                    FechaEstimada = p.FechaEntregaEstimada,
-                    FechaEntrega = p.FechaEntregaReal ?? DateTime.Now,
-                    RetrasoDías = DateTimeHelper.CalcularDiasHabilesDiferencia(p.FechaEntregaEstimada, p.FechaEntregaReal ?? DateTime.Now),
-                    IntentosEntregaFallida = p.IntentosEntregaFallida
+                .Select(p => {
+                    // Si FechaEntregaEstimada no fue calculada (pedidos antiguos), calcularla ahora
+                    var fechaEstimada = (p.FechaEntregaEstimada == DateTime.MinValue) 
+                        ? DateTimeHelper.CalcularFechaEntregaEstimada(p.Fecha)
+                        : p.FechaEntregaEstimada;
+                    
+                    return new DetallePedidoFueraDeplazo
+                    {
+                        IDPedido = p.IDPedido,
+                        ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
+                        NombreCadete = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                        FechaCreacion = p.Fecha,
+                        FechaEstimada = fechaEstimada,
+                        FechaEntrega = p.FechaEntregaReal ?? DateTime.Now,
+                        RetrasoDías = DateTimeHelper.CalcularDiasHabilesDiferencia(fechaEstimada, p.FechaEntregaReal ?? DateTime.Now),
+                        IntentosEntregaFallida = p.IntentosEntregaFallida
+                    };
                 })
                 .OrderByDescending(d => d.RetrasoDías) // Ordenar por mayor retraso
                 .ToList();
