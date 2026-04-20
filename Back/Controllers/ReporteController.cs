@@ -239,7 +239,16 @@ namespace Back.Controllers
                 Console.WriteLine($"\n[DEBUG PEDIDOS] Rango: {desde:yyyy-MM-dd} a {hasta:yyyy-MM-dd}");
                 Console.WriteLine($"[DEBUG PEDIDOS] Total de pedidos: {pedidos.Count}");
 
-                var agrupadosPorZona = pedidos.GroupBy(p => p.ZonaId).ToDictionary(g => g.Key, g => g.ToList());
+                var agrupadosPorZona = new Dictionary<int?, List<dynamic>>();
+                
+                foreach (var pedido in pedidos)
+                {
+                    if (!agrupadosPorZona.ContainsKey(pedido.ZonaId))
+                    {
+                        agrupadosPorZona[pedido.ZonaId] = new List<dynamic>();
+                    }
+                    agrupadosPorZona[pedido.ZonaId].Add(pedido);
+                }
                 
                 Console.WriteLine($"[DEBUG PEDIDOS] Agrupado por ZonaId:");
                 foreach (var grupo in agrupadosPorZona)
@@ -247,7 +256,7 @@ namespace Back.Controllers
                     Console.WriteLine($"  ZonaId {grupo.Key}: {grupo.Value.Count} pedidos");
                 }
 
-                return Ok(new
+                var resultado = new
                 {
                     fechaDesde = desde.ToString("yyyy-MM-dd"),
                     fechaHasta = hasta.ToString("yyyy-MM-dd"),
@@ -259,11 +268,15 @@ namespace Back.Controllers
                         pedidos = g.Value
                     }).ToList(),
                     detallePedidos = pedidos
-                });
+                };
+
+                return Ok(resultado);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = "Error al obtener debug", error = ex.Message });
+                Console.WriteLine($"[DEBUG ERROR] {ex.Message}");
+                Console.WriteLine($"[DEBUG ERROR] {ex.StackTrace}");
+                return BadRequest(new { message = "Error al obtener debug", error = ex.Message, stackTrace = ex.StackTrace });
             }
         }
 
