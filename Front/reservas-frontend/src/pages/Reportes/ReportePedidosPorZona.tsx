@@ -53,6 +53,10 @@ export const ReportePedidosPorZona = () => {
                 
                 const data = await response.json();
                 console.log('[GetZonas] Zonas cargadas:', data);
+                console.log(`[GetZonas] Total de zonas: ${data.length}`);
+                data.forEach((z: any, index: number) => {
+                    console.log(`  [Zona ${index + 1}] ID: ${z.id}, Nombre: ${z.nombre}`);
+                });
                 setZonas(data || []);
             } catch (error) {
                 console.error('❌ Error al cargar zonas:', error);
@@ -68,10 +72,33 @@ export const ReportePedidosPorZona = () => {
             
             try {
                 setLoading(true);
+                console.log(`\n📊 [REPORTE] Solicitando datos...`);
+                console.log(`  Desde: ${fechaDesde}`);
+                console.log(`  Hasta: ${fechaHasta}`);
+                console.log(`  Zona: ${idZona === null ? 'Todas' : idZona}`);
+                console.log(`  URL: ${import.meta.env.VITE_API_BASE_URL}/reporte/pedidos-por-zona?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}&idZona=${idZona}`);
+                
                 const res = await getPedidosPorZona(fechaDesde, fechaHasta, idZona);
+                
+                console.log(`\n✅ [REPORTE] Respuesta recibida:`);
+                console.log(`  Total de zonas en respuesta: ${res ? res.length : 0}`);
+                
+                if (res && res.length > 0) {
+                    console.log(`\n📋 [REPORTE] Detalles por zona:`);
+                    res.forEach((zona, index) => {
+                        console.log(`  [${index + 1}] ${zona.nombreZona}`);
+                        console.log(`      - Cantidad de Pedidos: ${zona.cantidadPedidos}`);
+                        console.log(`      - Porcentaje: ${zona.porcentaje.toFixed(2)}%`);
+                        console.log(`      - Total Recaudado: $${zona.totalRecaudado.toLocaleString('es-AR')}`);
+                    });
+                } else {
+                    console.log(`⚠️ [REPORTE] No hay datos para mostrar`);
+                }
+                
                 setDatos(res || []);
             } catch (error) {
-                console.error("Error al cargar pedidos por zona:", error);
+                console.error("❌ [REPORTE] Error al cargar pedidos por zona:", error);
+                console.error("Detalles del error:", error instanceof Error ? error.message : String(error));
             } finally {
                 setLoading(false);
             }
