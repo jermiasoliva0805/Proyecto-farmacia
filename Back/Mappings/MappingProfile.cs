@@ -1,7 +1,8 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Back.DTOs;
-using Back.DTOS;
 using Back.Models;
+using Back.DTOS;
+using Proyecto_farmacia.DTOs;
 
 namespace Back.Mappings
 {
@@ -42,7 +43,8 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Teléfono));
 
             // --- Mapeos de Creación de Pedidos ---
-            CreateMap<CreateOrderDTO, Pedido>();
+            CreateMap<CreateOrderDTO, Pedido>()
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
             CreateMap<OrderDetailDTO, DetalleDePedido>();
 
             // ==========================================================
@@ -64,81 +66,7 @@ namespace Back.Mappings
                 .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.UsuarioNombre))
                 .ForMember(dest => dest.Mail, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Contraseña, opt => opt.MapFrom(src => src.Contraseña))
-                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
-                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal))
-                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
-
-            // Mapeo de actualización de usuarios (UpdateUserDTO -> Usuario)
-            CreateMap<UpdateUserDTO, Usuario>()
-                .ForMember(dest => dest.Nombre, opt => opt.Condition(src => src.Nombre != null))
-                .ForMember(dest => dest.Apellido, opt => opt.Condition(src => src.Apellido != null))
-                .ForMember(dest => dest.UsuarioNombre, opt => opt.Condition(src => src.UsuarioNombre != null))
-                .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
-                .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
-                .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
-                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId)) // Sin condición: mapea siempre
-                .ForMember(dest => dest.Contraseña, opt => opt.Condition(src => src.Contraseña != null));
-
-            // ==========================================================
-            //       SECCIÓN DE PEDIDOS Y TRACKING
-            // ==========================================================
-            CreateMap<ChangeOrderStatusDTO, HistorialDeEstados>()
-                .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
-                .ForMember(dest => dest.IDEstadoDePedido, opt => opt.MapFrom(src => src.IDNuevoEstado))
-                .ForMember(dest => dest.IDUsuario, opt => opt.MapFrom(src => src.IDUsuario))
-                .ForMember(dest => dest.fecha_hora_inicio, opt => opt.MapFrom(src => DateTime.UtcNow));
-
-            // --- Tracking principal ---
-            CreateMap<Pedido, OrderTrackingDTO>()
-                .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
-                .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
-                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => ConvertToArgentinaTime(src.HistorialDeEstados.Max(h => h.fecha_hora_inicio))))
-                .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.HistorialDeEstados));
-
-            // --- Items del historial ---
-            CreateMap<HistorialDeEstados, TrackingHistoryItemDTO>()
-                .ForMember(dest => dest.NombreEstado, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado))
-                .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => ConvertToArgentinaTime(src.fecha_hora_inicio)))
-                .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src => src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}" : "Sistema"))
-                .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
-                .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src => src.EstadoDePedido.motivo_cancelacion))
-                .ForMember(dest => dest.IntentosEntregaFallida, opt => opt.MapFrom(src => src.IntentosEntregaFallida))
-                .ForMember(dest => dest.IntentosMax, opt => opt.MapFrom(src => src.IntentosMax));
-
-            // --- Resumen ---
-            CreateMap<Pedido, OrderSummaryDTO>()
-                .ForMember(dest => dest.IDEstadoDePedido, opt => opt.MapFrom(src => src.IDEstadoDePedido))
-                .ForMember(dest => dest.EstadoNombre, opt => opt.MapFrom(src => src.EstadoDePedido.NombreEstado));
-
-            // --- Mapeos de Creación de Pedidos ---
-            CreateMap<CreateOrderDTO, Pedido>()
-                .ForMember(dest => dest.IDLocalidad, opt => opt.Ignore()) // Se obtiene del Cliente o del DTO
-                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId))
-                .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
-            
-            CreateMap<OrderDetailDTO, DetalleDePedido>();
-        }
-
-        // Método para convertir fechas UTC a hora de Argentina (UTC-3 / UTC-2)
-        private DateTime ConvertToArgentinaTime(DateTime utcTime)
-        {
-            try
-            {
-                // Asegurar que la fecha sea tratada como UTC
-                if (utcTime.Kind != DateTimeKind.Utc)
-                {
-                    utcTime = DateTime.SpecifyKind(utcTime, DateTimeKind.Utc);
-                }
-                
-                // Argentina Standard Time es el identificador de la zona horaria
-                TimeZoneInfo argentinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
-                return TimeZoneInfo.ConvertTimeFromUtc(utcTime, argentinaTimeZone);
-            }
-            catch
-            {
-                // Fallback: si "Argentina Standard Time" no existe, restar 3 horas directamente
-                return utcTime.AddHours(-3);
-            }
+                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol));
         }
     }
 }
