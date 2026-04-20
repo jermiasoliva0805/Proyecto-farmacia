@@ -714,9 +714,9 @@ namespace Back.Repositories
 
             var resultado = pedidosDemorados.Select(p => new OrderSummaryDTO
             {
-                IdPedido = p.IDPedido,
+                IDPedido = p.IDPedido,
                 ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
-                EstadoNombre = p.Estado?.Descripcion ?? "Desconocido",
+                EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido",
                 Total = p.Total,
                 Fecha = p.Fecha,
                 EstaDemorado = true, // Indicar que está demorado
