@@ -3,6 +3,7 @@ using Back.Services.Interfaces;
 using Back.Repositories.Interfaces;
 using Back.Models;
 using Microsoft.Extensions.Configuration;
+using AutoMapper;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
