@@ -42,8 +42,8 @@ namespace Back.Repositories
 
             var query = _context.Pedidos
                 .Include(p => p.Usuario)
-                .Where(p => p.Usuario != null && p.Usuario.Rol == "Cadete") // Filtrar solo cadetes
-                .Where(p => p.Usuario != null && !p.Usuario.IsDeleted) // Excluir usuarios eliminados (soft delete)
+                .Where(p => p.Usuario != null && p.Usuario.Rol == "Cadete")
+                .Where(p => p.Usuario != null && !p.Usuario.IsDeleted)
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
                 .AsQueryable();
 
@@ -143,44 +143,35 @@ namespace Back.Repositories
         {
             const int ID_ESTADO_CANCELADO = 9;
 
-            // Establecer fechas por defecto si no se proporcionan
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
 
-            // Asegurar que 'hasta' incluya todo el día (23:59:59)
             hasta = hasta.AddDays(1).AddSeconds(-1);
 
-            // Obtener todos los pedidos creados en el rango
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
-            // Obtener pedidos cancelados AUTOMÁTICAMENTE (3 intentos fallidos - NO tienen motivo)
             var queryCancelados = _context.Pedidos
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
-                .Where(p => p.MotivoCancelacionId == null)  // Sin motivo = auto-cancelado
+                .Where(p => p.MotivoCancelacionId == null)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
-            // Aplicar filtro de sucursal si es necesario
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
                 queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            // Contar totales
             var totalPedidos = await queryTodosPedidos.CountAsync();
             var pedidosCancelados = await queryCancelados.ToListAsync();
             var totalCancelados = pedidosCancelados.Count;
 
-            // Calcular porcentaje
             var porcentaje = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
 
-            // Suma del monto total cancelado
             var montoTotal = pedidosCancelados.Sum(p => p.Total);
 
-            // Reporte simple sin motivos (estos no tienen motivos)
             var detallesPorMotivo = new List<DetalleCancelacionDTO>();
 
             return new ReportePedidosCanceladosDTO
@@ -199,27 +190,22 @@ namespace Back.Repositories
         {
             const int ID_ESTADO_CANCELADO = 9;
 
-            // Establecer fechas por defecto
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
 
-            // Asegurar que 'hasta' incluya todo el día (23:59:59)
             hasta = hasta.AddDays(1).AddSeconds(-1);
 
-            // Obtener todos los pedidos creados en el rango
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
-            // Obtener pedidos cancelados MANUALMENTE por el admin (tienen motivo explícito asignado)
             var queryCancelados = _context.Pedidos
                 .Include(p => p.MotivoCancelacion)
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
-                .Where(p => p.MotivoCancelacionId != null)  // Solo cancelaciones manuales
+                .Where(p => p.MotivoCancelacionId != null)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
 
-            // Aplicar filtro de sucursal
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
@@ -233,13 +219,11 @@ namespace Back.Repositories
             var porcentajeCancelacion = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
             var ingresosPerdidos = pedidosCancelados.Sum(p => p.Total);
 
-            // Obtener principal motivo
             var principalMotivo = pedidosCancelados
                 .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .OrderByDescending(g => g.Count())
                 .FirstOrDefault()?.Key ?? "N/A";
 
-            // Detalles por motivo
             var detalleMotivos = pedidosCancelados
                 .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .Select(g => new CancelacionPorMotivoDTO
@@ -265,28 +249,23 @@ namespace Back.Repositories
 
         public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
         {
-            // Regla de Negocio: Contar todos los productos de pedidos NO cancelados
             const int ID_ESTADO_CANCELADO = 9;
             
-            // Calcular la fecha desde la cual filtrar
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
 
             var query = _context.Pedidos
                 .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
-                .Where(p => p.IDEstadoDePedido != ID_ESTADO_CANCELADO) // Excluir solo cancelados
-                .Where(p => p.Fecha >= fechaDesde); // Filtro de fecha
+                .Where(p => p.IDEstadoDePedido != ID_ESTADO_CANCELADO)
+                .Where(p => p.Fecha >= fechaDesde);
 
-            // Agregar filtro de sucursal si viene especificado
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            // Obtener todos los pedidos relevantes
             var pedidos = await query.ToListAsync();
 
-            // Procesar: agrupar detalles por producto e calcular estadísticas
             var totalUnidades = pedidos
                 .SelectMany(p => p.Detalles)
                 .Sum(d => d.Cantidad);
@@ -311,22 +290,18 @@ namespace Back.Repositories
 
         public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null)
         {
-            // Calcular la fecha desde la cual filtrar
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
 
-            // Obtener todos los pedidos en el rango con su historial de estados y relaciones
             var query = _context.Pedidos
                 .Include(p => p.HistorialDeEstados)
                     .ThenInclude(h => h.EstadoDePedido)
                 .Where(p => p.Fecha >= fechaDesde);
 
-            // Agregar filtro de sucursal si viene especificado
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
             }
 
-            // Agregar filtro de estado si viene especificado
             if (idEstado.HasValue && idEstado.Value > 0)
             {
                 Console.WriteLine($"[REPO DEBUG] Aplicando filtro de estado: {idEstado.Value}");
@@ -337,7 +312,6 @@ namespace Back.Repositories
 
             Console.WriteLine($"[REPO DEBUG] TiemposProceso - Total pedidos cargados: {pedidos.Count}");
 
-            // Calcular tiempos por fase para cada pedido
             var detalles = new List<DetalleTiempoProcesoDTO>();
             var tiemposPorFase = new Dictionary<string, List<double>>
             {
@@ -367,14 +341,12 @@ namespace Back.Repositories
                     Console.WriteLine($"  ⚠️ HISTORIAL VACÍO para pedido #{pedido.IDPedido}");
                 }
 
-                // Encontrar transiciones entre estados
                 var estado1 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 1);
                 var estado2 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 2);
                 var estado4 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 4);
                 var estado6 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 6);
                 var estado7 = historial.FirstOrDefault(h => h.IDEstadoDePedido == 7);
 
-                // Calcular tiempos de cada fase
                 double espera = 0;
                 double preparacion = 0;
                 double despacho = 0;
@@ -408,12 +380,10 @@ namespace Back.Repositories
                     Console.WriteLine($"  ✓ Viaje: {viaje:F2} min");
                 }
 
-                // Determinar el estado final
                 var estadoFinal = historial.Count > 0 
                     ? (historial.Last().EstadoDePedido?.NombreEstado ?? "Desconocido") 
                     : "Sin historial";
 
-                // Agregar a detalles
                 detalles.Add(new DetalleTiempoProcesoDTO
                 {
                     IdPedido = pedido.IDPedido,
@@ -422,43 +392,40 @@ namespace Back.Repositories
                     Despacho = despacho,
                     Viaje = viaje,
                     EstadoFinal = estadoFinal,
-                    EsAlertaDespacho = despacho > 60 // Alerta si despacho > 60 minutos
+                    EsAlertaDespacho = despacho > 60
                 });
             }
 
-            // Calcular promedios por fase
             var fases = new List<FaseProcesoDTO>
             {
                 new FaseProcesoDTO
                 {
                     Nombre = "Espera",
                     TiempoPromedio = tiemposPorFase["Espera"].Count > 0 ? tiemposPorFase["Espera"].Average() : 0,
-                    Color = "#6366f1" // Indigo
+                    Color = "#6366f1"
                 },
                 new FaseProcesoDTO
                 {
                     Nombre = "Preparación",
                     TiempoPromedio = tiemposPorFase["Preparación"].Count > 0 ? tiemposPorFase["Preparación"].Average() : 0,
-                    Color = "#8b5cf6" // Violet
+                    Color = "#8b5cf6"
                 },
                 new FaseProcesoDTO
                 {
                     Nombre = "Despacho",
                     TiempoPromedio = tiemposPorFase["Despacho"].Count > 0 ? tiemposPorFase["Despacho"].Average() : 0,
-                    Color = "#a78bfa" // Lilac
+                    Color = "#a78bfa"
                 },
                 new FaseProcesoDTO
                 {
                     Nombre = "Viaje",
                     TiempoPromedio = tiemposPorFase["Viaje"].Count > 0 ? tiemposPorFase["Viaje"].Average() : 0,
-                    Color = "#c4b5fd" // Light Violet
+                    Color = "#c4b5fd"
                 }
             };
 
-            // Determinar punto crítico (la fase con mayor tiempo promedio)
             var puntoCritico = fases.OrderByDescending(f => f.TiempoPromedio).First();
 
-            // Calcular eficiencia de despacho (% de pedidos con despacho < 30 min)
             var eficienciaDespacho = detalles.Count > 0
                 ? (int)Math.Round((detalles.Count(d => d.Despacho < 30 && d.Despacho > 0) * 100.0) / detalles.Count)
                 : 0;
@@ -481,17 +448,14 @@ namespace Back.Repositories
             DateTime? fechaHasta = null,
             int? idSucursal = null)
         {
-            // Calcular rangos de fecha
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
             var hastaAjustado = hasta.AddDays(1).AddSeconds(-1);
 
-            // Construir query base
             var query = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hastaAjustado)
                 .AsQueryable();
 
-            // Aplicar filtro de sucursal si está especificado
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 query = query.Where(p => p.IDSucursal == idSucursal.Value);
@@ -499,11 +463,9 @@ namespace Back.Repositories
 
             var pedidos = await query.ToListAsync();
 
-            // Calcular totales
             var totalOperaciones = pedidos.Count;
             var totalMonto = pedidos.Sum(p => p.Total);
 
-            // Agrupar por forma de pago y calcular estadísticas
             var distribucion = pedidos
                 .GroupBy(p => p.FormaDePago)
                 .Select(g => new DetalleFormaPagoDTO
@@ -529,69 +491,45 @@ namespace Back.Repositories
             DateTime? fechaHasta = null,
             int? idZona = null)
         {
-            // Calcular fechas por defecto
             var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
             var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
 
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Filtro: desde={desde:yyyy-MM-dd}, hasta={hasta:yyyy-MM-dd}, idZona={idZona}");
-
-            var queryBase = _context.Pedidos
-                .Where(p => p.Fecha >= desde && p.Fecha <= hasta && p.Zona != null)
-                .AsQueryable();
-
-            var totalPedidos = await queryBase.CountAsync();
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Total pedidos en rango (con zona): {totalPedidos}");
-
-            if (totalPedidos == 0)
-                return new List<PedidosPorZonaDTO>();
-
-            // Verificar cuántas zonas hay
-            var zonasConPedidos = await queryBase
-                .Select(p => new { p.ZonaId, p.Zona.Nombre })
-                .Distinct()
+            var pedidosConZona = await _context.Pedidos
+                .Include(p => p.Zona)
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .ToListAsync();
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Zonas con pedidos: {zonasConPedidos.Count}");
-            foreach (var z in zonasConPedidos)
-            {
-                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.Nombre}");
-            }
 
-            // Filtrar por zona si se especifica
             if (idZona.HasValue && idZona.Value > 0)
             {
-                queryBase = queryBase.Where(p => p.ZonaId == idZona.Value);
-                var pedidosPorZona = await queryBase.CountAsync();
-                Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos para zona {idZona}: {pedidosPorZona}");
+                pedidosConZona = pedidosConZona.Where(p => p.ZonaId == idZona.Value).ToList();
             }
 
-            var pedidos = await queryBase
-                .Include(p => p.Zona)
-                .ToListAsync();
-
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos cargados después de filtros: {pedidos.Count}");
-
-            if (pedidos.Count == 0)
+            if (!pedidosConZona.Any())
                 return new List<PedidosPorZonaDTO>();
 
-            // Agrupar por zona
-            var reporte = pedidos
-                .GroupBy(p => new { p.ZonaId, p.Zona.Nombre })
+            foreach (var pedido in pedidosConZona)
+            {
+                var zonaId = pedido.ZonaId.HasValue ? pedido.ZonaId.Value.ToString() : "NULL";
+                var zonaNombre = pedido.Zona != null ? pedido.Zona.Nombre : "(sin zona)";
+                Console.WriteLine($"Pedido {pedido.IDPedido} - ZonaId: {zonaId}, Zona.Nombre: {zonaNombre}");
+            }
+
+            // FIX: agrupar por valores escalares (ZonaId y NombreZona) en lugar del objeto Zona
+            var reporte = pedidosConZona
+                .GroupBy(p => new {
+                    ZonaId = p.ZonaId ?? 0,
+                    NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA"
+                })
                 .Select(g => new PedidosPorZonaDTO
                 {
-                    ZonaId = g.Key.ZonaId ?? 0,
-                    NombreZona = g.Key.Nombre,
+                    ZonaId = g.Key.ZonaId,
+                    NombreZona = g.Key.NombreZona,
                     CantidadPedidos = g.Count(),
-                    Porcentaje = (g.Count() * 100.0m / totalPedidos),
+                    Porcentaje = (g.Count() * 100.0m / pedidosConZona.Count),
                     TotalRecaudado = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
                 .ToList();
-
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Reporte final: {reporte.Count} zonas");
-            foreach (var r in reporte)
-            {
-                Console.WriteLine($"  - {r.NombreZona}: {r.CantidadPedidos} pedidos ({r.Porcentaje:F1}%)");
-            }
 
             return reporte;
         }

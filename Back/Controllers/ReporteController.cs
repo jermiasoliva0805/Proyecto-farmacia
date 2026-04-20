@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Proyecto_farmacia.DTOs;
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Back.Data;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Back.Controllers
 {
@@ -12,10 +16,12 @@ namespace Back.Controllers
     public class ReporteController : ControllerBase
     {
         private readonly IReporteRepository _reporteRepository;
+        private readonly AppDbContext _context;
 
-        public ReporteController(IReporteRepository reporteRepository)
+        public ReporteController(IReporteRepository reporteRepository, AppDbContext context)
         {
             _reporteRepository = reporteRepository;
+            _context = context;
         }
 
         [HttpGet("entregas-cadete")]
@@ -202,6 +208,76 @@ namespace Back.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error al obtener el reporte de pedidos por zona", error = ex.Message });
+            }
+        }
+
+        [HttpGet("debug-pedidos-por-zona")]
+        public async Task<IActionResult> GetDebugPedidosPorZona(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null)
+        {
+            try
+            {
+                var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
+                var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
+
+                var pedidos = await _context.Pedidos
+                    .Include(p => p.Zona)
+                    .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                    .OrderBy(p => p.ZonaId)
+                    .ThenByDescending(p => p.Fecha)
+                    .Select(p => new
+                    {
+                        p.IDPedido,
+                        p.ZonaId,
+                        NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA",
+                        p.Fecha,
+                        p.Total
+                    })
+                    .ToListAsync();
+
+                Console.WriteLine($"\n[DEBUG PEDIDOS] Rango: {desde:yyyy-MM-dd} a {hasta:yyyy-MM-dd}");
+                Console.WriteLine($"[DEBUG PEDIDOS] Total de pedidos: {pedidos.Count}");
+
+                var agrupadosPorZona = new Dictionary<string, List<dynamic>>();
+                
+                foreach (var pedido in pedidos)
+                {
+                    string clave = pedido.ZonaId?.ToString() ?? "NULL";
+                    if (!agrupadosPorZona.ContainsKey(clave))
+                    {
+                        agrupadosPorZona[clave] = new List<dynamic>();
+                    }
+                    agrupadosPorZona[clave].Add(pedido);
+                }
+                
+                Console.WriteLine($"[DEBUG PEDIDOS] Agrupado por ZonaId:");
+                foreach (var grupo in agrupadosPorZona)
+                {
+                    Console.WriteLine($"  ZonaId {grupo.Key}: {grupo.Value.Count} pedidos");
+                }
+
+                var resultado = new
+                {
+                    fechaDesde = desde.ToString("yyyy-MM-dd"),
+                    fechaHasta = hasta.ToString("yyyy-MM-dd"),
+                    totalPedidos = pedidos.Count,
+                    agrupadoPorZona = agrupadosPorZona.Select(g => new
+                    {
+                        zonaId = g.Key,
+                        cantidad = g.Value.Count,
+                        pedidos = g.Value
+                    }).ToList(),
+                    detallePedidos = pedidos
+                };
+
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG ERROR] {ex.Message}");
+                Console.WriteLine($"[DEBUG ERROR] {ex.StackTrace}");
+                return BadRequest(new { message = "Error al obtener debug", error = ex.Message, stackTrace = ex.StackTrace });
             }
         }
 

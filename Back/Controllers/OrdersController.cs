@@ -5,6 +5,7 @@ using Back.Data;
 using Back.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
@@ -211,6 +212,40 @@ namespace Back.Controllers
             {
                 return StatusCode(500, new { message = $"Error al obtener cadetes: {ex.Message}" });
             }
+        }
+
+        // ==========================================
+        // DEBUG: VERIFICACIÓN DE ZONAS
+        // ==========================================
+
+        [HttpGet("debug-zonas")]
+        public async Task<IActionResult> DebugZonas()
+        {
+            Console.WriteLine("\n[DEBUG-ZONAS] INICIO");
+
+            var pedidos = await _context.Pedidos
+                .Include(p => p.Zona)
+                .Take(20)
+                .ToListAsync();
+
+            Console.WriteLine($"[DEBUG-ZONAS] Total pedidos cargados: {pedidos.Count}");
+
+            var resultado = pedidos.Select(p => new
+            {
+                p.IDPedido,
+                p.ZonaId,
+                ZonaNombre = p.Zona?.Nombre ?? "NULL",
+                ZonaId_navegacion = p.Zona?.Id ?? -1
+            }).ToList();
+
+            foreach (var r in resultado)
+            {
+                Console.WriteLine($"  ├─ Pedido #{r.IDPedido}: ZonaId={r.ZonaId}, Zona.Nombre={r.ZonaNombre}, Zona.Id={r.ZonaId_navegacion}");
+            }
+
+            Console.WriteLine("[DEBUG-ZONAS] FIN\n");
+
+            return Ok(resultado);
         }
 
         // ==========================================
