@@ -493,52 +493,34 @@ namespace Back.Repositories
             var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
             var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
 
-            Console.WriteLine($"\n[GetReportePedidosPorZonaAsync] INICIO - Filtro: desde={desde:yyyy-MM-dd}, hasta={hasta:yyyy-MM-dd}, idZona={idZona}");
-
-            // DEBUG: Cargar todos los pedidos SIN Include primero
-            var allPedidos = await _context.Pedidos
-                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
-                .ToListAsync();
-
-            Console.WriteLine($"[DEBUG] Total pedidos sin Include: {allPedidos.Count}");
-            foreach (var p in allPedidos)
-            {
-                Console.WriteLine($"  ├─ Pedido #{p.IDPedido}: ZonaId={p.ZonaId}");
-            }
-
-            // Ahora cargar con Include
+            // Cargar pedidos con Zona incluida
             var pedidosConZona = await _context.Pedidos
                 .Include(p => p.Zona)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .ToListAsync();
 
-            Console.WriteLine($"[DEBUG] Total pedidos con Include: {pedidosConZona.Count}");
-            foreach (var p in pedidosConZona)
+            // Filtrar por zona específica si se solicita
+            if (idZona.HasValue && idZona.Value > 0)
             {
-                Console.WriteLine($"  ├─ Pedido #{p.IDPedido}: ZonaId={p.ZonaId}, Zona.Nombre='{p.Zona?.Nombre ?? "NULL"}'");
+                pedidosConZona = pedidosConZona.Where(p => p.ZonaId == idZona.Value).ToList();
             }
 
-            // Agrupar sin filtros
+            if (!pedidosConZona.Any())
+                return new List<PedidosPorZonaDTO>();
+
+            // Agrupar preservando TODA la información de la Zona
             var reporte = pedidosConZona
-                .GroupBy(p => p.ZonaId)
+                .GroupBy(p => new { p.ZonaId, p.Zona })
                 .Select(g => new PedidosPorZonaDTO
                 {
-                    ZonaId = g.Key ?? 0,
-                    NombreZona = g.First().Zona?.Nombre ?? $"ZONA_NULL",
+                    ZonaId = g.Key.ZonaId ?? 0,
+                    NombreZona = g.Key.Zona?.Nombre ?? "SIN ZONA",
                     CantidadPedidos = g.Count(),
                     Porcentaje = (g.Count() * 100.0m / pedidosConZona.Count),
                     TotalRecaudado = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
                 .ToList();
-
-            Console.WriteLine($"[DEBUG] Reporte final: {reporte.Count} zonas");
-            foreach (var r in reporte)
-            {
-                Console.WriteLine($"  ├─ {r.NombreZona} (ZonaId={r.ZonaId}): {r.CantidadPedidos} pedidos ({r.Porcentaje:F1}%)");
-            }
-
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] FIN\n");
 
             return reporte;
         }
