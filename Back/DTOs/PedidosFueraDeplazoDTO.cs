@@ -8,7 +8,7 @@ namespace Back.DTOs
         // ==================== MÉTRICAS ====================
         public int TotalEntregas { get; set; }
         public int EntregasTardías { get; set; }
-        public double RetrasoPromedioDías { get; set; }
+        public int RetrasoPromedioDías { get; set; }
 
         // ==================== DETALLES ====================
         public List<DetallePedidoFueraDeplazo> Detalles { get; set; } = new();
@@ -25,7 +25,7 @@ namespace Back.DTOs
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaEstimada { get; set; }
         public DateTime FechaEntrega { get; set; }
-        public double RetrasoDías { get; set; } // Diferencia en días hábiles
+        public int RetrasoDías { get; set; } // Diferencia en días hábiles (entero)
         public int IntentosEntregaFallida { get; set; }
     }
 }
