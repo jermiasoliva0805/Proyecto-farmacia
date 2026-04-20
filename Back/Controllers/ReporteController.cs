@@ -310,5 +310,19 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de entregas fuera de plazo", error = ex.Message });
             }
         }
+
+        [HttpGet("pedidos-demorados")]
+        public async Task<ActionResult<List<OrderSummaryDTO>>> GetPedidosDemorados()
+        {
+            try
+            {
+                var pedidosDemorados = await _reporteRepository.GetPedidosDemoradosAsync();
+                return Ok(pedidosDemorados);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener pedidos demorados", error = ex.Message });
+            }
+        }
     }
 }

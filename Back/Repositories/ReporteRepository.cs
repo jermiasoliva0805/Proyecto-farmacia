@@ -697,5 +697,33 @@ namespace Back.Repositories
                 Detalles = detalles
             };
         }
+
+        public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosAsync()
+        {
+            var ahora = DateTime.Now;
+
+            var pedidosDemorados = await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .Include(p => p.Estado)
+                .Where(p => p.IDEstadoDePedido != 7) // No entregados
+                .Where(p => p.FechaEntregaEstimada != DateTime.MinValue) // Con fecha estimada válida
+                .Where(p => ahora > p.FechaEntregaEstimada) // Pasó la fecha estimada
+                .OrderBy(p => p.FechaEntregaEstimada) // Más antiguos primero = mayor prioridad
+                .ToListAsync();
+
+            var resultado = pedidosDemorados.Select(p => new OrderSummaryDTO
+            {
+                IdPedido = p.IDPedido,
+                ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
+                EstadoNombre = p.Estado?.Descripcion ?? "Desconocido",
+                Total = p.Total,
+                Fecha = p.Fecha,
+                EstaDemorado = true, // Indicar que está demorado
+                FechaEntregaEstimada = p.FechaEntregaEstimada
+            }).ToList();
+
+            return resultado;
+        }
     }
 }

@@ -53,9 +53,18 @@ export const DashboardAdmin: React.FC = () => {
             const data = await pedidosService.getFilteredOrders(filtros);
             setPedidos(data);
             
+            // Obtener pedidos demorados en tiempo real desde el backend
+            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+            const demoradosResponse = await fetch(`${API_BASE}/Reporte/pedidos-demorados`);
+            const pedidosDemoradosBackend = demoradosResponse.ok ? await demoradosResponse.json() : [];
+            
+            const demoradosCount = pedidosDemoradosBackend.length > 0 
+                ? pedidosDemoradosBackend.length 
+                : data.filter(p => p.estaDemorado || (p as any).EstaDemorado).length;
+            
             setStats({
                 activos: data.filter(p => !['Entregado', 'Cancelado'].includes(p.estadoNombre)).length,
-                demorados: data.filter(p => p.estaDemorado || (p as any).EstaDemorado).length,
+                demorados: demoradosCount,
                 entregados: data.filter(p => p.estadoNombre === 'Entregado').length,
                 cancelados: data.filter(p => p.estadoNombre === 'Cancelado').length,
             });

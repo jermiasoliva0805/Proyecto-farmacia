@@ -74,5 +74,10 @@ namespace Back.Repositories.Interfaces
         Task<PedidosFueraDeplazoDTO> GetReportePedidosFueraDeplazoAsync(
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null);
+
+        /// <summary>
+        /// Obtiene pedidos demorados en tiempo real (sin entregar, que ya pasaron FechaEntregaEstimada)
+        /// </summary>
+        Task<List<OrderSummaryDTO>> GetPedidosDemoradosAsync();
     }
 }
