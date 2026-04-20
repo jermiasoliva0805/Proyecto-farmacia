@@ -10,6 +10,7 @@ import { ReporteTiemposProceso } from './ReporteTiemposProceso';
 import { ReportePedidosPorZona } from './ReportePedidosPorZona';
 import { ReporteFormasPago } from './ReporteFormasPago';
 import { ReporteEncuestaSatisfaccion } from './ReporteEncuestaSatisfaccion';
+import { ReportePedidosFueraDeplazo } from './ReportePedidosFueraDeplazo';
 
 
 export const PanelReportes = () => {
@@ -28,6 +29,15 @@ export const PanelReportes = () => {
                     }`}
                 >
                     Entregas por Cadete
+                </button>
+
+                <button
+                    onClick={() => setTabActiva('fueraDeplazo')}
+                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
+                        tabActiva === 'fueraDeplazo' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
+                    }`}
+                >
+                    Entregas Fuera de Plazo
                 </button>
 
                 <button
@@ -124,6 +134,7 @@ export const PanelReportes = () => {
             {/* Contenido Dinámico */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
                 {tabActiva === 'entregas' && <ReporteEntregas />}
+                {tabActiva === 'fueraDeplazo' && <ReportePedidosFueraDeplazo />}
                 {tabActiva === 'operarios' && <ReporteOperarios />}
                 {tabActiva === 'ranking' && <RankingClientes />}
                 {tabActiva === 'facturacion' && <ReporteFacturacion />}

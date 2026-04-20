@@ -218,5 +218,21 @@ namespace Back.Controllers
                 return BadRequest(new { message = "Error al obtener el reporte de encuesta de satisfacción", error = ex.Message });
             }
         }
+
+        [HttpGet("entregas-fuera-de-plazo")]
+        public async Task<ActionResult<PedidosFueraDeplazoDTO>> GetPedidosFueraDeplazo(
+            [FromQuery] DateTime? fechaDesde = null,
+            [FromQuery] DateTime? fechaHasta = null)
+        {
+            try
+            {
+                var reporte = await _reporteRepository.GetReportePedidosFueraDeplazoAsync(fechaDesde, fechaHasta);
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener el reporte de entregas fuera de plazo", error = ex.Message });
+            }
+        }
     }
 }

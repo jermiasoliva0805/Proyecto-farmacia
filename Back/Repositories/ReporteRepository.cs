@@ -2,6 +2,7 @@ using Back.Data;
 using Back.DTOs;
 using Back.Models;
 using Back.Repositories.Interfaces;
+using Back.Utils;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -702,6 +703,60 @@ namespace Back.Repositories
             {
                 TotalRespuestas = totalRespuestasFormulario,
                 Preguntas = preguntas
+            };
+        }
+
+        /// <summary>
+        /// Obtiene el reporte de entregas fuera de plazo (entregadas después de la fecha estimada)
+        /// Solo incluye pedidos con estado 7 (Entregado)
+        /// </summary>
+        public async Task<PedidosFueraDeplazoDTO> GetReportePedidosFueraDeplazoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null)
+        {
+            // Configurar rango de fechas
+            var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
+            var hasta = (fechaHasta ?? DateTime.Now).AddDays(1).AddSeconds(-1);
+
+            // Obtener pedidos entregados en el rango
+            var pedidosEntregados = await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .Where(p => p.IDEstadoDePedido == 7) // Entregado
+                .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .ToListAsync();
+
+            // Filtrar solo los que fueron entregados después de la fecha estimada
+            var pedidosFueraDeplazo = pedidosEntregados
+                .Where(p => p.FechaEntregaReal.HasValue && 
+                           p.FechaEntregaReal.Value > p.FechaEntregaEstimada)
+                .ToList();
+
+            // Construir los detalles
+            var detalles = pedidosFueraDeplazo
+                .Select(p => new DetallePedidoFueraDeplazo
+                {
+                    IDPedido = p.IDPedido,
+                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
+                    NombreCadete = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                    FechaCreacion = p.Fecha,
+                    FechaEstimada = p.FechaEntregaEstimada,
+                    FechaEntrega = p.FechaEntregaReal ?? DateTime.Now,
+                    RetrasoDías = DateTimeHelper.CalcularDiasHabilesDiferencia(p.FechaEntregaEstimada, p.FechaEntregaReal ?? DateTime.Now),
+                    IntentosEntregaFallida = p.IntentosEntregaFallida
+                })
+                .OrderByDescending(d => d.RetrasoDías) // Ordenar por mayor retraso
+                .ToList();
+
+            // Calcular métricas
+            var retrasoPromedio = detalles.Any() ? detalles.Average(d => d.RetrasoDías) : 0;
+
+            return new PedidosFueraDeplazoDTO
+            {
+                TotalEntregas = pedidosEntregados.Count,
+                EntregasTardías = pedidosFueraDeplazo.Count,
+                RetrasoPromedioDías = Math.Round(retrasoPromedio, 2),
+                Detalles = detalles
             };
         }
     }

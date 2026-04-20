@@ -2,6 +2,7 @@
 using Back.Models;
 using Back.DTOs;
 using Back.Repositories.Interfaces;
+using Back.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace Back.Repositories
@@ -36,6 +37,9 @@ namespace Back.Repositories
                 pedido.Fecha = DateTime.Now;
                 pedido.IDEstadoDePedido = 1; // "Sin preparar"
                 pedido.EstadoActual = "Sin preparar";
+
+                // ✅ Calcular fecha de entrega estimada: 48 horas hábiles (lunes a viernes)
+                pedido.FechaEntregaEstimada = DateTimeHelper.CalcularFechaEntregaEstimada(pedido.Fecha);
 
                 if (pedido.Detalles != null && pedido.Detalles.Any())
                 {

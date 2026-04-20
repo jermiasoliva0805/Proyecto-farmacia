@@ -67,5 +67,12 @@ namespace Back.Repositories.Interfaces
         /// Obtiene el reporte consolidado de la encuesta de satisfacción desde Google Forms.
         /// </summary>
         Task<ReporteEncuestaSatisfaccionDTO> GetReporteEncuestaSatisfaccionAsync();
+
+        /// <summary>
+        /// Obtiene el reporte de entregas fuera de plazo (entregadas después de FechaEntregaEstimada)
+        /// </summary>
+        Task<PedidosFueraDeplazoDTO> GetReportePedidosFueraDeplazoAsync(
+            DateTime? fechaDesde = null,
+            DateTime? fechaHasta = null);
     }
 }
