@@ -534,6 +534,7 @@ namespace Back.Repositories
 
             Console.WriteLine($"[GetReportePedidosPorZonaAsync] Filtro: desde={desde:yyyy-MM-dd}, hasta={hasta:yyyy-MM-dd}, idZona={idZona}");
 
+            // Obtener todos los pedidos en el rango SIN filtrar por zona
             var queryBase = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .AsQueryable();
@@ -544,36 +545,52 @@ namespace Back.Repositories
             if (totalPedidos == 0)
                 return new List<PedidosPorZonaDTO>();
 
-            // Verificar cuántas zonas hay
-            var zonasConPedidos = await queryBase
+            // Cargar todos los pedidos con sus zonas
+            var allPedidos = await queryBase
                 .Include(p => p.Zona)
-                .Select(p => new { p.ZonaId, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
-                .Distinct()
                 .ToListAsync();
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Zonas con pedidos: {zonasConPedidos.Count}");
+
+            // Verificar cuántas zonas hay (incluyendo NULL)
+            var zonasConPedidos = allPedidos
+                .GroupBy(p => p.ZonaId)
+                .Select(g => new 
+                { 
+                    ZonaId = g.Key, 
+                    NombreZona = g.First().Zona?.Nombre ?? "SIN ZONA",
+                    Cantidad = g.Count()
+                })
+                .ToList();
+
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Zonas encontradas: {zonasConPedidos.Count}");
             foreach (var z in zonasConPedidos)
             {
-                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.NombreZona}");
+                Console.WriteLine($"  - ZonaId: {z.ZonaId}, Nombre: {z.NombreZona}, Pedidos: {z.Cantidad}");
             }
 
-            // Filtrar por zona si se especifica
-            if (idZona.HasValue && idZona.Value > 0)
+            // IMPORTANTE: Filtrar solo las 5 zonas válidas (1-5), los NULL se ignoran
+            var pedidos = allPedidos
+                .Where(p => p.ZonaId >= 1 && p.ZonaId <= 5)
+                .ToList();
+
+            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos con zonas válidas (1-5): {pedidos.Count}");
+
+            // Recalcular total para las zonas válidas
+            var totalPedidosValidos = pedidos.Count;
+
+            if (totalPedidosValidos == 0)
+                return new List<PedidosPorZonaDTO>();
+
+            // Filtrar por zona específica si se solicita
+            if (idZona.HasValue && idZona.Value > 0 && idZona.Value <= 5)
             {
-                queryBase = queryBase.Where(p => p.ZonaId == idZona.Value);
-                var pedidosPorZona = await queryBase.CountAsync();
-                Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos para zona {idZona}: {pedidosPorZona}");
+                pedidos = pedidos.Where(p => p.ZonaId == idZona.Value).ToList();
+                Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos filtrados por zona {idZona}: {pedidos.Count}");
             }
-
-            var pedidos = await queryBase
-                .Include(p => p.Zona)
-                .ToListAsync();
-
-            Console.WriteLine($"[GetReportePedidosPorZonaAsync] Pedidos cargados después de filtros: {pedidos.Count}");
 
             if (pedidos.Count == 0)
                 return new List<PedidosPorZonaDTO>();
 
-            // Agrupar por zona
+            // Agrupar por zona (solo las 5 válidas)
             var reporte = pedidos
                 .GroupBy(p => new { p.ZonaId, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
                 .Select(g => new PedidosPorZonaDTO
@@ -581,7 +598,7 @@ namespace Back.Repositories
                     ZonaId = g.Key.ZonaId ?? 0,
                     NombreZona = g.Key.NombreZona,
                     CantidadPedidos = g.Count(),
-                    Porcentaje = (g.Count() * 100.0m / totalPedidos),
+                    Porcentaje = (g.Count() * 100.0m / totalPedidosValidos),
                     TotalRecaudado = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
