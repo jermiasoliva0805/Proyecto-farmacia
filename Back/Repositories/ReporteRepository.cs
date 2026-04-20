@@ -508,6 +508,14 @@ namespace Back.Repositories
             if (!pedidosConZona.Any())
                 return new List<PedidosPorZonaDTO>();
 
+            // Log detallado de cada pedido para depuración
+            foreach (var pedido in pedidosConZona)
+            {
+                var zonaId = pedido.ZonaId.HasValue ? pedido.ZonaId.Value.ToString() : "NULL";
+                var zonaNombre = pedido.Zona != null ? pedido.Zona.Nombre : "(sin zona)";
+                Console.WriteLine($"Pedido {pedido.IDPedido} - ZonaId: {zonaId}, Zona.Nombre: {zonaNombre}");
+            }
+
             // Agrupar preservando TODA la información de la Zona
             var reporte = pedidosConZona
                 .GroupBy(p => new { p.ZonaId, p.Zona })
