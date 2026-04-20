@@ -493,13 +493,11 @@ namespace Back.Repositories
             var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
             var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
 
-            // Cargar pedidos con Zona incluida
             var pedidosConZona = await _context.Pedidos
                 .Include(p => p.Zona)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .ToListAsync();
 
-            // Filtrar por zona específica si se solicita
             if (idZona.HasValue && idZona.Value > 0)
             {
                 pedidosConZona = pedidosConZona.Where(p => p.ZonaId == idZona.Value).ToList();
@@ -508,7 +506,6 @@ namespace Back.Repositories
             if (!pedidosConZona.Any())
                 return new List<PedidosPorZonaDTO>();
 
-            // Log detallado de cada pedido para depuración
             foreach (var pedido in pedidosConZona)
             {
                 var zonaId = pedido.ZonaId.HasValue ? pedido.ZonaId.Value.ToString() : "NULL";
@@ -516,13 +513,16 @@ namespace Back.Repositories
                 Console.WriteLine($"Pedido {pedido.IDPedido} - ZonaId: {zonaId}, Zona.Nombre: {zonaNombre}");
             }
 
-            // Agrupar preservando TODA la información de la Zona
+            // FIX: agrupar por valores escalares (ZonaId y NombreZona) en lugar del objeto Zona
             var reporte = pedidosConZona
-                .GroupBy(p => new { p.ZonaId, p.Zona })
+                .GroupBy(p => new {
+                    ZonaId = p.ZonaId ?? 0,
+                    NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA"
+                })
                 .Select(g => new PedidosPorZonaDTO
                 {
-                    ZonaId = g.Key.ZonaId ?? 0,
-                    NombreZona = g.Key.Zona?.Nombre ?? "SIN ZONA",
+                    ZonaId = g.Key.ZonaId,
+                    NombreZona = g.Key.NombreZona,
                     CantidadPedidos = g.Count(),
                     Porcentaje = (g.Count() * 100.0m / pedidosConZona.Count),
                     TotalRecaudado = g.Sum(p => p.Total)
