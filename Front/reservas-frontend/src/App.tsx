@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Sidebar } from './components/layout/Sidebar'; 
@@ -71,6 +73,17 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <Routes>
           {/* --- RUTAS PÚBLICAS --- */}
           <Route path="/login" element={<Login />} />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, User, Package, Save, ArrowLeft, ShoppingCart, MapPin, Phone, Mail, CreditCard } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useNavigate } from 'react-router-dom';
 import { pedidosService } from '@/service/PedidosService';
@@ -213,20 +214,39 @@ const OrderFormPage: React.FC = () => {
 
         // Validaciones
         if (tipoCliente === 'existente' && !clienteId) {
-            return alert("Por favor selecciona un cliente");
+            toast.warning("Por favor selecciona un cliente");
+            return;
         }
         
         if (tipoCliente === 'nuevo') {
-            if (!nuevoCliente.nombre.trim()) return alert("El nombre del cliente es requerido");
-            if (!nuevoCliente.telefono.trim()) return alert("El teléfono es requerido");
-            if (!nuevoCliente.email.trim()) return alert("El email es requerido");
-            if (!nuevoCliente.direccion.trim()) return alert("La dirección es requerida");
+            if (!nuevoCliente.nombre.trim()) {
+                toast.warning("El nombre del cliente es requerido");
+                return;
+            }
+            if (!nuevoCliente.telefono.trim()) {
+                toast.warning("El teléfono es requerido");
+                return;
+            }
+            if (!nuevoCliente.email.trim()) {
+                toast.warning("El email es requerido");
+                return;
+            }
+            if (!nuevoCliente.direccion.trim()) {
+                toast.warning("La dirección es requerida");
+                return;
+            }
         }
         
         const detallesValidos = items.filter(i => i.productId !== '');
-        if (detallesValidos.length === 0) return alert("Agrega al menos un producto");
+        if (detallesValidos.length === 0) {
+            toast.warning("Agrega al menos un producto");
+            return;
+        }
         
-        if (!sucursalId) return alert("Por favor selecciona una sucursal");
+        if (!sucursalId) {
+            toast.warning("Por favor selecciona una sucursal");
+            return;
+        }
 
         setSaving(true); // ✅ Deshabilitar el botón mientras se guarda
         
@@ -235,14 +255,18 @@ const OrderFormPage: React.FC = () => {
             const userData = userDataJson ? JSON.parse(userDataJson) : null;
             
             if (!userData) {
-                return alert("No se pudo obtener los datos de tu usuario. Por favor inicia sesión nuevamente.");
+                toast.error("No se pudo obtener los datos de tu usuario. Por favor inicia sesión nuevamente.");
+                return;
             }
 
             // Obtener datos del cliente
             let clienteData = null;
             if (tipoCliente === 'existente') {
                 clienteData = clientes.find(c => c.id === parseInt(clienteId));
-                if (!clienteData) return alert("Cliente no encontrado");
+                if (!clienteData) {
+                    toast.error("Cliente no encontrado");
+                    return;
+                }
             }
 
             const direccionEntrega = tipoCliente === 'nuevo' 
@@ -287,15 +311,25 @@ const OrderFormPage: React.FC = () => {
 
             const resultado = await pedidosService.createOrder(pedido);
             console.log('✅ Pedido creado:', resultado);
-            alert(`Pedido creado con éxito. ID: ${resultado.pedidoId}`);
+            toast.success(`✓ Pedido creado con éxito - ID: ${resultado.pedidoId}`, {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
             
             // ✅ Navegar al dashboard del admin donde se ven los pedidos
             setTimeout(() => {
                 navigate('/dashboard/admin');
-            }, 500);
+            }, 1500);
         } catch (error) {
             console.error("❌ Error al guardar:", error);
-            alert("Error al guardar el pedido");
+            toast.error("Error al guardar el pedido", {
+                position: "top-right",
+                autoClose: 3000,
+            });
         } finally {
             setSaving(false); // ✅ Permitir nuevos intentos siempre
         }
