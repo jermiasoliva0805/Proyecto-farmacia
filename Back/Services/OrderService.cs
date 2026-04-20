@@ -1,12 +1,8 @@
+﻿using AutoMapper;
 using Back.DTOs;
-using Back.Services.Interfaces;
-using Back.Repositories.Interfaces;
 using Back.Models;
-using Microsoft.Extensions.Configuration;
-using AutoMapper;
-using System;
-using System.Threading.Tasks;
-using System.Linq;
+using Back.Repositories.Interfaces;
+using Back.Services.Interfaces;
 
 namespace Back.Services
 {
@@ -81,17 +77,6 @@ namespace Back.Services
             // Convertimos DTO a Modelo con el cliente resuelto
             var pedido = _mapper.Map<Pedido>(orderDto);
             pedido.IDCliente = idClienteFinal;
-            
-            // 🔴 IMPORTANTE: Asignar ZonaId si viene en el DTO
-            if (orderDto.ZonaId.HasValue && orderDto.ZonaId.Value > 0)
-            {
-                pedido.ZonaId = orderDto.ZonaId;
-                Console.WriteLine($"[OrderService] Zona asignada al pedido: {orderDto.ZonaId}");
-            }
-            else
-            {
-                Console.WriteLine($"[OrderService] ⚠️ ADVERTENCIA: El pedido se crea sin zona (ZonaId = {orderDto.ZonaId})");
-            }
 
             // Si viene dirección del cliente nuevo, guardarla
             if (!string.IsNullOrEmpty(orderDto.Direccion))
@@ -124,40 +109,69 @@ namespace Back.Services
                 // Obtener la URL base de la aplicación desde configuración o variable de entorno
                 var baseUrl = _configuration["AppSettings:FrontendUrl"] 
                     ?? Environment.GetEnvironmentVariable("FRONTEND_URL") 
-                    ?? "https://farmacia-app.com";
+                    ?? "https://midominio.com";
 
-                var trackingUrl = $"{baseUrl}/seguimiento/{pedidoId}";
+                // Eliminar trailing slash si existe
+                if (baseUrl.EndsWith("/"))
+                    baseUrl = baseUrl.TrimEnd('/');
 
-                var subject = $"Tu pedido #{pedidoId} ha sido recibido";
-                var body = $@"
-                    <h2>¡Hola {clientName}!</h2>
-                    <p>Tu pedido ha sido recibido correctamente.</p>
-                    <p><strong>Número de Pedido:</strong> #{pedidoId}</p>
-                    <p>Puedes seguir el estado de tu pedido aquí:</p>
-                    <p><a href='{trackingUrl}'>Ver seguimiento del pedido</a></p>
-                    <br/>
-                    <p>¡Gracias por tu compra!</p>
-                ";
+                // Construir el URL único de seguimiento
+                var trackingUrl = $"{baseUrl}/tracking/{pedidoId}";
 
-                await _emailSender.SendEmailAsync(clientEmail, subject, body);
-                Console.WriteLine($"[OrderService] Email de tracking enviado a {clientEmail}");
+                // ✅ Obtener los nombres de productos del pedido para personalizar el email
+                var pedido = await _orderRepository.GetOrderWithDetailsAsync(pedidoId);
+                var nombresProductos = new List<string>();
+                if (pedido?.Detalles != null)
+                {
+                    foreach (var detalle in pedido.Detalles)
+                    {
+                        if (detalle.Producto != null && !string.IsNullOrEmpty(detalle.Producto.NombreProducto))
+                        {
+                            nombresProductos.Add(detalle.Producto.NombreProducto);
+                        }
+                    }
+                    nombresProductos = nombresProductos.Distinct().Take(3).ToList();
+                }
+
+                Console.WriteLine($"[OrderService] Enviando email de creación de pedido #{pedidoId} a {clientEmail}");
+                Console.WriteLine($"[OrderService] URL de tracking: {trackingUrl}");
+                Console.WriteLine($"[OrderService] Productos: {string.Join(", ", nombresProductos)}");
+
+                // ✅ Usar el mismo método que AsignarOperarioAsync - es más robusto
+                // Estado 1 = Pedido Creado / Sin preparar
+                await _emailSender.EnviarCorreoCambioEstadoHtml(
+                    destinatario: clientEmail,
+                    nombreCliente: clientName,
+                    estadoDescripcion: "Pedido Recibido",
+                    numeroPedido: pedidoId,
+                    idEstado: 1,  // Sin preparar (Recibido)
+                    brandName: "Farmacia General Paz",
+                    supportEmail: "contacto@farmaciageneralpaz.com",
+                    brandCode: "FGP",
+                    trackingUrl: trackingUrl,
+                    nombresProductos: nombresProductos
+                );
+
+                Console.WriteLine($"[OrderService] Email enviado exitosamente para pedido #{pedidoId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[OrderService] Error al enviar email de tracking: {ex.Message}");
-                // No lanzamos la excepción, solo la registramos
+                Console.WriteLine($"[OrderService] Error al enviar email de creación: {ex.Message}");
+                // No relanzar la excepción para que el pedido se cree igualmente
             }
         }
 
         public async Task<OrderTrackingDTO> GetOrderTrackingAsync(int id)
         {
-            // Implementar según necesidad
-            throw new NotImplementedException();
+            var pedido = await _orderRepository.GetOrderWithDetailsAsync(id);
+            if (pedido == null) return null;
+
+            return _mapper.Map<OrderTrackingDTO>(pedido);
         }
 
         public async Task<bool> UpdateOrderStatusAsync(ChangeOrderStatusDTO changeDto)
         {
-            // Implementar según necesidad
+            // Lógica para futuros cambios de estado
             throw new NotImplementedException();
         }
     }
