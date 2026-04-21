@@ -9,6 +9,7 @@ import { Package, Clock, CheckCircle, Eye, PlayCircle } from 'lucide-react';
 
 const ESTADO_SIN_PREPARAR = 1;
 const ESTADO_PREPARAR_PEDIDO = 2;
+const OBSERVACION_INICIO_ARMADO = "Iniciando armado de pedido - Cronómetro activado ⏱";
 
 export const DashboardOperario: React.FC = () => {
     const { user } = useAuth();
@@ -73,7 +74,7 @@ export const DashboardOperario: React.FC = () => {
                 idPedido,
                 idNuevoEstado: ESTADO_PREPARAR_PEDIDO,
                 idUsuario: user!.id,
-                observaciones: "Iniciando armado de pedido - Cronómetro activado ⏱"
+                observaciones: OBSERVACION_INICIO_ARMADO
             });
             window.alert("✅ Armado iniciado. El pedido pasó a preparación.");
             loadPedidos();
