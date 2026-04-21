@@ -11,7 +11,6 @@ export const ReporteTiemposProceso: React.FC = () => {
     const [tiempos, setTiempos] = useState<TiemposProcesoDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
-    const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [idEstado, setIdEstado] = useState<number | null>(null);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -22,7 +21,7 @@ export const ReporteTiemposProceso: React.FC = () => {
         const fetchDatos = async () => {
             try {
                 setLoading(true);
-                const data = await getReporteTiempos(periodo, idSucursal, idEstado);
+                const data = await getReporteTiempos(periodo, idEstado);
                 setTiempos(data);
             } catch (error) {
                 console.error("Error al cargar tiempos:", error);
@@ -31,7 +30,7 @@ export const ReporteTiemposProceso: React.FC = () => {
             }
         };
         fetchDatos();
-    }, [periodo, idSucursal, idEstado]);
+    }, [periodo, idEstado]);
 
     const handleExportExcel = async () => {
         try {
@@ -123,17 +122,6 @@ export const ReporteTiemposProceso: React.FC = () => {
                         { value: "90", label: "Últimos 90 días" },
                     ]}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPeriodo(e.target.value)}
-                />
-                <Selector
-                    icon={<MapPin size={18} />}
-                    label="Sucursal:"
-                    value={idSucursal !== null ? idSucursal.toString() : ""}
-                    options={[
-                        { value: "", label: "Todas las sucursales" },
-                        { value: "1", label: "Sucursal Centro" },
-                        { value: "2", label: "Sucursal Norte" },
-                    ]}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
                 <Selector
                     icon={<Filter size={18} />}

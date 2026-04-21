@@ -16,7 +16,6 @@ export const ReporteProductos = () => {
     const [datos, setDatos] = useState<TopProductosDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
-    const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [clickedIndex, setClickedIndex] = useState<number | null>(null);
     const [showExportDialog, setShowExportDialog] = useState(false);
@@ -28,7 +27,7 @@ export const ReporteProductos = () => {
         const cargarData = async () => {
             try {
                 setLoading(true);
-                const res = await getTop10Productos(periodo, idSucursal);
+                const res = await getTop10Productos(periodo);
                 setDatos(res);
             } catch (error) {
                 console.error("Error al cargar productos:", error);
@@ -37,7 +36,7 @@ export const ReporteProductos = () => {
             }
         };
         cargarData();
-    }, [periodo, idSucursal]);
+    }, [periodo]);
 
     const handleExportExcel = async () => {
         try {
@@ -151,17 +150,6 @@ export const ReporteProductos = () => {
                         { value: "90", label: "Últimos 90 días" },
                     ]}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPeriodo(e.target.value)}
-                />
-                <Selector
-                    icon={<MapPin size={18} />}
-                    label="Sucursal:"
-                    value={idSucursal !== null ? idSucursal.toString() : ""}
-                    options={[
-                        { value: "", label: "Todas las sucursales" },
-                        { value: "1", label: "Sucursal Centro" },
-                        { value: "2", label: "Sucursal Norte" },
-                    ]}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
             </div>
 

@@ -652,7 +652,7 @@ namespace Back.Repositories
                     FechaCreacion = p.Fecha,
                     FechaEstimada = p.FechaEntregaEstimada,
                     FechaEntrega = p.FechaEntregaReal ?? DateTime.Now,
-                    RetrasoDías = (int)Math.Round(DateTimeHelper.CalcularDiasHabilesDiferencia(p.FechaEntregaEstimada, p.FechaEntregaReal ?? DateTime.Now)),
+                    RetrasoDías = (int)Math.Round((p.FechaEntregaReal ?? DateTime.Now - p.FechaEntregaEstimada).TotalDays),
                     IntentosEntregaFallida = p.IntentosEntregaFallida
                 })
                 .OrderByDescending(d => d.RetrasoDías) // Ordenar por mayor retraso

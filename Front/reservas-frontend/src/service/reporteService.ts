@@ -12,16 +12,11 @@ import {
     PedidosPorZonaDTO
 } from '../types/pedido.types';
 
-export const getRankingClientes = async (periodo: string, idSucursal: number | null): Promise<RankingClienteDTO[]> => {
+export const getRankingClientes = async (periodo: string): Promise<RankingClienteDTO[]> => {
     try {
         const params: any = {
             dias: parseInt(periodo)
         };
-        
-        // Solo agregar idSucursal si es válido
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
-        }
         
         const response = await api.get<RankingClienteDTO[]>('/reporte/ranking-clientes', {
             params: params
@@ -33,17 +28,12 @@ export const getRankingClientes = async (periodo: string, idSucursal: number | n
     }
 };
 
-export const getRankingClientesFacturacion = async (periodo: string, idSucursal: number | null): Promise<ClienteFacturacionDTO[]> => {
+export const getRankingClientesFacturacion = async (periodo: string): Promise<ClienteFacturacionDTO[]> => {
     try {
         // 'api' es tu instancia de axios
         const params: any = {
             dias: parseInt(periodo)
         };
-        
-        // Solo agregar idSucursal si es válido
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
-        }
         
         const response = await api.get<ClienteFacturacionDTO[]>('/reporte/clientes-facturacion', {
             params: params
@@ -57,8 +47,7 @@ export const getRankingClientesFacturacion = async (periodo: string, idSucursal:
 
 export const getPedidosCancelados = async (
     fechaDesde?: string,
-    fechaHasta?: string,
-    idSucursal: number | null = null
+    fechaHasta?: string
 ): Promise<ReportePedidosCanceladosDTO> => {
     try {
         const params: any = {};
@@ -69,10 +58,6 @@ export const getPedidosCancelados = async (
         
         if (fechaHasta) {
             params.fechaHasta = fechaHasta;
-        }
-        
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
         }
         
         const response = await api.get<ReportePedidosCanceladosDTO>('/reporte/pedidos-cancelados', {
@@ -87,8 +72,7 @@ export const getPedidosCancelados = async (
 
 export const getCancelacionesPorMotivo = async (
     fechaDesde?: string,
-    fechaHasta?: string,
-    idSucursal: number | null = null
+    fechaHasta?: string
 ): Promise<ReporteCancelacionesPorMotivoDTO> => {
     try {
         const params: any = {};
@@ -101,10 +85,6 @@ export const getCancelacionesPorMotivo = async (
             params.fechaHasta = fechaHasta;
         }
         
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
-        }
-        
         const response = await api.get<ReporteCancelacionesPorMotivoDTO>('/reporte/cancelaciones-por-motivo', {
             params: params
         });
@@ -115,16 +95,11 @@ export const getCancelacionesPorMotivo = async (
     }
 };
 
-export const getTop10Productos = async (periodo: string, idSucursal: number | null): Promise<TopProductosDTO[]> => {
+export const getTop10Productos = async (periodo: string): Promise<TopProductosDTO[]> => {
     try {
         const params: any = {
             dias: parseInt(periodo)
         };
-        
-        // Solo agregar idSucursal si es válido
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
-        }
         
         const response = await api.get<TopProductosDTO[]>('/reporte/top-productos', {
             params: params
@@ -136,18 +111,12 @@ export const getTop10Productos = async (periodo: string, idSucursal: number | nu
     }
 };
 
-export const getReporteTiempos = async (periodo: string, idSucursal: number | null, idEstado: number | null = null): Promise<TiemposProcesoDTO> => {
+export const getReporteTiempos = async (periodo: string, idEstado: number | null = null): Promise<TiemposProcesoDTO> => {
     try {
         const params: any = {
             dias: parseInt(periodo)
         };
-        
-        // Solo agregar idSucursal si es válido
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
-        }
 
-        // Solo agregar idEstado si es válido
         if (idEstado !== null && idEstado > 0) {
             params.idEstado = idEstado;
         }
@@ -194,8 +163,7 @@ export const getPedidosPorZona = async (
 
 export const getReporteFormasPago = async (
     fechaDesde?: string,
-    fechaHasta?: string,
-    idSucursal: number | null = null
+    fechaHasta?: string
 ): Promise<ReporteFormasPagoDTO> => {
     try {
         const params: Record<string, string | number> = {};
@@ -206,10 +174,6 @@ export const getReporteFormasPago = async (
 
         if (fechaHasta) {
             params.fechaHasta = fechaHasta;
-        }
-
-        if (idSucursal !== null && idSucursal > 0) {
-            params.idSucursal = idSucursal;
         }
 
         const response = await api.get<ReporteFormasPagoDTO>('/reporte/formas-pago', { params });

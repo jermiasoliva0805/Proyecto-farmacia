@@ -10,7 +10,6 @@ export const RankingClientes: React.FC = () => {
     const [ranking, setRanking] = useState<RankingClienteDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState("7");
-    const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     
@@ -20,7 +19,7 @@ export const RankingClientes: React.FC = () => {
         const fetchDatos = async () => {
             try {
                 setLoading(true);
-                const data = await getRankingClientes(periodo, idSucursal);
+                const data = await getRankingClientes(periodo);
                 setRanking(data);
             } catch (error) {
                 console.error("Error al cargar ranking:", error);
@@ -29,7 +28,7 @@ export const RankingClientes: React.FC = () => {
             }
         };
         fetchDatos();
-    }, [periodo, idSucursal]);
+    }, [periodo]);
 
     const handleExportExcel = async () => {
         setIsExporting(true);
@@ -115,17 +114,6 @@ export const RankingClientes: React.FC = () => {
                         { value: "90", label: "Últimos 90 días" },
                     ]}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPeriodo(e.target.value)}
-                />
-                <Selector
-                    icon={<MapPin size={18} />}
-                    label="Sucursal:"
-                    value={idSucursal !== null ? idSucursal.toString() : ""}
-                    options={[
-                        { value: "", label: "Todas las sucursales" },
-                        { value: "1", label: "Sucursal Centro" },
-                        { value: "2", label: "Sucursal Norte" },
-                    ]}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
                 />
             </div>
 
