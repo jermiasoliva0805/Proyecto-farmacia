@@ -62,14 +62,12 @@ export const ReporteCancelados = () => {
 
             const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
                                  periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
 
             exportToExcel(dataExport, {
                 reportName: 'Pedidos Cancelados',
                 fileName: 'pedidos-cancelados',
                 filters: {
                     periodo: periodoLabel,
-                    sucursal: sucursalLabel,
                 }
             });
         } finally {
@@ -88,14 +86,12 @@ export const ReporteCancelados = () => {
 
             const periodoLabel = periodo === "7" ? "Últimos 7 días" : 
                                  periodo === "30" ? "Últimos 30 días" : "Últimos 90 días";
-            const sucursalLabel = idSucursal ? `Sucursal ${idSucursal}` : "Todas las sucursales";
 
             await exportToPDF(contentRef.current, {
                 reportName: 'Pedidos Cancelados',
                 fileName: 'pedidos-cancelados',
                 filters: {
                     periodo: periodoLabel,
-                    sucursal: sucursalLabel,
                 }
             });
         } finally {
