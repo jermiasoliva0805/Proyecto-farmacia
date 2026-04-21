@@ -705,7 +705,7 @@ namespace Back.Repositories
             var pedidosDemorados = await _context.Pedidos
                 .Include(p => p.Cliente)
                 .Include(p => p.Usuario)
-                .Include(p => p.Estado)
+                .Include(p => p.EstadoDePedido)
                 .Where(p => p.IDEstadoDePedido != 7) // No entregados
                 .Where(p => p.FechaEntregaEstimada != DateTime.MinValue) // Con fecha estimada válida
                 .Where(p => ahora > p.FechaEntregaEstimada) // Pasó la fecha estimada
