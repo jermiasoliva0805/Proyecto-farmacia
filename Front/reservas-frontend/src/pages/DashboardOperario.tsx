@@ -6,6 +6,7 @@ import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
 import { Package, Clock, CheckCircle, Eye, PlayCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const ESTADO_SIN_PREPARAR = 1;
 const ESTADO_PREPARAR_PEDIDO = 2;
@@ -76,11 +77,11 @@ export const DashboardOperario: React.FC = () => {
                 idUsuario: user!.id,
                 observaciones: OBSERVACION_INICIO_ARMADO
             });
-            window.alert("✅ Armado iniciado. El pedido pasó a preparación.");
+            toast.success("✅ Armado iniciado. El pedido pasó a preparación.");
             loadPedidos();
         } catch (error) {
             console.error("Error al iniciar armado:", error);
-            window.alert("❌ No se pudo iniciar el armado.");
+            toast.error("❌ No se pudo iniciar el armado.");
         }
     };
 
