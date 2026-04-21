@@ -6,13 +6,20 @@ import { useAuth } from '@context/AuthContext';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { DetallePedidoModal } from '../components/pedidos/DetallePedidoModal';
-import { Eye, LayoutGrid, List, PlayCircle } from 'lucide-react';
+import { Eye, LayoutGrid, List, PlayCircle, CheckCircle2 } from 'lucide-react';
+
+interface ToastState {
+    visible: boolean;
+    type: 'success' | 'error';
+    message: string;
+}
 
 const MisPedidosOperario = () => {
     const { user } = useAuth();
     const [pedidos, setPedidos] = useState<OrderSummaryDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<'tabla' | 'kanban'>('tabla');
+    const [toast, setToast] = useState<ToastState>({ visible: false, type: 'success', message: '' });
     
     const [selectedPedido, setSelectedPedido] = useState<OrderSummaryDTO | null>(null);
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
@@ -90,12 +97,12 @@ const MisPedidosOperario = () => {
                 observaciones: "Iniciando armado de pedido - Cronómetro activado ⏱"
             });
             
-            window.alert("✅ Armado iniciado. El pedido ha pasado al Kanban para gestionarlo.");
+            showToast('success', '✓ Armado iniciado. El pedido ha pasado al Kanban para gestionarlo.');
             console.log(`[CU25] Pedido ${idPedido} - Tiempo de armado: INICIADO`);
             loadPedidos(); 
         } catch (error) {
             console.error("Error al cambiar estado:", error);
-            window.alert("❌ No se pudo iniciar el armado.");
+            showToast('error', '❌ No se pudo iniciar el armado.');
         }
     };
 
@@ -105,8 +112,23 @@ const MisPedidosOperario = () => {
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
+    const showToast = (type: 'success' | 'error', message: string) => {
+        setToast({ visible: true, type, message });
+        setTimeout(() => setToast({ ...toast, visible: false }), 3000);
+    };
+
     return (
         <DashboardLayout>
+            {/* Toast Notificación */}
+            {toast.visible && (
+                <div className={`fixed top-4 right-4 max-w-sm p-4 rounded-lg shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-[10px] z-50 ${
+                    toast.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                }`}>
+                    {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 flex-shrink-0" />}
+                    <p className="text-sm font-medium">{toast.message}</p>
+                </div>
+            )}
+
             <div className="space-y-6 font-sans">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
