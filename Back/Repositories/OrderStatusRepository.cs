@@ -28,6 +28,8 @@ namespace Back.Repositories
                 if (pedidoActualizado != null)
                 {
                     pedido.EstadoActual = pedidoActualizado.EstadoActual;
+                    pedido.IDUsuario = pedidoActualizado.IDUsuario;
+                    pedido.ZonaId = pedidoActualizado.ZonaId;
                     pedido.MotivoCancelacionId = pedidoActualizado.MotivoCancelacionId;
                     pedido.JustificacionCancelacion = pedidoActualizado.JustificacionCancelacion;
                     pedido.FechaInicioArmado = pedidoActualizado.FechaInicioArmado;

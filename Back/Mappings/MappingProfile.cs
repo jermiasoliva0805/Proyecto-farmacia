@@ -1,4 +1,5 @@
 using AutoMapper;
+using System.Linq;
 using Back.DTOs;
 using Back.Models;
 using Back.DTOS;
@@ -67,6 +68,32 @@ namespace Back.Mappings
                 .ForMember(dest => dest.Mail, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Contraseña, opt => opt.MapFrom(src => src.Contraseña))
                 .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol));
+
+            // --- Mapeos de Tracking / Historial ---
+            CreateMap<Pedido, OrderTrackingDTO>()
+                .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
+                .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido != null ? src.EstadoDePedido.NombreEstado : src.EstadoActual))
+                .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src =>
+                    src.HistorialDeEstados != null && src.HistorialDeEstados.Any()
+                        ? src.HistorialDeEstados.Max(h => h.fecha_hora_inicio)
+                        : src.Fecha))
+                .ForMember(dest => dest.Historial, opt => opt.MapFrom(src =>
+                    src.HistorialDeEstados
+                        .OrderByDescending(h => h.fecha_hora_inicio)));
+
+            CreateMap<HistorialDeEstados, TrackingHistoryItemDTO>()
+                .ForMember(dest => dest.NombreEstado, opt => opt.MapFrom(src =>
+                    src.EstadoDePedido != null ? src.EstadoDePedido.NombreEstado : "Sin estado"))
+                .ForMember(dest => dest.FechaHora, opt => opt.MapFrom(src => src.fecha_hora_inicio))
+                .ForMember(dest => dest.Responsable, opt => opt.MapFrom(src =>
+                    src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}".Trim() : "Sistema"))
+                .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src =>
+                    src.Pedido != null && src.Pedido.MotivoCancelacion != null
+                        ? src.Pedido.MotivoCancelacion.Nombre
+                        : null))
+                .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
+                .ForMember(dest => dest.IntentosEntregaFallida, opt => opt.MapFrom(src => src.IntentosEntregaFallida))
+                .ForMember(dest => dest.IntentosMax, opt => opt.MapFrom(src => src.IntentosMax));
         }
     }
 }
