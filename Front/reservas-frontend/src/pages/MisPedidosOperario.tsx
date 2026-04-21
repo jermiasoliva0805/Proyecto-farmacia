@@ -55,13 +55,13 @@ const MisPedidosOperario = () => {
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
             
-            // Si vista es Tabla: mostrar solo Estado 2 (Preparar pedido) de HOY
+            // Si vista es Tabla: mostrar Estado 1 (Sin preparar) y Estado 2 (Preparar pedido) de HOY
             // Si vista es Kanban: mostrar Estados 2, 3 siempre, pero 4 solo de HOY
             if (view === 'tabla') {
                 const pendientes = data.filter(p => {
                     const fechaPedido = new Date(p.fecha);
                     fechaPedido.setHours(0, 0, 0, 0);
-                    return p.idEstadoDePedido === 2 && fechaPedido.getTime() === hoy.getTime();
+                    return [1, 2].includes(p.idEstadoDePedido) && fechaPedido.getTime() === hoy.getTime();
                 });
                 setPedidos(pendientes);
             } else {
@@ -176,7 +176,7 @@ const MisPedidosOperario = () => {
                                         <td className="p-4 text-gray-600 font-mono">${pedido.total?.toFixed(2)}</td>
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-3">
-                                                {pedido.idEstadoDePedido === 2 && !pedido.fechaInicioArmado && (
+                                                {[1, 2].includes(pedido.idEstadoDePedido) && !pedido.fechaInicioArmado && (
                                                     <button 
                                                         onClick={() => handleCambiarEstado(pedido.idPedido, 2)}
                                                         className="flex items-center gap-1 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
