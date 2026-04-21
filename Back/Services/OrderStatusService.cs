@@ -17,7 +17,7 @@ namespace Back.Services
         private readonly EmailSender _emailSender;
         private readonly IConfiguration _configuration;
         private readonly ClientProductRelationService _clientProductRelationService;
-        private readonly AppDbContext _context; // ✅ FIX: agregado para poder leer la zona del cadete
+        private readonly AppDbContext _context;
  
         public OrderStatusService(
             IOrderStatusRepository repository,
@@ -26,7 +26,7 @@ namespace Back.Services
             EmailSender emailSender,
             IConfiguration configuration,
             ClientProductRelationService clientProductRelationService,
-            AppDbContext context) // ✅ FIX: inyectado AppDbContext
+            AppDbContext context)
         {
             _repository = repository;
             _orderRepository = orderRepository;
@@ -34,7 +34,7 @@ namespace Back.Services
             _emailSender = emailSender;
             _configuration = configuration;
             _clientProductRelationService = clientProductRelationService;
-            _context = context; // ✅ FIX
+            _context = context;
         }
  
         /// <summary>
@@ -149,16 +149,23 @@ namespace Back.Services
             pedido.IDEstadoDePedido = 5; // Despachando
             pedido.IDUsuario = dto.CadeteId;
  
-            // ✅ FIX: buscar la zona del cadete y asignarla al pedido
-            var cadete = await _context.Usuarios.FindAsync(dto.CadeteId);
-            if (cadete != null && cadete.ZonaId.HasValue)
+            // ✅ FIX: Solo asignar zona del cadete si el pedido NO tiene zona ya asignada
+            if (!pedido.ZonaId.HasValue)
             {
-                pedido.ZonaId = cadete.ZonaId;
-                Console.WriteLine($"[AsignarCadete] Pedido #{pedido.IDPedido} - ZonaId asignada: {cadete.ZonaId} (cadete: {cadete.Nombre})");
+                var cadete = await _context.Usuarios.FindAsync(dto.CadeteId);
+                if (cadete != null && cadete.ZonaId.HasValue)
+                {
+                    pedido.ZonaId = cadete.ZonaId;
+                    Console.WriteLine($"[AsignarCadete] Pedido #{pedido.IDPedido} - ZonaId asignada como fallback desde cadete: {cadete.ZonaId} ({cadete.Nombre})");
+                }
+                else
+                {
+                    Console.WriteLine($"[AsignarCadete] ADVERTENCIA: El cadete ID {dto.CadeteId} no tiene zona asignada. El pedido #{pedido.IDPedido} quedará sin zona.");
+                }
             }
             else
             {
-                Console.WriteLine($"[AsignarCadete] ADVERTENCIA: El cadete ID {dto.CadeteId} no tiene zona asignada. El pedido #{pedido.IDPedido} quedará sin zona.");
+                Console.WriteLine($"[AsignarCadete] Pedido #{pedido.IDPedido} ya tiene ZonaId={pedido.ZonaId}, no se sobreescribe.");
             }
  
             var historial = new HistorialDeEstados
@@ -284,7 +291,7 @@ namespace Back.Services
                 pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
                 pedido.EstadoActual = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
             }
-
+ 
             // Guardar responsable del último cambio para mantener trazabilidad y filtros por usuario
             pedido.IDUsuario = changeStatusDto.IDUsuario;
  

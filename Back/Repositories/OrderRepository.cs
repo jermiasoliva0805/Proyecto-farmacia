@@ -4,13 +4,13 @@ using Back.DTOs;
 using Back.Repositories.Interfaces;
 using Back.Utils;
 using Microsoft.EntityFrameworkCore;
-
+ 
 namespace Back.Repositories
 {
     public class OrderRepository : GenericRepository<Pedido>, IOrderRepository
     {
         public OrderRepository(AppDbContext context) : base(context) { }
-
+ 
         public async Task<IEnumerable<OrderSummaryDTO>> GetOrdersByStatusAsync(int statusId)
         {
             return await _context.Pedidos
@@ -28,7 +28,7 @@ namespace Back.Repositories
                 })
                 .ToListAsync();
         }
-
+ 
         public async Task<int> CreateOrderAsync(Pedido pedido, int idUsuario)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -37,31 +37,37 @@ namespace Back.Repositories
                 pedido.Fecha = DateTime.Now;
                 pedido.IDEstadoDePedido = 1; // "Sin preparar"
                 pedido.EstadoActual = "Sin preparar";
-
+ 
                 // ✅ Calcular fecha de entrega estimada: 48 horas hábiles (lunes a viernes)
                 pedido.FechaEntregaEstimada = DateTimeHelper.CalcularFechaEntregaEstimada(pedido.Fecha);
-
+ 
                 if (pedido.Detalles != null && pedido.Detalles.Any())
                 {
                     pedido.Total = pedido.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
                 }
-
-                // 🔧 FIX: Asignar ZonaId basándose en el barrio del cliente
-                if (pedido.IDCliente > 0)
+ 
+                // ✅ FIX: Solo usar zona del barrio del cliente como fallback
+                // si el frontend NO envió una zona
+                if (!pedido.ZonaId.HasValue && pedido.IDCliente > 0)
                 {
                     var cliente = await _context.Clientes
                         .Include(c => c.Barrio)
                         .FirstOrDefaultAsync(c => c.IDCliente == pedido.IDCliente);
-
+ 
                     if (cliente?.Barrio != null && cliente.Barrio.ZonaId.HasValue)
                     {
                         pedido.ZonaId = cliente.Barrio.ZonaId;
+                        Console.WriteLine($"[OrderRepository] ZonaId asignada desde barrio del cliente: {pedido.ZonaId}");
                     }
                 }
-
+                else
+                {
+                    Console.WriteLine($"[OrderRepository] ZonaId recibida desde el frontend: {pedido.ZonaId}");
+                }
+ 
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
-
+ 
                 // ✅ Crear historial DESPUÉS de que el pedido está guardado (así tiene ID)
                 var historialInicial = new HistorialDeEstados
                 {
@@ -71,10 +77,10 @@ namespace Back.Repositories
                     fecha_hora_inicio = DateTime.UtcNow,
                     Observaciones = "Pedido recibido e ingresado al sistema."
                 };
-
+ 
                 _context.HistorialesDeEstados.Add(historialInicial);
                 await _context.SaveChangesAsync();
-
+ 
                 await transaction.CommitAsync();
                 return pedido.IDPedido;
             }
@@ -85,7 +91,7 @@ namespace Back.Repositories
                 throw;
             }
         }
-
+ 
         // Incluye Cliente para poder acceder al mail
         public async Task<Pedido> GetByIdWithClienteAsync(int id)
         {
@@ -93,7 +99,7 @@ namespace Back.Repositories
                 .Include(p => p.Cliente)
                 .FirstOrDefaultAsync(p => p.IDPedido == id);
         }
-
+ 
         public async Task<Pedido> GetOrderWithDetailsAsync(int id)
         {
             return await _context.Pedidos
@@ -101,7 +107,7 @@ namespace Back.Repositories
                 .ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(p => p.IDPedido == id);
         }
-
+ 
         // Obtener todos los pedidos de un cliente con sus detalles
         public async Task<IEnumerable<Pedido>> GetClientOrdersAsync(int clientId)
         {
@@ -111,7 +117,7 @@ namespace Back.Repositories
                 .ThenInclude(d => d.Producto)
                 .ToListAsync();
         }
-
+ 
         // Incluye Cliente y Detalles para poder acceder al mail y productos
         public async Task<Pedido> GetByIdWithClienteAndDetailsAsync(int id)
         {
