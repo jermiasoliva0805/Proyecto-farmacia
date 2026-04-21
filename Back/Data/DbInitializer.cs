@@ -407,10 +407,10 @@ namespace Back.Data
                     var barrio = context.Barrios.FirstOrDefault(b =>
                         b.Nombre == nombreBarrio && b.IDLocalidad == localidad.IDLocalidad);
 
-                    if (barrio != null)
+                   if (barrio != null)
                     {
-                        // Si el barrio ya existe pero no tiene zona asignada, actualizar
-                        if (barrio.ZonaId == null)
+                        // Siempre actualizar ZonaId para garantizar consistencia
+                        if (barrio.ZonaId != zona.Id)
                         {
                             barrio.ZonaId = zona.Id;
                             context.Barrios.Update(barrio);
