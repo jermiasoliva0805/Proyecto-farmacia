@@ -5,7 +5,7 @@ import { OrderFilters } from '@components/orders/OrderFilters';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
-import { Package, Clock, CheckCircle, Eye, AlertCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, Eye, PlayCircle } from 'lucide-react';
 
 export const DashboardOperario: React.FC = () => {
     const { user } = useAuth();
@@ -62,6 +62,22 @@ export const DashboardOperario: React.FC = () => {
     const handleVerDetalle = (pedido: OrderSummaryDTO) => {
         setSelectedPedidoDetalle(pedido);
         setModalDetalleOpen(true);
+    };
+
+    const handleIniciarArmado = async (idPedido: number) => {
+        try {
+            await pedidosService.cambiarEstado({
+                idPedido,
+                idNuevoEstado: 2,
+                idUsuario: user!.id,
+                observaciones: "Iniciando armado de pedido - Cronómetro activado ⏱"
+            });
+            window.alert("✅ Armado iniciado. El pedido pasó a preparación.");
+            loadPedidos();
+        } catch (error) {
+            console.error("Error al iniciar armado:", error);
+            window.alert("❌ No se pudo iniciar el armado.");
+        }
     };
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -164,12 +180,22 @@ export const DashboardOperario: React.FC = () => {
                                             </td>
                                             <td className="p-5 text-gray-600 font-mono">${pedido.total?.toFixed(2)}</td>
                                             <td className="p-5 text-right">
-                                                <button 
-                                                    onClick={() => handleVerDetalle(pedido)} 
-                                                    className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center justify-end gap-1 ml-auto transition-colors"
-                                                >
-                                                    <Eye className="w-4 h-4" /> Ver detalle
-                                                </button>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    {pedido.idEstadoDePedido === 1 && !pedido.fechaInicioArmado && (
+                                                        <button
+                                                            onClick={() => handleIniciarArmado(pedido.idPedido)}
+                                                            className="flex items-center gap-1 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                                                        >
+                                                            <PlayCircle className="w-4 h-4" /> Iniciar Armado
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handleVerDetalle(pedido)} 
+                                                        className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center justify-end gap-1 ml-auto transition-colors"
+                                                    >
+                                                        <Eye className="w-4 h-4" /> Ver detalle
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
