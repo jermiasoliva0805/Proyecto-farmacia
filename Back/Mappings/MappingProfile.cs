@@ -89,7 +89,7 @@ namespace Back.Mappings
                     src.Usuario != null ? $"{src.Usuario.Nombre} {src.Usuario.Apellido}".Trim() : "Sistema"))
                 .ForMember(dest => dest.MotivoCancelacion, opt => opt.MapFrom(src =>
                     src.Pedido != null && src.Pedido.MotivoCancelacion != null
-                        ? src.Pedido.MotivoCancelacion.Descripcion
+                        ? src.Pedido.MotivoCancelacion.Nombre
                         : null))
                 .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
                 .ForMember(dest => dest.IntentosEntregaFallida, opt => opt.MapFrom(src => src.IntentosEntregaFallida))
