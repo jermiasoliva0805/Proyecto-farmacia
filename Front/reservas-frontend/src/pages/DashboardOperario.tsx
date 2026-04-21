@@ -8,6 +8,9 @@ import { useAuth } from '@context/AuthContext';
 import { Package, Clock, CheckCircle, Eye, PlayCircle } from 'lucide-react';
 
 export const DashboardOperario: React.FC = () => {
+    const ESTADO_SIN_PREPARAR = 1;
+    const ESTADO_PREPARAR_PEDIDO = 2;
+
     const { user } = useAuth();
     const [pedidos, setPedidos] = useState<OrderSummaryDTO[]>([]);
     const [loading, setLoading] = useState(true);
@@ -68,7 +71,7 @@ export const DashboardOperario: React.FC = () => {
         try {
             await pedidosService.cambiarEstado({
                 idPedido,
-                idNuevoEstado: 2,
+                idNuevoEstado: ESTADO_PREPARAR_PEDIDO,
                 idUsuario: user!.id,
                 observaciones: "Iniciando armado de pedido - Cronómetro activado ⏱"
             });
@@ -181,7 +184,7 @@ export const DashboardOperario: React.FC = () => {
                                             <td className="p-5 text-gray-600 font-mono">${pedido.total?.toFixed(2)}</td>
                                             <td className="p-5 text-right">
                                                 <div className="flex items-center justify-end gap-3">
-                                                    {pedido.idEstadoDePedido === 1 && !pedido.fechaInicioArmado && (
+                                                    {pedido.idEstadoDePedido === ESTADO_SIN_PREPARAR && !pedido.fechaInicioArmado && (
                                                         <button
                                                             onClick={() => handleIniciarArmado(pedido.idPedido)}
                                                             className="flex items-center gap-1 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
