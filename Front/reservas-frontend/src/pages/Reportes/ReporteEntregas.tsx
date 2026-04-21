@@ -20,7 +20,6 @@ export const ReporteEntregas: React.FC = () => {
 
   // Estados de los filtros
   const [periodo, setPeriodo] = useState("7"); 
-  const [idSucursal, setIdSucursal] = useState<number | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   
@@ -43,11 +42,7 @@ export const ReporteEntregas: React.FC = () => {
         const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
         let url = `${API_BASE}/Reporte/entregas-cadete?fechaDesde=${fDesde}&fechaHasta=${fHasta}`;
         
-        if (idSucursal !== null && idSucursal > 0) {
-          url += `&idSucursal=${idSucursal}`;
-        }
-        
-        console.log("Solicitando datos para:", { periodo, idSucursal, url });
+        console.log("Solicitando datos para:", { periodo, url });
 
         const response = await fetch(url);
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
@@ -62,7 +57,7 @@ export const ReporteEntregas: React.FC = () => {
     };
 
     fetchReporte();
-  }, [periodo, idSucursal]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
+  }, [periodo]); // <--- Estos son los disparadores. Si cambian, se ejecuta fetchReporte.
 
   const handleExportExcel = async () => {
     try {
@@ -154,17 +149,6 @@ export const ReporteEntregas: React.FC = () => {
             { value: "90", label: "Últimos 90 días" },
           ]}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPeriodo(e.target.value)}
-        />
-        <Selector
-          icon={<MapPin size={18} />}
-          label="Sucursal:"
-          value={idSucursal !== null ? idSucursal.toString() : ""}
-          options={[
-            { value: "", label: "Todas las sucursales" },
-            { value: "1", label: "Sucursal Centro" },
-            { value: "2", label: "Sucursal Norte" },
-          ]}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))}
         />
       </div>
 

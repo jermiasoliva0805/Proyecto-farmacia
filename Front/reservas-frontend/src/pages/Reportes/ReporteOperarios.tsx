@@ -17,7 +17,6 @@ const ReporteOperarios = () => {
     const [datos, setDatos] = useState<ReporteOperario[]>([]);
     const [loading, setLoading] = useState(true);
     const [periodo, setPeriodo] = useState('7');
-    const [idSucursal, setIdSucursal] = useState<number | null>(null);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     
@@ -27,11 +26,6 @@ const ReporteOperarios = () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({ dias: periodo });
-            
-            // Solo agregar idSucursal si no es null y es mayor a 0
-            if (idSucursal !== null && idSucursal > 0) {
-                params.append('idSucursal', idSucursal.toString());
-            }
             
             const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
             const response = await fetch(`${API_BASE}/Orders/reporte-tiempos-operarios?${params}`, {
@@ -46,7 +40,7 @@ const ReporteOperarios = () => {
         } finally {
             setLoading(false);
         }
-    }, [periodo, idSucursal]);
+    }, [periodo]);
 
     useEffect(() => { fetchDatos(); }, [fetchDatos]);
 
@@ -136,20 +130,6 @@ const ReporteOperarios = () => {
             <div ref={contentRef}>
             {/* FILTROS - AJUSTADO TAMAÑO FUENTE */}
             <div className="flex flex-col md:flex-row gap-4 mb-8">
-                <div className="flex-1 flex items-center gap-3 bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm group">
-                    <MapPin size={20} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
-                    <span className="text-gray-500 font-medium text-sm">Sucursal:</span>
-                    <select 
-                        value={idSucursal !== null ? idSucursal.toString() : ""} 
-                        onChange={(e) => setIdSucursal(e.target.value === "" ? null : parseInt(e.target.value))} 
-                        className="flex-1 bg-transparent font-bold text-sm outline-none appearance-none cursor-pointer text-gray-700"
-                    >
-                        <option value="">Todas las sucursales</option>
-                        <option value="1">Sucursal Centro</option>
-                        <option value="2">Sucursal Norte</option>
-                    </select>
-                </div>
-
                 <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-gray-200 shadow-sm group">
                     <Calendar size={20} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
                     <span className="text-gray-500 font-medium text-sm">Periodo:</span>
