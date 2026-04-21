@@ -55,13 +55,11 @@ const MisPedidosOperario = () => {
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
             
-            // Si vista es Tabla: mostrar Estado 1 (Sin preparar) y Estado 2 (Preparar pedido) de HOY
+            // Si vista es Tabla: mostrar Estado 1 (Sin preparar) y Estado 2 (Preparar pedido) - sin restricción de fecha
             // Si vista es Kanban: mostrar Estados 2, 3 siempre, pero 4 solo de HOY
             if (view === 'tabla') {
                 const pendientes = data.filter(p => {
-                    const fechaPedido = new Date(p.fecha);
-                    fechaPedido.setHours(0, 0, 0, 0);
-                    return [1, 2].includes(p.idEstadoDePedido) && fechaPedido.getTime() === hoy.getTime();
+                    return [1, 2].includes(p.idEstadoDePedido);
                 });
                 setPedidos(pendientes);
             } else {
