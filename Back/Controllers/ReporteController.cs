@@ -27,44 +27,30 @@ namespace Back.Controllers
         [HttpGet("entregas-cadete")]
         public async Task<IActionResult> GetEntregasPorCadete(
             [FromQuery] DateTime? fechaDesde = null,
-            [FromQuery] DateTime? fechaHasta = null,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] DateTime? fechaHasta = null)
         {
             try
             {
-                // LOGS DE DEBUG
-                Console.WriteLine($"[CONTROLLER] fechaDesde: {fechaDesde}");
-                Console.WriteLine($"[CONTROLLER] fechaHasta: {fechaHasta}");
-                Console.WriteLine($"[CONTROLLER] idSucursal: {idSucursal}");
-
                 var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
                 var hasta = fechaHasta ?? DateTime.Now;
 
-                Console.WriteLine($"[CONTROLLER] Calculado desde: {desde}");
-                Console.WriteLine($"[CONTROLLER] Calculado hasta: {hasta}");
-
-                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta, idSucursal);
-
-                Console.WriteLine($"[CONTROLLER] Reporte devuelto: {reporte.Count} cadetes");
+                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta);
 
                 return Ok(reporte);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[CONTROLLER] ERROR: {ex.Message}");
-                Console.WriteLine($"[CONTROLLER] Stack: {ex.StackTrace}");
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
         }
 
         [HttpGet("ranking-clientes")]
         public async Task<IActionResult> GetRankingClientes(
-            [FromQuery] int dias = 7,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] int dias = 7)
         {
             try
             {
-                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync(dias, idSucursal);
+                var reporte = await _reporteRepository.GetRankingClientesFrecuentesAsync(dias);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -75,15 +61,12 @@ namespace Back.Controllers
 
         [HttpGet("clientes-facturacion")]
         public async Task<ActionResult<List<ClienteFacturacionDTO>>> GetRankingFacturacion(
-            [FromQuery] int dias = 7,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] int dias = 7)
         {
             try
             {
-                // Llamamos al método que ahora acepta filtros
-                var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync(dias, idSucursal);
+                var reporte = await _reporteRepository.GetRankingClientesFacturacionAsync(dias);
 
-                // Si no hay datos, devolvemos una lista vacía pero con status 200
                 if (reporte == null)
                 {
                     return Ok(new List<ClienteFacturacionDTO>());
@@ -93,7 +76,6 @@ namespace Back.Controllers
             }
             catch (Exception ex)
             {
-                // Es importante loguear el error por si algo falla en el servidor
                 return BadRequest($"Error al obtener el reporte de facturación: {ex.Message}");
             }
         }
@@ -101,12 +83,11 @@ namespace Back.Controllers
         [HttpGet("pedidos-cancelados")]
         public async Task<ActionResult<ReportePedidosCanceladosDTO>> GetPedidosCancelados(
             [FromQuery] DateTime? fechaDesde = null,
-            [FromQuery] DateTime? fechaHasta = null,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] DateTime? fechaHasta = null)
         {
             try
             {
-                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesde, fechaHasta, idSucursal);
+                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesde, fechaHasta);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -118,12 +99,11 @@ namespace Back.Controllers
         [HttpGet("cancelaciones-por-motivo")]
         public async Task<ActionResult<ReporteCancelacionesPorMotivoDTO>> GetCancelacionesPorMotivo(
             [FromQuery] DateTime? fechaDesde = null,
-            [FromQuery] DateTime? fechaHasta = null,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] DateTime? fechaHasta = null)
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesde, fechaHasta, idSucursal);
+                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesde, fechaHasta);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -134,12 +114,11 @@ namespace Back.Controllers
 
         [HttpGet("top-productos")]
         public async Task<ActionResult<List<TopProductosDTO>>> GetTop10Productos(
-            [FromQuery] int dias = 7,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] int dias = 7)
         {
             try
             {
-                var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias, idSucursal);
+                var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias);
 
                 if (reporte == null)
                 {
@@ -157,12 +136,11 @@ namespace Back.Controllers
         [HttpGet("tiempos-proceso")]
         public async Task<ActionResult<TiemposProcesoDTO>> GetReporteTiemposProceso(
             [FromQuery] int dias = 7,
-            [FromQuery] int? idSucursal = null,
             [FromQuery] int? idEstado = null)
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteTiemposProcesoAsync(dias, idSucursal, idEstado);
+                var reporte = await _reporteRepository.GetReporteTiemposProcesoAsync(dias, idEstado);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -174,12 +152,11 @@ namespace Back.Controllers
         [HttpGet("formas-pago")]
         public async Task<ActionResult<ReporteFormasPagoDTO>> GetReporteFormasPago(
             [FromQuery] DateTime? fechaDesde = null,
-            [FromQuery] DateTime? fechaHasta = null,
-            [FromQuery] int? idSucursal = null)
+            [FromQuery] DateTime? fechaHasta = null)
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesde, fechaHasta, idSucursal);
+                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesde, fechaHasta);
                 return Ok(reporte);
             }
             catch (Exception ex)

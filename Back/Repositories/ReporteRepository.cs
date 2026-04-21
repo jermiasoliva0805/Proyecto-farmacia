@@ -35,9 +35,9 @@ namespace Back.Repositories
 
         public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
             DateTime fechaDesde,
-            DateTime fechaHasta,
-            int? idSucursal = null)
+            DateTime fechaHasta)
         {
+            int idSucursal = 1;
             var hasta = fechaHasta.AddDays(1).AddSeconds(-1);
 
             var query = _context.Pedidos
@@ -45,12 +45,8 @@ namespace Back.Repositories
                 .Where(p => p.Usuario != null && p.Usuario.Rol == "Cadete")
                 .Where(p => p.Usuario != null && !p.Usuario.IsDeleted)
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var pedidos = await query.ToListAsync();
 
@@ -72,19 +68,16 @@ namespace Back.Repositories
             return reporte;
         }
 
-        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7, int? idSucursal = null)
+        public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7)
         {
+            int idSucursal = 1;
             var fechaDesde = DateTime.Now.AddDays(-dias);
 
             var query = _context.Pedidos
                 .Include(p => p.Cliente)
                 .Where(p => p.Fecha >= fechaDesde)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var pedidos = await query.ToListAsync();
 
@@ -105,19 +98,16 @@ namespace Back.Repositories
             return ranking;
         }
 
-        public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7, int? idSucursal = null)
+        public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7)
         {
+            int idSucursal = 1;
             var fechaDesde = DateTime.Now.AddDays(-dias);
 
             var query = _context.Pedidos
                 .Include(p => p.Cliente)
                 .Where(p => p.Fecha >= fechaDesde)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var pedidos = await query.ToListAsync();
 
@@ -138,9 +128,9 @@ namespace Back.Repositories
 
         public async Task<ReportePedidosCanceladosDTO> GetReportePedidosCanceladosAsync(
             DateTime? fechaDesde = null,
-            DateTime? fechaHasta = null,
-            int? idSucursal = null)
+            DateTime? fechaHasta = null)
         {
+            int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
 
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
@@ -150,19 +140,15 @@ namespace Back.Repositories
 
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
 
             var queryCancelados = _context.Pedidos
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
                 .Where(p => p.MotivoCancelacionId == null)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
-                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var totalPedidos = await queryTodosPedidos.CountAsync();
             var pedidosCancelados = await queryCancelados.ToListAsync();
@@ -185,9 +171,9 @@ namespace Back.Repositories
 
         public async Task<ReporteCancelacionesPorMotivoDTO> GetReporteCancelacionesPorMotivoAsync(
             DateTime? fechaDesde = null,
-            DateTime? fechaHasta = null,
-            int? idSucursal = null)
+            DateTime? fechaHasta = null)
         {
+            int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
 
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
@@ -197,6 +183,7 @@ namespace Back.Repositories
 
             var queryTodosPedidos = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
 
             var queryCancelados = _context.Pedidos
@@ -204,13 +191,8 @@ namespace Back.Repositories
                 .Where(p => p.IDEstadoDePedido == ID_ESTADO_CANCELADO)
                 .Where(p => p.MotivoCancelacionId != null)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                queryTodosPedidos = queryTodosPedidos.Where(p => p.IDSucursal == idSucursal.Value);
-                queryCancelados = queryCancelados.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var totalPedidos = await queryTodosPedidos.CountAsync();
             var pedidosCancelados = await queryCancelados.ToListAsync();
@@ -247,8 +229,9 @@ namespace Back.Repositories
             };
         }
 
-        public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int? idSucursal = null)
+        public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7)
         {
+            int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
             
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
@@ -257,12 +240,8 @@ namespace Back.Repositories
                 .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
                 .Where(p => p.IDEstadoDePedido != ID_ESTADO_CANCELADO)
-                .Where(p => p.Fecha >= fechaDesde);
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
+                .Where(p => p.Fecha >= fechaDesde)
+                .Where(p => p.IDSucursal == idSucursal);
 
             var pedidos = await query.ToListAsync();
 
@@ -288,19 +267,16 @@ namespace Back.Repositories
             return topProductos;
         }
 
-        public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idSucursal = null, int? idEstado = null)
+        public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idEstado = null)
         {
+            int idSucursal = 1;
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
 
             var query = _context.Pedidos
                 .Include(p => p.HistorialDeEstados)
                     .ThenInclude(h => h.EstadoDePedido)
-                .Where(p => p.Fecha >= fechaDesde);
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
+                .Where(p => p.Fecha >= fechaDesde)
+                .Where(p => p.IDSucursal == idSucursal);
 
             if (idEstado.HasValue && idEstado.Value > 0)
             {
@@ -445,21 +421,17 @@ namespace Back.Repositories
 
         public async Task<ReporteFormasPagoDTO> GetReporteFormasPagoAsync(
             DateTime? fechaDesde = null,
-            DateTime? fechaHasta = null,
-            int? idSucursal = null)
+            DateTime? fechaHasta = null)
         {
+            int idSucursal = 1;
             var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
             var hasta = fechaHasta ?? DateTime.Now;
             var hastaAjustado = hasta.AddDays(1).AddSeconds(-1);
 
             var query = _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hastaAjustado)
+                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
-
-            if (idSucursal.HasValue && idSucursal.Value > 0)
-            {
-                query = query.Where(p => p.IDSucursal == idSucursal.Value);
-            }
 
             var pedidos = await query.ToListAsync();
 
@@ -680,14 +652,14 @@ namespace Back.Repositories
                     FechaCreacion = p.Fecha,
                     FechaEstimada = p.FechaEntregaEstimada,
                     FechaEntrega = p.FechaEntregaReal ?? DateTime.Now,
-                    RetrasoDías = (int)Math.Ceiling(DateTimeHelper.CalcularDiasHabilesDiferencia(p.FechaEntregaEstimada, p.FechaEntregaReal ?? DateTime.Now)),
+                    RetrasoDías = (int)Math.Round(DateTimeHelper.CalcularDiasHabilesDiferencia(p.FechaEntregaEstimada, p.FechaEntregaReal ?? DateTime.Now)),
                     IntentosEntregaFallida = p.IntentosEntregaFallida
                 })
                 .OrderByDescending(d => d.RetrasoDías) // Ordenar por mayor retraso
                 .ToList();
 
             // Calcular métricas
-            var retrasoPromedio = detalles.Any() ? (int)Math.Ceiling(detalles.Average(d => d.RetrasoDías)) : 0;
+            var retrasoPromedio = detalles.Any() ? (int)Math.Round(detalles.Average(d => d.RetrasoDías)) : 0;
 
             return new PedidosFueraDeplazoDTO
             {
