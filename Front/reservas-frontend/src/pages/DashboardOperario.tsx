@@ -7,10 +7,10 @@ import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
 import { Package, Clock, CheckCircle, Eye, PlayCircle } from 'lucide-react';
 
-export const DashboardOperario: React.FC = () => {
-    const ESTADO_SIN_PREPARAR = 1;
-    const ESTADO_PREPARAR_PEDIDO = 2;
+const ESTADO_SIN_PREPARAR = 1;
+const ESTADO_PREPARAR_PEDIDO = 2;
 
+export const DashboardOperario: React.FC = () => {
     const { user } = useAuth();
     const [pedidos, setPedidos] = useState<OrderSummaryDTO[]>([]);
     const [loading, setLoading] = useState(true);
