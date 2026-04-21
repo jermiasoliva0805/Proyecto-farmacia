@@ -94,7 +94,11 @@ export const DashboardCadete: React.FC = () => {
             toast.success(`Ruta iniciada para el pedido #${pedido.idPedido}.`);
         } catch (error: any) {
             console.error('Error al iniciar ruta:', error);
-            const backendMessage = error?.response?.data?.message;
+            const responseData = error?.response?.data;
+            const backendMessage =
+                typeof responseData === 'string'
+                    ? responseData
+                    : responseData?.message;
             toast.error(backendMessage || 'No se pudo iniciar la ruta. Intenta nuevamente.');
         }
     };
