@@ -141,7 +141,7 @@ export const pedidosService = {
                 PrecioUnitario: d.PrecioUnitario || d.precioUnitario
             }));
 
-            const payload = {
+            const payload: any = {
                 IDCliente: orderData.IDCliente || orderData.idCliente,
                 IDSucursal: orderData.IDSucursal || orderData.idSucursal,
                 IDUsuario: orderData.IDUsuario || orderData.idUsuario,
@@ -153,6 +153,12 @@ export const pedidosService = {
                 PuntoRetiro: orderData.PuntoRetiro,
                 Detalles: detalles
             };
+
+            // ✅ Incluir ZonaId si viene del frontend (con nullish coalescing)
+            const zonaId = orderData.ZonaId ?? orderData.zonaId;
+            if (zonaId !== null && zonaId !== undefined) {
+                payload.ZonaId = zonaId;
+            }
 
             console.log('📤 Enviando al backend:', payload);
             const response = await api.post('/Orders', payload);
