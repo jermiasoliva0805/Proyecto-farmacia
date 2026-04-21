@@ -284,6 +284,9 @@ namespace Back.Services
                 pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
                 pedido.EstadoActual = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
             }
+
+            // Guardar responsable del último cambio para mantener trazabilidad y filtros por usuario
+            pedido.IDUsuario = changeStatusDto.IDUsuario;
  
             var nuevoHistorial = new HistorialDeEstados
             {

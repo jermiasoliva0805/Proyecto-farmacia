@@ -11,6 +11,7 @@ import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { useAuth } from '@context/AuthContext';
 import { Truck, MapPin, CheckCircle, Navigation, Eye, AlertCircle, Play, Package } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export const DashboardCadete: React.FC = () => {
     const { user } = useAuth();
@@ -77,16 +78,24 @@ export const DashboardCadete: React.FC = () => {
     const pedidosEnCamino = pedidos.filter(p => p.idEstadoDePedido === 6); // Solo En camino (estado 6)
 
     const handleIniciarRuta = async (pedido: OrderSummaryDTO) => {
+        if (!user?.id) {
+            toast.error('No se pudo identificar al usuario para iniciar la ruta.');
+            return;
+        }
+
         try {
             await pedidosService.cambiarEstado({
                 idPedido: pedido.idPedido,
                 idNuevoEstado: 6, // Cambiar a "En camino"
-                idUsuario: user!.id,
+                idUsuario: user.id,
                 observaciones: 'Cadete inicia ruta de entregas'
             });
-            loadPedidos();
-        } catch (error) {
+            await loadPedidos();
+            toast.success(`Ruta iniciada para el pedido #${pedido.idPedido}.`);
+        } catch (error: any) {
             console.error('Error al iniciar ruta:', error);
+            const backendMessage = error?.response?.data?.message;
+            toast.error(backendMessage || 'No se pudo iniciar la ruta. Intenta nuevamente.');
         }
     };
 
