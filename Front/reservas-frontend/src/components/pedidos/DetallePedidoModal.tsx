@@ -268,8 +268,6 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 </div>
                 
                 ${label.codigoPostal ? `<div style="margin-top: 8px;"><span style="font-weight: 700;">CP:</span> ${label.codigoPostal}</div>` : ''}
-                
-                ${label.referenciaEntrega ? `<div style="margin-top: 8px;"><span style="font-weight: 700;">Referencia:</span> ${label.referenciaEntrega}</div>` : ''}
               </div>
 
               <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 11px;">
