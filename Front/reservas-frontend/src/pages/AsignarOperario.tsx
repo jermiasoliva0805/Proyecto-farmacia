@@ -14,6 +14,46 @@ export const AsignarOperarioPage: React.FC = () => {
     const [selectedPedido, setSelectedPedido] = useState<OrderSummaryDTO | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
 
+    useEffect(() => {
+        loadPedidos();
+    }, []);
+
+    // Función de colores para mantener la consistencia visual
+    const getEstadoStyle = (estado: string) => {
+        const est = estado.toLowerCase();
+        if (est === 'sin preparar') {
+            return 'bg-gray-100 text-gray-400 border-gray-200'; // Gris para "Sin preparar"
+        }
+        return 'bg-blue-100 text-blue-600 border-blue-200';
+    };
+
+    const loadPedidos = async () => {
+        setLoading(true);
+        try {
+            const data = await pedidosService.getPendientesOperario();
+            if (data && data.length > 0) {
+                setPedidos(data);
+            } else {
+                setPedidos([]);
+            }
+        } catch (error) {
+            console.error('Error cargando pedidos:', error);
+            setPedidos([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAsignar = (pedido: OrderSummaryDTO) => {
+        setSelectedPedido(pedido);
+        setModalOpen(true);
+    };
+
+    const handleSuccess = () => {
+        setModalOpen(false);
+        loadPedidos();
+    };
+
     return (
         <DashboardLayout>
             <div className="p-6 bg-gray-50 min-h-screen">
@@ -34,7 +74,7 @@ export const AsignarOperarioPage: React.FC = () => {
                         </div>
                     ) : pedidos.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-gray-500">No hay pedidos por asignar.</p>
+                            <p className="text-gray-500">No hay pedidos pendientes de asignación de operario.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -87,46 +127,6 @@ export const AsignarOperarioPage: React.FC = () => {
                         </div>
                     )}
                 </div>
-            </div>
-
-            {selectedPedido && (
-                <AsignarOperarioModal
-                    isOpen={modalOpen}
-                    onClose={() => setModalOpen(false)}
-                    pedido={selectedPedido}
-                    onSuccess={handleSuccess}
-                />
-            )}
-        </DashboardLayout>
-    );
-};
-                                            </td>
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                ${pedido.total.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {/* AQUÍ VA EL COLOR Y EL ESTADO */}
-                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
-                                                    {pedido.estadoNombre.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="primary"
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                    onClick={() => handleAsignar(pedido)}
-                                                >
-                                                    Asignar Operario
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </Card>
             </div>
 
             {selectedPedido && (
