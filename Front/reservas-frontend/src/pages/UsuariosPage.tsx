@@ -30,6 +30,8 @@ const UsuariosPage = () => {
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<any>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState<RegisterDTO>({
         nombre: '',
@@ -299,19 +301,29 @@ const UsuariosPage = () => {
         }
     };
 
-    const handleEliminar = async (usuario: any) => {
-        const mensaje = `¿Estás seguro de que deseas dar de baja a ${usuario.nombreCompleto}?\n\nRol: ${usuario.rol}\nEmail: ${usuario.email}\n\nEsta acción no se puede deshacer.`;
+    const handleEliminar = (usuario: any) => {
+        setUserToDelete(usuario);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!userToDelete) return;
         
-        if (window.confirm(mensaje)) {
-            try {
-                await usuariosService.deleteUsuario(usuario.id);
-                setUsuarios(prev => prev.filter(u => u.id !== usuario.id));
-                setToast({ message: "Usuario eliminado correctamente", type: 'success' });
-            } catch (error: any) {
-                const msg = error.response?.data?.message || "Error al eliminar el usuario";
-                setToast({ message: msg, type: 'error' });
-            }
+        try {
+            await usuariosService.deleteUsuario(userToDelete.id);
+            setUsuarios(prev => prev.filter(u => u.id !== userToDelete.id));
+            setToast({ message: "Usuario eliminado correctamente", type: 'success' });
+            setIsDeleteModalOpen(false);
+            setUserToDelete(null);
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Error al eliminar el usuario";
+            setToast({ message: msg, type: 'error' });
         }
+    };
+
+    const cancelDelete = () => {
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
     };
 
     return (
@@ -523,6 +535,41 @@ const UsuariosPage = () => {
                                 className={`px-6 py-2 text-white rounded-lg font-bold shadow-md transition-all ${ROLE_THEMES[formData.rol].button} ${Object.keys(errors).length > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {editingId ? 'Actualizar' : 'Guardar'} Personal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Confirmación de Eliminación */}
+            {isDeleteModalOpen && userToDelete && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 border-b border-red-200 bg-red-50">
+                            <h2 className="text-xl font-bold text-red-700">
+                                Confirmar Eliminación
+                            </h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-gray-700">
+                                ¿Estás seguro de que deseas dar de baja a <span className="font-bold">{userToDelete.nombreCompleto}</span>?
+                            </p>
+                            <p className="text-sm text-red-600 font-medium">
+                                Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+                        <div className="p-6 bg-gray-50 flex justify-end gap-3 border-t">
+                            <button 
+                                onClick={cancelDelete}
+                                className="px-4 py-2 text-gray-500 font-medium hover:text-gray-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-md transition-all"
+                            >
+                                Eliminar
                             </button>
                         </div>
                     </div>
