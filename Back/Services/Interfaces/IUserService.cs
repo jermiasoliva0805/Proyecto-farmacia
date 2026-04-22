@@ -9,7 +9,7 @@ namespace Back.Services
     {
         // --- TUS MÉTODOS EXISTENTES (Lectura) ---
         // Ref: RF13 - Listado de usuarios/responsables
-        Task<IEnumerable<UserDTO>> GetAllUsersAsync();
+        Task<IEnumerable<UserDTO>> GetAllUsersAsync(int? currentUserId = null);
         Task<UserDTO?> GetUserByIdAsync(int id);
 
         // --- MÉTODOS NUEVOS (Escritura) ---

@@ -29,9 +29,16 @@ namespace Back.Services
         // TUS MÉTODOS DE LECTURA (Ya existían)
         // ==========================================
 
-        public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserDTO>> GetAllUsersAsync(int? currentUserId = null)
         {
             var usuarios = await _userRepository.GetAllAsync();
+            
+            // CAMBIO 1: Si se proporciona un ID del usuario actual (encargado), excluirlo de la lista
+            if (currentUserId.HasValue)
+            {
+                usuarios = usuarios.Where(u => u.IDUsuario != currentUserId.Value);
+            }
+            
             return _mapper.Map<IEnumerable<UserDTO>>(usuarios);
         }
 
@@ -80,9 +87,27 @@ namespace Back.Services
 
         public async Task<bool> UpdateUserAsync(int id, UpdateUserDTO updateDto)
         {
-            // 1. Verificar que el usuario exista
-            var usuarioExistente = await _userRepository.GetByIdAsync(id);
+            // 1. Verificar que el usuario exista y obtener datos completos (incluyendo pedidos)
+            var usuarioExistente = await _userRepository.GetByIdWithPedidosAsync(id);
             if (usuarioExistente == null) return false;
+
+            // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
+            if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
+                updateDto.ZonaId.Value != usuarioExistente.ZonaId)
+            {
+                // El cadete intenta cambiar de zona. Verificar si tiene pedidos en ruta o entrega
+                var tienePedidosEnEntrega = usuarioExistente.Pedidos.Any(p => 
+                    p.IDEstadoDePedido >= 5 && p.IDEstadoDePedido <= 6 // Estados 5 (En ruta) o 6 (En Camino)
+                );
+
+                if (tienePedidosEnEntrega)
+                {
+                    throw new InvalidOperationException(
+                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
+                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                    );
+                }
+            }
 
             // 2. Actualizar campos
             // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
@@ -124,18 +149,21 @@ namespace Back.Services
                 }
             }
 
-            // VALIDACIÓN 2: No permitir eliminar operario si está armando activamente
-            // Solo bloquea si tiene pedidos en estado 2 (Preparar) o 3 (Demorado)
-            // Estado 1 (Sin preparar): ✅ Puede eliminar - solo asignado, sin iniciar armado
-            // Estado 4+ (Listo para despachar, etc): ✅ Puede eliminar - ya pasó al siguiente responsable
-            var tienePedidosEnArmado = usuario.Pedidos.Any(p => 
-                p.IDEstadoDePedido == 2 || p.IDEstadoDePedido == 3
-            );
-
-            if (tienePedidosEnArmado)
+            // VALIDACIÓN 2: No permitir eliminar operario si tiene pedidos asignados
+            // CAMBIO 3: Un operario no se puede eliminar si tiene CUALQUIER pedido asignado
+            // Estados permitidos: 7 (Entregado), 8 (Cancelado), o sin pedidos
+            // Estados bloqueantes: 1 (Sin preparar), 2 (Preparar), 3 (Demorado), 4 (Listo), 5 (En ruta), 6 (En Camino)
+            if (usuario.Rol == "Operario")
             {
-                throw new Exception($"No se puede eliminar al operario {usuario.Nombre} {usuario.Apellido} porque tiene pedidos en armado. "
-                    + "El operario debe completar o cancelar todos los pedidos en preparación antes de ser eliminado.");
+                var tienePedidosAsignados = usuario.Pedidos.Any(p => 
+                    p.IDEstadoDePedido >= 1 && p.IDEstadoDePedido <= 6 // Cualquier estado antes de entregar o cancelar
+                );
+
+                if (tienePedidosAsignados)
+                {
+                    throw new Exception($"No se puede eliminar al operario {usuario.Nombre} {usuario.Apellido} porque tiene pedidos asignados. "
+                        + "El operario debe completar o cancelar todos los pedidos antes de ser eliminado.");
+                }
             }
 
             // Si pasa ambas validaciones, proceder con soft delete (preserva historial)

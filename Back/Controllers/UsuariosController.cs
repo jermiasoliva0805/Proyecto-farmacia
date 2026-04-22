@@ -20,9 +20,20 @@ namespace Back.Controllers
 
         // 1. LISTAR TODOS (Para la tabla del ABM)
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetUsuarios()
         {
-            var users = await _userService.GetAllUsersAsync();
+            // CAMBIO 1: Obtener el ID del usuario autenticado desde el token JWT
+            var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int? currentUserId = null;
+            
+            if (int.TryParse(currentUserIdClaim, out int userId))
+            {
+                currentUserId = userId;
+            }
+
+            // Pasar el ID del usuario actual para que se excluya de la lista
+            var users = await _userService.GetAllUsersAsync(currentUserId);
             return Ok(users);
         }
 
@@ -55,13 +66,23 @@ namespace Back.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateUsuario(int id, [FromBody] UpdateUserDTO updateDto)
         {
-            // ⚠️ VALIDACIÓN CRÍTICA DE SEGURIDAD
-            // Obtener el ID del usuario autenticado desde el token JWT
+            // CAMBIO 2: Lógica mejorada de autorización
+            // Obtener el ID y Rol del usuario autenticado desde el token JWT
             var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            // Si no es Admin (Encargado), solo puede editar su propio perfil
-            if (currentUserRole != "Encargado" && currentUserIdClaim != id.ToString())
+            if (!int.TryParse(currentUserIdClaim, out int currentUserId))
+            {
+                return Unauthorized(new { message = "Token inválido." });
+            }
+
+            // Permitir editar solo si:
+            // 1. Es el mismo usuario (puede editar su propio perfil), O
+            // 2. Es Encargado (puede editar a cualquiera)
+            bool esUsuarioActual = currentUserId == id;
+            bool esEncargado = currentUserRole == "Encargado";
+
+            if (!esUsuarioActual && !esEncargado)
             {
                 return Unauthorized(new 
                 { 
@@ -70,10 +91,21 @@ namespace Back.Controllers
                 });
             }
 
-            var result = await _userService.UpdateUserAsync(id, updateDto);
-            if (!result) return NotFound(new { message = "No se pudo actualizar. Usuario no encontrado." });
-            
-            return Ok(new { message = "Usuario actualizado correctamente." });
+            try
+            {
+                var result = await _userService.UpdateUserAsync(id, updateDto);
+                if (!result) return NotFound(new { message = "Usuario no encontrado." });
+                
+                return Ok(new { message = "Usuario actualizado correctamente." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message, errorCode = "CADETE_HAS_ACTIVE_DELIVERIES" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al actualizar usuario: " + ex.Message });
+            }
         }
 
         // 5. ELIMINAR USUARIO (Baja)
