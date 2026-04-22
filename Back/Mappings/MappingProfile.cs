@@ -67,7 +67,20 @@ namespace Back.Mappings
                 .ForMember(dest => dest.UsuarioNombre, opt => opt.MapFrom(src => src.UsuarioNombre))
                 .ForMember(dest => dest.Mail, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Contraseña, opt => opt.MapFrom(src => src.Contraseña))
-                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol));
+                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
+                .ForMember(dest => dest.IDSucursal, opt => opt.MapFrom(src => src.IDSucursal))
+                .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
+
+            // Mapeo de actualización de usuarios (UpdateUserDTO -> Usuario)
+            CreateMap<Back.DTOS.UpdateUserDTO, Usuario>()
+                .ForMember(dest => dest.Nombre, opt => opt.Condition(src => src.Nombre != null))
+                .ForMember(dest => dest.Apellido, opt => opt.Condition(src => src.Apellido != null))
+                .ForMember(dest => dest.UsuarioNombre, opt => opt.Condition(src => src.UsuarioNombre != null))
+                .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
+                .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
+                .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
+                .ForMember(dest => dest.ZonaId, opt => opt.Condition(src => src.ZonaId.HasValue));
+            // Nota: La contraseña se maneja por separado en el servicio con BCrypt
 
             // --- Mapeos de Tracking / Historial ---
             CreateMap<Pedido, OrderTrackingDTO>()
