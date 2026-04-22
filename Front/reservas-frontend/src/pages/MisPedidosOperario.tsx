@@ -129,16 +129,18 @@ const MisPedidosOperario = () => {
                 </div>
             )}
 
-            <div className="space-y-6 font-sans">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Pedidos Pendientes de Armado</h1>
+            <div className="space-y-6 font-sans flex flex-col items-center w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full max-w-5xl mx-auto text-center">
+                    <div className="flex flex-col items-center w-full">
+                        <div className="flex items-center gap-3 justify-center w-full">
+                            <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">Pedidos Pendientes de Armado</h1>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
+                    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit mx-auto">
                         <button 
                             onClick={() => setView('tabla')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'tabla' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}

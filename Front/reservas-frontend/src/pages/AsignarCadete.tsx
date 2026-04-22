@@ -42,9 +42,9 @@ export const AsignarCadetePage: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
+            <div className="space-y-6 flex flex-col items-center w-full">
+                <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-4xl mx-auto text-center gap-4">
+                    <div className="flex flex-col items-center">
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                             <Truck className="w-8 h-8" />
                             Asignar Cadetes
@@ -58,7 +58,7 @@ export const AsignarCadetePage: React.FC = () => {
                     </Badge>
                 </div>
 
-                <Card>
+                <Card className="w-full max-w-4xl mx-auto">
                     {loading ? (
                         <div className="flex justify-center py-12">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

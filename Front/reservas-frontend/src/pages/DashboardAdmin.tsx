@@ -115,9 +115,9 @@ export const DashboardAdmin: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-8 font-sans">
+            <div className="space-y-8 font-sans flex flex-col items-center w-full">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full max-w-6xl mx-auto text-center">
     <div>
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Bienvenido, {user?.nombreCompleto?.split(' ')[0]}</h1>
         <p className="text-gray-500 mt-1 text-sm">Panel de Administración - {user?.nombreSucursal}</p>
