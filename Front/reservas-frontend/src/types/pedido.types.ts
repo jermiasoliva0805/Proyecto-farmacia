@@ -15,6 +15,7 @@ export interface OrderSummaryDTO {
     // ✅ CU25: Para detectar si ya inició el armado
     fechaInicioArmado?: string;
     fechaFinArmado?: string;
+    zonaNombre?: string;
 }
 
 export interface OrderDetailDTO {

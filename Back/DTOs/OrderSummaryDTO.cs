@@ -25,5 +25,8 @@ namespace Back.DTOs
         // ✅ CU25: Fechas de armado para detectar si ya inició
         public string? FechaInicioArmado { get; set; }
         public string? FechaFinArmado { get; set; }
+
+        // Zona de reparto
+        public string? ZonaNombre { get; set; }
     }
 }

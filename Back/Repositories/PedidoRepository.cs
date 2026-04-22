@@ -25,6 +25,7 @@ namespace Back.Repositories
                 .Include(p => p.Cliente)
                 .Include(p => p.EstadoDePedido)
                 .Include(p => p.Usuario)
+                .Include(p => p.Zona)
                 .AsNoTracking()
                 .AsQueryable();
             
@@ -78,6 +79,7 @@ namespace Back.Repositories
                     FechaEntregaReal = p.FechaEntregaReal, 
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
                     FechaEntregaEstimada = p.FechaEntregaEstimada,
+                    ZonaNombre = p.Zona != null ? p.Zona.Nombre : "Sin asignar",
                     // ✅ CU25: Incluir fechas de armado para detectar si ya inició
                     FechaInicioArmado = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
                     FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null

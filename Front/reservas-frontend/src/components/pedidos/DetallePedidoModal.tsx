@@ -352,6 +352,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
               <div><p className="text-gray-500">Estado</p><Badge variant={pedido.estaDemorado ? 'warning' : 'info'}>{pedido.estadoNombre}</Badge></div>
               <div><p className="text-gray-500">Cliente</p><p className="font-semibold">{pedido.clienteNombre}</p></div>
               <div><p className="text-gray-500">Sucursal</p><p className="font-semibold">Casa Central</p></div>
+              <div><p className="text-gray-500">Zona</p><p className="font-semibold">{pedido.zonaNombre || 'Sin asignar'}</p></div>
             </div>
 
             {/* --- RESUMEN ECONÓMICO CON PRODUCTOS --- */}
