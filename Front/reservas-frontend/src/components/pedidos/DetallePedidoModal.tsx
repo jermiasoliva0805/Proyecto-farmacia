@@ -285,15 +285,10 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
             </div>
 
             <div class="label-section">
-              <h4>Detalles de Envío:</h4>
+              <h4>Referencia de Envío:</h4>
               <div class="label-info">
-                <span style="font-weight: 700;">Método de envío:</span> ${label.metodoEnvio || '-'}
+                ${label.referenciaEntrega ? `<span style="font-weight: 700;">${label.referenciaEntrega}</span>` : '<span style="color: var(--muted);">Sin referencia especificada</span>'}
               </div>
-              ${label.puntoDeRetiro && label.metodoEnvio === 'Punto de retiro' ? `
-                <div class="label-info">
-                  <span style="font-weight: 700;">Punto de retiro:</span> ${label.puntoDeRetiro}
-                </div>
-              ` : ''}
             </div>
 
             <div class="label-section">
