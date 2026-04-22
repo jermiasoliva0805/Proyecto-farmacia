@@ -87,25 +87,29 @@ namespace Back.Services
 
         public async Task<bool> UpdateUserAsync(int id, UpdateUserDTO updateDto)
         {
-            // 1. Verificar que el usuario exista y obtener datos completos (incluyendo pedidos)
-            var usuarioExistente = await _userRepository.GetByIdWithPedidosAsync(id);
+            // 1. Verificar que el usuario exista
+            var usuarioExistente = await _userRepository.GetByIdAsync(id);
             if (usuarioExistente == null) return false;
 
             // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
             if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
                 updateDto.ZonaId.Value != usuarioExistente.ZonaId)
             {
-                // El cadete intenta cambiar de zona. Verificar si tiene pedidos en ruta o entrega
-                var tienePedidosEnEntrega = usuarioExistente.Pedidos.Any(p => 
-                    p.IDEstadoDePedido >= 5 && p.IDEstadoDePedido <= 6 // Estados 5 (En ruta) o 6 (En Camino)
-                );
-
-                if (tienePedidosEnEntrega)
+                // El cadete intenta cambiar de zona. Cargar pedidos para validar
+                var usuarioConPedidos = await _userRepository.GetByIdWithPedidosAsync(id);
+                if (usuarioConPedidos != null)
                 {
-                    throw new InvalidOperationException(
-                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
-                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                    var tienePedidosEnEntrega = usuarioConPedidos.Pedidos.Any(p => 
+                        p.IDEstadoDePedido >= 5 && p.IDEstadoDePedido <= 6 // Estados 5 (En ruta) o 6 (En Camino)
                     );
+
+                    if (tienePedidosEnEntrega)
+                    {
+                        throw new InvalidOperationException(
+                            $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
+                            "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                        );
+                    }
                 }
             }
 
