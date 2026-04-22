@@ -117,15 +117,15 @@ export const DashboardAdmin: React.FC = () => {
         <DashboardLayout>
             <div className="space-y-8 font-sans w-full">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full max-w-6xl mx-auto">
-    <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Bienvenido, {user?.nombreCompleto?.split(' ')[0]}</h1>
-        <p className="text-gray-500 mt-1 text-sm">Panel de Administración - {user?.nombreSucursal}</p>
-    </div>
-    <Button onClick={() => navigate('/pedidos/nuevo')} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all">
-        <Plus size={20} /> Nuevo Pedido
-    </Button>
-</div>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4 w-full max-w-6xl mx-auto">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Bienvenido, {user?.nombreCompleto?.split(' ')[0]}</h1>
+                        <p className="text-gray-500 mt-1 text-sm">Panel de Administración - {user?.nombreSucursal}</p>
+                    </div>
+                    <Button onClick={() => navigate('/pedidos/nuevo')} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all">
+                        <Plus size={20} /> Nuevo Pedido
+                    </Button>
+                </div>
 
                 {/* Estadísticas - Estilo Bordeado (Outline) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

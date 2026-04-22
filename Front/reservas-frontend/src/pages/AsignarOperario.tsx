@@ -57,7 +57,7 @@ export const AsignarOperarioPage: React.FC = () => {
     return (
         <DashboardLayout>
             <div className="space-y-6 w-full">
-                <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start w-full max-w-4xl mx-auto gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                             <Users className="w-8 h-8" />

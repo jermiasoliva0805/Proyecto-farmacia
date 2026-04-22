@@ -107,6 +107,7 @@ export const SeguimientoPedidos: React.FC = () => {
                         <Search className="w-8 h-8" />
                         Seguimiento de Pedidos
                     </h1>
+                    <p className="text-gray-600 mt-1 text-sm">Panel de seguimiento y control de pedidos</p>
                 </div>
 
                 <Card className="w-full max-w-5xl mx-auto">
