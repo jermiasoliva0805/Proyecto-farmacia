@@ -299,14 +299,17 @@ const UsuariosPage = () => {
         }
     };
 
-    const handleEliminar = async (id: number) => {
-        if (window.confirm("¿Seguro que deseas dar de baja a este personal?")) {
+    const handleEliminar = async (usuario: any) => {
+        const mensaje = `¿Estás seguro de que deseas dar de baja a ${usuario.nombreCompleto}?\n\nRol: ${usuario.rol}\nEmail: ${usuario.email}\n\nEsta acción no se puede deshacer.`;
+        
+        if (window.confirm(mensaje)) {
             try {
-                await usuariosService.deleteUsuario(id);
-                setUsuarios(prev => prev.filter(u => u.id !== id));
+                await usuariosService.deleteUsuario(usuario.id);
+                setUsuarios(prev => prev.filter(u => u.id !== usuario.id));
                 setToast({ message: "Usuario eliminado correctamente", type: 'success' });
-            } catch (error) {
-                setToast({ message: "Error al eliminar el usuario", type: 'error' });
+            } catch (error: any) {
+                const msg = error.response?.data?.message || "Error al eliminar el usuario";
+                setToast({ message: msg, type: 'error' });
             }
         }
     };
@@ -374,7 +377,7 @@ const UsuariosPage = () => {
                                                 <Pencil size={18} />
                                             </button>
                                             <button 
-                                                onClick={() => handleEliminar(user.id)}
+                                                onClick={() => handleEliminar(user)}
                                                 className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                                             >
                                                 <Trash2 size={18} />
