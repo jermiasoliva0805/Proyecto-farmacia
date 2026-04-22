@@ -76,8 +76,8 @@ export const DashboardOperario: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-8 font-sans flex flex-col items-center justify-center w-full">
-                <div className="w-full flex flex-col items-center justify-center text-center">
+            <div className="space-y-8 font-sans w-full">
+                <div className="w-full">
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                         Hola, {user?.nombreCompleto?.split(' ')[0]}
                     </h1>
@@ -86,7 +86,7 @@ export const DashboardOperario: React.FC = () => {
 
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mx-auto">
-                    <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md flex flex-col items-center text-center">
+                    <div className="bg-white border-2 border-blue-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-blue-600 text-sm font-medium mb-1">En Preparación</p>
                             <h3 className="text-4xl font-bold mb-2 text-blue-900">{pedidosPreparando.length}</h3>
@@ -95,7 +95,7 @@ export const DashboardOperario: React.FC = () => {
                         <Package className="absolute right-4 top-4 w-12 h-12 text-blue-100" />
                     </div>
 
-                    <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md flex flex-col items-center text-center">
+                    <div className="bg-white border-2 border-emerald-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-emerald-600 text-sm font-medium mb-1">Listos</p>
                             <h3 className="text-4xl font-bold mb-2 text-emerald-900">{pedidosListos.length}</h3>
@@ -104,7 +104,7 @@ export const DashboardOperario: React.FC = () => {
                         <CheckCircle className="absolute right-4 top-4 w-12 h-12 text-emerald-100" />
                     </div>
 
-                    <div className="bg-white border-2 border-purple-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md flex flex-col items-center text-center">
+                    <div className="bg-white border-2 border-purple-500 rounded-2xl p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
                         <div className="relative z-10">
                             <p className="text-purple-600 text-sm font-medium mb-1">Total Hoy</p>
                             <h3 className="text-4xl font-bold mb-2 text-purple-900">{pedidos.length}</h3>
@@ -115,7 +115,7 @@ export const DashboardOperario: React.FC = () => {
                 </div>
 
                 {/* Filtros */}
-                <div className="bg-white p-2 rounded-xl border border-gray-100 shadow-sm w-full max-w-3xl mx-auto flex justify-center">
+                <div className="bg-white p-2 rounded-xl border border-gray-100 shadow-sm w-full max-w-3xl mx-auto">
                     <OrderFilters userRole="Operario" onFilterChange={loadPedidos} />
                 </div>
 
