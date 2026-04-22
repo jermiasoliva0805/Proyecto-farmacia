@@ -91,29 +91,6 @@ namespace Back.Services
             var usuarioExistente = await _userRepository.GetByIdAsync(id);
             if (usuarioExistente == null) return false;
 
-            // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
-            // Temporalmente desactivada para diagnosticar error 500
-            // TODO: Implementar validación de zona de forma más segura
-            /*
-            if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
-                updateDto.ZonaId.Value != usuarioExistente.ZonaId)
-            {
-                var pedidosEnEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
-                {
-                    IDUsuario = id,
-                    IDEstadoDePedido = 6
-                });
-
-                if (pedidosEnEntrega != null && pedidosEnEntrega.Any())
-                {
-                    throw new InvalidOperationException(
-                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
-                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
-                    );
-                }
-            }
-            */
-
             // 2. Actualizar campos
             // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
             _mapper.Map(updateDto, usuarioExistente);
