@@ -61,78 +61,79 @@ export const SeguimientoPedidos: React.FC = () => {
                 return 'bg-gray-50 text-gray-500 border-gray-100';
         }
     };
+                </Card>
+                {/* Fin primer Card */}
 
-    useEffect(() => {
-        handleSearch();
-    }, []);
-
-    const handleSearch = async () => {
-        setLoading(true);
-        try {
-            const data = await pedidosService.getFilteredOrders(filters);
-            setPedidos(data);
-        } catch (error) {
-            console.error('Error al buscar pedidos:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleVerSeguimiento = async (idPedido: number) => {
-        try {
-            const tracking = await trackingService.getSeguimiento(idPedido);
-            setSelectedTracking(tracking);
-            setModalOpen(true);
-        } catch (error) {
-            console.error('Error al obtener seguimiento:', error);
-        }
-    };
-
-    const handleFilterChange = (field: keyof OrderFilterDTO, value: any) => {
-        setFilters(prev => ({
-            ...prev,
-            [field]: value || undefined,
-        }));
-    };
-
-    const clearFilters = () => {
-        setFilters({});
-    };
-
-    return (
-        <DashboardLayout>
-            <div className="p-6 bg-gray-50 min-h-screen">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Search className="w-8 h-8" />
-                            Seguimiento de Pedidos
-                        </h1>
-                        <p className="text-gray-500">Panel de seguimiento y control de pedidos</p>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            Resultados de la Búsqueda
+                        </h2>
+                        <Badge variant="info">{pedidos.length} pedidos</Badge>
                     </div>
+
+                    {loading ? (
+                        <div className="flex justify-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        </div>
+                    ) : pedidos.length === 0 ? (
+                        <Alert type="info">
+                            No se encontraron pedidos con los filtros aplicados.
+                        </Alert>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Fecha</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Responsable</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
+                                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {pedidos.map((pedido) => (
+                                        <tr key={pedido.idPedido} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                #{pedido.idPedido}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-600">
+                                                {new Date(pedido.fecha).toLocaleDateString('es-AR')}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">
+                                                {pedido.clienteNombre}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                    {pedido.estadoNombre.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-600">
+                                                {pedido.responsableNombre || <span className="text-gray-400 italic">Sin asignar</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                ${pedido.total.toFixed(2)}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                    onClick={() => handleVerSeguimiento(pedido.idPedido)}
+                                                >
+                                                    Ver Seguimiento
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Filter className="w-5 h-5 text-gray-600" />
-                        <h2 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Select
-                            label="Estado"
-                            value={filters.idEstadoDePedido?.toString() || ''}
-                            onChange={(e) => handleFilterChange('idEstadoDePedido', e.target.value ? parseInt(e.target.value) : undefined)}
-                            options={estadosOptions}
-                        />
-
-                        <Input
-                            type="date"
-                            label="Fecha Desde"
-                            value={filters.fechaDesde || ''}
-                            onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
-                        />
-
                         <Input
                             type="date"
                             label="Fecha Hasta"

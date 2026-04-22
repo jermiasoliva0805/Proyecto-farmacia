@@ -114,7 +114,7 @@ export const AsignarCadetePage: React.FC = () => {
                             </table>
                         </div>
                     )}
-                </Card>
+                </div>
             </div>
 
             {selectedPedido && (
