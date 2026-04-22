@@ -72,15 +72,14 @@ namespace Back.Mappings
                 .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId));
 
             // Mapeo de actualización de usuarios (UpdateUserDTO -> Usuario)
+            // Nota: Se asignan manualmente en UserService.UpdateUserAsync para evitar sobrescribir campos null
             CreateMap<Back.DTOS.UpdateUserDTO, Usuario>()
-                .ForMember(dest => dest.Nombre, opt => opt.Condition(src => src.Nombre != null))
-                .ForMember(dest => dest.Apellido, opt => opt.Condition(src => src.Apellido != null))
-                .ForMember(dest => dest.UsuarioNombre, opt => opt.Condition(src => src.UsuarioNombre != null))
-                .ForMember(dest => dest.Mail, opt => opt.Condition(src => src.Mail != null))
-                .ForMember(dest => dest.Rol, opt => opt.Condition(src => src.Rol != null))
-                .ForMember(dest => dest.IDSucursal, opt => opt.Condition(src => src.IDSucursal.HasValue))
-                .ForMember(dest => dest.ZonaId, opt => opt.Condition(src => src.ZonaId.HasValue));
-            // Nota: La contraseña se maneja por separado en el servicio con BCrypt
+                .ForMember(dest => dest.IDUsuario, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.Sucursal, opt => opt.Ignore())
+                .ForMember(dest => dest.Zona, opt => opt.Ignore())
+                .ForMember(dest => dest.Pedidos, opt => opt.Ignore())
+                .ForMember(dest => dest.IntentosDeEntrega, opt => opt.Ignore());
 
             // --- Mapeos de Tracking / Historial ---
             CreateMap<Pedido, OrderTrackingDTO>()

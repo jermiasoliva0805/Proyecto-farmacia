@@ -91,9 +91,27 @@ namespace Back.Services
             var usuarioExistente = await _userRepository.GetByIdAsync(id);
             if (usuarioExistente == null) return false;
 
-            // 2. Actualizar campos
-            // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
-            _mapper.Map(updateDto, usuarioExistente);
+            // 2. Actualizar solo los campos que se proporcionan (no-null)
+            if (!string.IsNullOrEmpty(updateDto.Nombre))
+                usuarioExistente.Nombre = updateDto.Nombre;
+            
+            if (!string.IsNullOrEmpty(updateDto.Apellido))
+                usuarioExistente.Apellido = updateDto.Apellido;
+            
+            if (!string.IsNullOrEmpty(updateDto.UsuarioNombre))
+                usuarioExistente.UsuarioNombre = updateDto.UsuarioNombre;
+            
+            if (!string.IsNullOrEmpty(updateDto.Mail))
+                usuarioExistente.Mail = updateDto.Mail;
+            
+            if (!string.IsNullOrEmpty(updateDto.Rol))
+                usuarioExistente.Rol = updateDto.Rol;
+            
+            if (updateDto.IDSucursal.HasValue)
+                usuarioExistente.IDSucursal = updateDto.IDSucursal.Value;
+            
+            if (updateDto.ZonaId.HasValue)
+                usuarioExistente.ZonaId = updateDto.ZonaId.Value;
 
             // 3. Si se proporciona una nueva contraseña, hashearla
             if (!string.IsNullOrEmpty(updateDto.Contraseña))
