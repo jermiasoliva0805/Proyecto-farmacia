@@ -80,7 +80,7 @@ namespace Back.Controllers
             // 1. Es el mismo usuario (puede editar su propio perfil), O
             // 2. Es Encargado (puede editar a cualquiera)
             bool esUsuarioActual = currentUserId == id;
-            bool esEncargado = currentUserRole == "Encargado";
+            bool esEncargado = currentUserRole?.Equals("Encargado", StringComparison.OrdinalIgnoreCase) ?? false;
 
             if (!esUsuarioActual && !esEncargado)
             {
