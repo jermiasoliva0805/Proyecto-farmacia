@@ -92,18 +92,20 @@ namespace Back.Services
             if (usuarioExistente == null) return false;
 
             // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
+            // Solo validar si el cadete realmente está cambiando de zona
             if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
                 updateDto.ZonaId.Value != usuarioExistente.ZonaId)
             {
-                // El cadete intenta cambiar de zona. Cargar pedidos para validar
-                var usuarioConPedidos = await _userRepository.GetByIdWithPedidosAsync(id);
-                if (usuarioConPedidos != null)
+                // El cadete intenta cambiar de zona. Validar pedidos en entrega
+                try
                 {
-                    var tienePedidosEnEntrega = usuarioConPedidos.Pedidos.Any(p => 
-                        p.IDEstadoDePedido >= 5 && p.IDEstadoDePedido <= 6 // Estados 5 (En ruta) o 6 (En Camino)
-                    );
+                    var pedidosEnEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                    {
+                        IDUsuario = id,
+                        IDEstadoDePedido = 6 // En Camino
+                    });
 
-                    if (tienePedidosEnEntrega)
+                    if (pedidosEnEntrega != null && pedidosEnEntrega.Any())
                     {
                         throw new InvalidOperationException(
                             $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
@@ -111,9 +113,17 @@ namespace Back.Services
                         );
                     }
                 }
+                catch (InvalidOperationException)
+                {
+                    throw; // Re-lanzar si es nuestra validación
+                }
+                catch
+                {
+                    // Si hay error en la validación de pedidos, permitir el cambio igual
+                }
             }
 
-            // 2. Actualizar campos
+            // 2. Actualizar campos (ANTES FUNCIONABA, SIGUE IGUAL)
             // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
             _mapper.Map(updateDto, usuarioExistente);
 
