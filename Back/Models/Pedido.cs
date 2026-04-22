@@ -11,6 +11,8 @@ namespace Back.Models
         public string FormaDePago { get; set; } = string.Empty;
         public string EstadoActual { get; set; } = string.Empty;
         public string DireccionEntrega { get; set; } = string.Empty;
+        public string? CodigoPostalEntrega { get; set; }
+        public string? ReferenciaEntrega { get; set; } // ej: "Entre Calle X y Calle Y"
         public int IDLocalidad { get; set; }
 
         [Required]
