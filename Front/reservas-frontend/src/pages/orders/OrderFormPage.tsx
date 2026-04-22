@@ -25,7 +25,7 @@ const OrderFormPage: React.FC = () => {
     // Datos del pedido
     const [items, setItems] = useState([{ tempId: Date.now(), productId: '', quantity: 1 }]);
     const [medioPago, setMedioPago] = useState('Efectivo');
-    const [puntoRetiro, setPuntoRetiro] = useState('');
+    const [referenciaEnvio, setReferenciaEnvio] = useState('');
     const [sucursalId, setSucursalId] = useState<string>('');
     
     // Datos de zona y localidad - Córdoba es FIJA
@@ -272,14 +272,12 @@ const OrderFormPage: React.FC = () => {
             const direccionEntrega = tipoCliente === 'nuevo' 
                 ? nuevoCliente.direccion 
                 : (clienteData?.email || '');
-            
-            const puntoRetiroFinal = puntoRetiro || direccionEntrega;
 
             const pedido: any = {
                 IDSucursal: parseInt(sucursalId),
                 IDUsuario: userData.id,
                 FormaDePago: medioPago,
-                PuntoRetiro: puntoRetiroFinal,
+                ReferenciaEntrega: referenciaEnvio,
                 Detalles: detallesValidos
                     .map(i => {
                         const producto = productos.find(p => String(p.id) === i.productId);
@@ -553,20 +551,20 @@ const OrderFormPage: React.FC = () => {
                                         </select>
                                     </div>
 
-                                    {/* Punto de Retiro */}
+                                    {/* Referencia de Envío */}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             <MapPin size={16} className="inline mr-2" />
-                                            Punto de Retiro (opcional)
+                                            Referencia de Envío (opcional)
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="Ej: Farmacia Centro, Av. Colon 123"
-                                            value={puntoRetiro}
-                                            onChange={(e) => setPuntoRetiro(e.target.value)}
+                                            placeholder="Ej: Entre Calle X y Calle Y, Casa con puerta azul"
+                                            value={referenciaEnvio}
+                                            onChange={(e) => setReferenciaEnvio(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">Si no especificas un punto, se usará la dirección del cliente</p>
+                                        <p className="text-xs text-gray-500 mt-1">Especifica referencias para facilitar la entrega</p>
                                     </div>
                                 </div>
 

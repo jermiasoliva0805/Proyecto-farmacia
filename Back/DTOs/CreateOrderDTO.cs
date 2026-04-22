@@ -25,7 +25,7 @@ namespace Back.DTOs
         
         public string? Email { get; set; }
         
-        public string? PuntoRetiro { get; set; }
+        public string? ReferenciaEntrega { get; set; }
 
         // Zona de reparto (se captura desde el barrio seleccionado)
         public int? ZonaId { get; set; }

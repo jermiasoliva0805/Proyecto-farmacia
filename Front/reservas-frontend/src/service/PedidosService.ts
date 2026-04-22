@@ -150,7 +150,7 @@ export const pedidosService = {
                 Telefono: orderData.Telefono,
                 Email: orderData.Email,
                 Direccion: orderData.Direccion,
-                PuntoRetiro: orderData.PuntoRetiro,
+                ReferenciaEntrega: orderData.ReferenciaEntrega,
                 Detalles: detalles
             };
 
