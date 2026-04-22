@@ -91,6 +91,26 @@ namespace Back.Services
             var usuarioExistente = await _userRepository.GetByIdAsync(id);
             if (usuarioExistente == null) return false;
 
+            // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
+            if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
+                updateDto.ZonaId.Value != usuarioExistente.ZonaId)
+            {
+                // El cadete intenta cambiar de zona. Validar que no tenga pedidos sin entregar
+                var pedidosSinEntregar = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                {
+                    IDUsuario = id,
+                    IDEstadoDePedido = 6 // En Camino (pedidos que aún no entregó)
+                });
+
+                if (pedidosSinEntregar != null && pedidosSinEntregar.Any())
+                {
+                    throw new InvalidOperationException(
+                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
+                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                    );
+                }
+            }
+
             // 2. Actualizar solo los campos que se proporcionan (no-null)
             if (!string.IsNullOrEmpty(updateDto.Nombre))
                 usuarioExistente.Nombre = updateDto.Nombre;
@@ -149,20 +169,19 @@ namespace Back.Services
                 }
             }
 
-            // VALIDACIÓN 2: No permitir eliminar operario si tiene pedidos asignados
-            // CAMBIO 3: Un operario no se puede eliminar si tiene CUALQUIER pedido asignado
-            // Estados permitidos: 7 (Entregado), 8 (Cancelado), o sin pedidos
-            // Estados bloqueantes: 1 (Sin preparar), 2 (Preparar), 3 (Demorado), 4 (Listo), 5 (En ruta), 6 (En Camino)
+            // VALIDACIÓN 2: No permitir eliminar operario si tiene pedidos en armado
+            // Estados bloqueantes para Operario: 2 (Preparar), 3 (Demorado)
+            // Estado 4 (Listo para despachar) ya no le pertenece, puede eliminarse
             if (usuario.Rol == "Operario")
             {
-                var tienePedidosAsignados = usuario.Pedidos.Any(p => 
-                    p.IDEstadoDePedido >= 1 && p.IDEstadoDePedido <= 6 // Cualquier estado antes de entregar o cancelar
+                var tienePedidosEnArmado = usuario.Pedidos.Any(p => 
+                    p.IDEstadoDePedido == 2 || p.IDEstadoDePedido == 3 // Solo Preparar y Demorado
                 );
 
-                if (tienePedidosAsignados)
+                if (tienePedidosEnArmado)
                 {
-                    throw new Exception($"No se puede eliminar al operario {usuario.Nombre} {usuario.Apellido} porque tiene pedidos asignados. "
-                        + "El operario debe completar o cancelar todos los pedidos antes de ser eliminado.");
+                    throw new Exception($"No se puede eliminar al operario {usuario.Nombre} {usuario.Apellido} porque tiene pedidos en armado. "
+                        + "El operario debe completar o cancelar todos los pedidos en preparación antes de ser eliminado.");
                 }
             }
 
