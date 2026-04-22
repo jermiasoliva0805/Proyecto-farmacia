@@ -101,16 +101,18 @@ export const SeguimientoPedidos: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6 w-full">
-                <div className="w-full">
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                        <Search className="w-8 h-8" />
-                        Seguimiento de Pedidos
-                    </h1>
-                    <p className="text-gray-600 mt-1 text-sm">Panel de seguimiento y control de pedidos</p>
+            <div className="p-6 bg-gray-50 min-h-screen">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                            <Search className="w-8 h-8" />
+                            Seguimiento de Pedidos
+                        </h1>
+                        <p className="text-gray-500">Panel de seguimiento y control de pedidos</p>
+                    </div>
                 </div>
 
-                <Card className="w-full max-w-5xl mx-auto">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <Filter className="w-5 h-5 text-gray-600" />
                         <h2 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h2>

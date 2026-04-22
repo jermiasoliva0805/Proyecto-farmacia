@@ -129,16 +129,15 @@ const MisPedidosOperario = () => {
                 </div>
             )}
 
-            <div className="space-y-6 font-sans w-full">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full max-w-5xl mx-auto">
+            <div className="p-6 bg-gray-50 min-h-screen">
+                <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-8 bg-indigo-500 rounded-full"></div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Pedidos Pendientes de Armado</h1>
-                            <p className="text-gray-600 mt-1 text-sm">Panel de pedidos asignados al operario</p>
+                            <h1 className="text-2xl font-bold text-gray-800">Pedidos Pendientes de Armado</h1>
+                            <p className="text-gray-500">Panel de pedidos asignados al operario</p>
                         </div>
                     </div>
-
                     <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
                         <button 
                             onClick={() => setView('tabla')}
