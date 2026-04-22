@@ -46,7 +46,6 @@ export const AsignarCadetePage: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800">Asignar Cadetes</h1>
-                        <p className="text-gray-500">Pedidos con preparación finalizada, listos para despacho.</p>
                     </div>
                     <Badge variant="success" size="md">
                         {pedidos.length} por despachar

@@ -108,7 +108,6 @@ export const SeguimientoPedidos: React.FC = () => {
                             <Search className="w-8 h-8" />
                             Seguimiento de Pedidos
                         </h1>
-                        <p className="text-gray-500">Panel de seguimiento y control de pedidos</p>
                     </div>
                 </div>
 

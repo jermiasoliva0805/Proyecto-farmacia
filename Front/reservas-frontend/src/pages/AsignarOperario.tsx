@@ -60,7 +60,6 @@ export const AsignarOperarioPage: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800">Asignar Operarios</h1>
-                        <p className="text-gray-500">Solo se muestran pedidos en estado <strong>'Sin preparar'</strong>.</p>
                     </div>
                     <Badge variant="info" size="md">
                         {pedidos.length} pedidos por asignar
