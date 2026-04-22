@@ -182,12 +182,6 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
                 <div class="row"><div class="label">Email:</div><div class="value">${printData.clienteEmail ?? '-'}</div></div>
                 <div class="row"><div class="label">Medio de pago:</div><div class="value">${printData.formaPago ?? '-'}</div></div>
               </div>
-              <div class="block">
-                <h4>Detalles de Envío</h4>
-                <div class="row"><div class="label">Método de envío:</div><div class="value">${printData.metodoEnvio ?? '-'}</div></div>
-                <div class="row"><div class="label">Punto de retiro:</div><div class="value">${printData.puntoDeRetiro ?? '-'}</div></div>
-                <div class="row"><div class="label">Estado de entrega:</div><div class="value">-</div></div>
-              </div>
             </div>
 
             <div class="section-title">Productos/Servicios</div>
