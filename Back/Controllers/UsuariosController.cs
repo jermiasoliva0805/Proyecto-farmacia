@@ -100,7 +100,10 @@ namespace Back.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message, errorCode = "CADETE_HAS_ACTIVE_DELIVERIES" });
+                return BadRequest(new { 
+                    message = ex.Message, 
+                    errorCode = "CADETE_CANNOT_CHANGE_ZONE_WITH_DELIVERIES" 
+                });
             }
             catch (Exception ex)
             {

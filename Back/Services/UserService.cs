@@ -95,18 +95,28 @@ namespace Back.Services
             if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
                 updateDto.ZonaId.Value != usuarioExistente.ZonaId)
             {
-                // El cadete intenta cambiar de zona. Validar que no tenga pedidos sin entregar
-                var pedidosSinEntregar = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                // El cadete intenta cambiar de zona. Validar que no tenga pedidos en ruta o entrega
+                var pedidosEnRutaOEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
                 {
                     IDUsuario = id,
-                    IDEstadoDePedido = 6 // En Camino (pedidos que aún no entregó)
+                    IDEstadoDePedido = 5 // En ruta
                 });
 
-                if (pedidosSinEntregar != null && pedidosSinEntregar.Any())
+                // También verificar estado 6 (En Camino)
+                if (pedidosEnRutaOEntrega == null || !pedidosEnRutaOEntrega.Any())
+                {
+                    pedidosEnRutaOEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
+                    {
+                        IDUsuario = id,
+                        IDEstadoDePedido = 6 // En Camino
+                    });
+                }
+
+                if (pedidosEnRutaOEntrega != null && pedidosEnRutaOEntrega.Any())
                 {
                     throw new InvalidOperationException(
-                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
-                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} porque tiene {pedidosEnRutaOEntrega.Count()} pedido(s) en ruta o entrega. " +
+                        "El proceso logístico es irreversible en esta etapa. Espere a que se completen las entregas antes de cambiar de zona."
                     );
                 }
             }
