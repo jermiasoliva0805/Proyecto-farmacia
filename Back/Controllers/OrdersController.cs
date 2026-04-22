@@ -374,5 +374,40 @@ namespace Back.Controllers
 
             return Ok(dto);
         }
+
+        /// <summary>
+        /// Obtiene los datos para la etiqueta de envío (sin productos)
+        /// </summary>
+        [Authorize]
+        [HttpGet("{id}/label-data")]
+        public async Task<IActionResult> GetLabelData(int id)
+        {
+            var order = await _pedidoRepository.GetByIdAsync(id);
+            if (order == null) return NotFound(new { message = "Pedido no encontrado." });
+
+            var dto = new OrderLabelDTO
+            {
+                IDPedido = order.IDPedido,
+                Fecha = order.Fecha,
+                ClienteDireccion = order.DireccionEntrega,
+                CodigoPostal = order.CodigoPostalEntrega,
+                ReferenciaEntrega = order.ReferenciaEntrega,
+                MetodoEnvio = (order.IDSucursal > 0) ? "Punto de retiro" : "Envío a domicilio",
+                PuntoRetiro = order.Sucursal?.Dirección ?? "N/A"
+            };
+
+            if (order.Cliente != null)
+            {
+                dto.ClienteNombre = $"{order.Cliente.Nombre} {order.Cliente.Apellido}";
+                dto.ClienteTelefono = order.Cliente.Telefono ?? "N/A";
+                dto.ClienteEmail = order.Cliente.Mail ?? "N/A";
+
+                var barrio = order.Cliente.Barrio?.Nombre ?? "N/A";
+                var localidad = order.Cliente.Localidad?.Ciudad ?? "N/A";
+                dto.ClienteLocalidadBarrio = $"{barrio}, {localidad}";
+            }
+
+            return Ok(dto);
+        }
     }
 }

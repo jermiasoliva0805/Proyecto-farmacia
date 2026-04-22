@@ -21,6 +21,20 @@ export type PrintData = {
   total: number;
 };
 
+export type LabelData = {
+  idPedido: number;
+  fecha?: string;
+  metodoEnvio?: string;
+  puntoDeRetiro?: string;
+  clienteNombre: string;
+  clienteTelefono?: string;
+  clienteEmail?: string;
+  clienteDireccion: string;
+  codigoPostal?: string;
+  referenciaEntrega?: string;
+  clienteLocalidadBarrio?: string;
+};
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/$/, '');
 const PRINT_PATH = (import.meta.env.VITE_ORDER_PRINT_PATH ?? '/orders/{id}/print-data').trim();
 const USE_COOKIES = (import.meta.env.VITE_USE_COOKIES ?? 'false').toLowerCase() === 'true';
@@ -122,6 +136,41 @@ export async function getPrintData(idPedido: number): Promise<PrintData> {
     clienteDireccion: String(json.clienteDireccion ?? json.cliente?.direccion ?? ''),
     productos,
     total: Number(json.total ?? json.montoTotal ?? subtotalCalculado ?? 0),
+  };
+
+  return data;
+}
+
+export async function getLabelData(idPedido: number): Promise<LabelData> {
+  const LABEL_PATH = (import.meta.env.VITE_ORDER_LABEL_PATH ?? '/orders/{id}/label-data').trim();
+  const url = buildUrlFromPath(LABEL_PATH, idPedido);
+  const { ok, status, json, text } = await fetchJson(url);
+
+  if (status === 401) {
+    throw new Error('No autorizado (401). Verifica que envías el token/cookies correctas y que no está expirado.');
+  }
+  if (status === 403) {
+    throw new Error('Acceso prohibido (403). Tu token no tiene permisos suficientes.');
+  }
+  if (status === 404) {
+    throw new Error(`Endpoint no encontrado: ${url}`);
+  }
+  if (!ok) {
+    throw new Error(`Fallo al obtener datos de etiqueta (${status}): ${text}`);
+  }
+
+  const data: LabelData = {
+    idPedido: Number(json.idPedido ?? json.id ?? idPedido),
+    fecha: json.fecha ? String(json.fecha) : undefined,
+    metodoEnvio: json.metodoEnvio ? String(json.metodoEnvio) : undefined,
+    puntoDeRetiro: json.puntoDeRetiro ? String(json.puntoDeRetiro) : undefined,
+    clienteNombre: String(json.clienteNombre ?? ''),
+    clienteTelefono: json.clienteTelefono ? String(json.clienteTelefono) : undefined,
+    clienteEmail: json.clienteEmail ? String(json.clienteEmail) : undefined,
+    clienteDireccion: String(json.clienteDireccion ?? ''),
+    codigoPostal: json.codigoPostal ? String(json.codigoPostal) : undefined,
+    referenciaEntrega: json.referenciaEntrega ? String(json.referenciaEntrega) : undefined,
+    clienteLocalidadBarrio: json.clienteLocalidadBarrio ? String(json.clienteLocalidadBarrio) : undefined,
   };
 
   return data;

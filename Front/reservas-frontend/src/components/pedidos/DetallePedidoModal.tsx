@@ -6,7 +6,7 @@ import { Modal } from '../common/Modal';
 import { TrackingTimeline } from '../seguimiento/TrackingTimeline';
 import { trackingService } from '../../service/trackingService';
 import { OrderTrackingDTO } from '../../types/tracking.types';
-import { getPrintData, type PrintData } from '../../service/orderService';
+import { getPrintData, getLabelData, type PrintData, type LabelData } from '../../service/orderService';
 import { useAuth } from '../../context/AuthContext';
 import { CancelarPedidoModal } from './CancelarPedidoModal';
 
@@ -23,8 +23,9 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
   const [loadingTracking, setLoadingTracking] = useState(false);
   const [modalCancelarOpen, setModalCancelarOpen] = useState(false);
 
-  // --- NUEVOS ESTADOS PARA PRODUCTOS ---
+  // --- NUEVOS ESTADOS PARA PRODUCTOS Y ETIQUETA ---
   const [fullData, setFullData] = useState<PrintData | null>(null);
+  const [labelData, setLabelData] = useState<LabelData | null>(null);
   const [loadingData, setLoadingData] = useState(false);
 
   // Cargar detalles cuando se abre el modal
@@ -33,10 +34,14 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
       const cargarDetalles = async () => {
         setLoadingData(true);
         try {
-          const data = await getPrintData(pedido.idPedido);
-          setFullData(data);
+          const [printData, labelDataResponse] = await Promise.all([
+            getPrintData(pedido.idPedido),
+            getLabelData(pedido.idPedido)
+          ]);
+          setFullData(printData);
+          setLabelData(labelDataResponse);
         } catch (err) {
-          console.error("Error al cargar productos:", err);
+          console.error("Error al cargar datos:", err);
         } finally {
           setLoadingData(false);
         }
@@ -44,6 +49,7 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
       cargarDetalles();
     } else {
       setFullData(null);
+      setLabelData(null);
     }
   }, [isOpen, pedido]);
 
@@ -78,27 +84,41 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
     }
   };
 
-  const buildPrintHTML = (data: PrintData) => {
-    const lineSubtotals = (Array.isArray(data.productos) ? data.productos : []).map((p: any) => {
+  const buildPrintHTML = (printData: PrintData, label: LabelData) => {
+    const lineSubtotals = (Array.isArray(printData.productos) ? printData.productos : []).map((p: any) => {
       const desc = p.descuento ?? 0;
       const sub = p.subtotal != null ? p.subtotal : p.cantidad * p.precioUnitario - desc;
       return { subtotal: sub, descuento: desc };
     });
     const subtotal = lineSubtotals.reduce((acc, x) => acc + x.subtotal, 0);
     const recargoMedioPago = 0;
-    const total = data.total || subtotal + recargoMedioPago;
+    const total = printData.total || subtotal + recargoMedioPago;
+
+    const formatDateLabel = (dateString?: string) => {
+      if (!dateString) return '-';
+      try {
+        return new Date(dateString).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+      } catch {
+        return '-';
+      }
+    };
 
     return `
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Hoja de Pedido #${data.idPedido}</title>
+          <title>Hojas de Pedido #${printData.idPedido}</title>
           <style>
             @page { size: A4; margin: 16mm; }
             :root { --border:#d9d9d9; --text:#111; --muted:#666; --brand:#000; --bg:#fff; }
             * { box-sizing: border-box; }
             body { font-family: Arial, Helvetica, sans-serif; color: var(--text); background: var(--bg); }
-            .sheet { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+            .sheet { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; page-break-after: always; }
+            .sheet:last-child { page-break-after: auto; }
             .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
             .brand { font-size:20px; font-weight:800; color:var(--brand); }
             .order-id { font-size:12px; color:var(--muted); margin-top:4px; }
@@ -132,32 +152,40 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
             }
             .sig-line { margin-top: 25px; border-top: 1px dotted var(--border); height: 10px; }
 
+            .label-section { border:1px solid var(--border); border-radius:4px; padding:12px; margin:8px 0; }
+            .label-section h4 { margin:0 0 8px 0; font-size:14px; font-weight:700; }
+            .label-info { font-size:12px; margin:6px 0; }
+            .label-info-bold { font-weight:700; }
+            .shipping-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+            .signature-area { margin-top:20px; min-height:40px; border-top:1px solid var(--border); padding-top:8px; text-align:center; font-size:11px; color:var(--muted); }
+
             @media print { .sheet { border-color: transparent; } }
           </style>
         </head>
         <body>
+          <!-- PRIMERA HOJA: Hoja de Preparación -->
           <div class="sheet">
             <div class="header">
               <div>
                 <div class="brand">Farmacias General Paz</div>
-                <div class="order-id">Pedido #${data.idPedido}</div>
+                <div class="order-id">Pedido #${printData.idPedido}</div>
               </div>
-              <div class="order-id">Fecha: ${formatDate(data.fecha)}</div>
+              <div class="order-id">Fecha: ${formatDate(printData.fecha)}</div>
             </div>
 
             <div class="info">
               <div class="block">
                 <h4>Detalles de Facturación</h4>
-                <div class="row"><div class="label">Cliente:</div><div class="value">${data.clienteNombre}</div></div>
-                <div class="row"><div class="label">Dirección:</div><div class="value">${data.clienteDireccion}</div></div>
-                <div class="row"><div class="label">Teléfono:</div><div class="value">${data.clienteTelefono ?? '-'}</div></div>
-                <div class="row"><div class="label">Email:</div><div class="value">${data.clienteEmail ?? '-'}</div></div>
-                <div class="row"><div class="label">Medio de pago:</div><div class="value">${data.formaPago ?? '-'}</div></div>
+                <div class="row"><div class="label">Cliente:</div><div class="value">${printData.clienteNombre}</div></div>
+                <div class="row"><div class="label">Dirección:</div><div class="value">${printData.clienteDireccion}</div></div>
+                <div class="row"><div class="label">Teléfono:</div><div class="value">${printData.clienteTelefono ?? '-'}</div></div>
+                <div class="row"><div class="label">Email:</div><div class="value">${printData.clienteEmail ?? '-'}</div></div>
+                <div class="row"><div class="label">Medio de pago:</div><div class="value">${printData.formaPago ?? '-'}</div></div>
               </div>
               <div class="block">
                 <h4>Detalles de Envío</h4>
-                <div class="row"><div class="label">Método de envío:</div><div class="value">${data.metodoEnvio ?? '-'}</div></div>
-                <div class="row"><div class="label">Punto de retiro:</div><div class="value">${data.puntoDeRetiro ?? '-'}</div></div>
+                <div class="row"><div class="label">Método de envío:</div><div class="value">${printData.metodoEnvio ?? '-'}</div></div>
+                <div class="row"><div class="label">Punto de retiro:</div><div class="value">${printData.puntoDeRetiro ?? '-'}</div></div>
                 <div class="row"><div class="label">Estado de entrega:</div><div class="value">-</div></div>
               </div>
             </div>
@@ -175,8 +203,8 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
               </thead>
               <tbody>
                 ${
-                  Array.isArray(data.productos) && data.productos.length
-                    ? data.productos
+                  Array.isArray(printData.productos) && printData.productos.length
+                    ? printData.productos
                         .map((p: any) => {
                           const desc = p.descuento ?? 0;
                           const sub = p.subtotal != null ? p.subtotal : p.cantidad * p.precioUnitario - desc;
@@ -221,6 +249,67 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
               </div>
             </div>
           </div>
+
+          <!-- SEGUNDA HOJA: Etiqueta de Envío -->
+          <div class="sheet">
+            <div class="header">
+              <div>
+                <div class="brand">Farmacias General Paz</div>
+                <div class="order-id">Etiqueta de Envío</div>
+              </div>
+              <div class="order-id">Fecha: ${formatDateLabel(label.fecha)}</div>
+            </div>
+
+            <div class="label-section">
+              <h4>ENVIAR A:</h4>
+              <div class="label-info">
+                <div class="label-info-bold" style="font-size: 16px;">${label.clienteNombre || 'Cliente'}</div>
+                <div style="margin-top: 8px; color: var(--muted); font-size: 11px;">${label.clienteLocalidadBarrio || ''}</div>
+              </div>
+
+              <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px;">
+                <div style="font-weight: 700; margin-bottom: 4px;">Dirección:</div>
+                <div style="font-size: 13px; line-height: 1.4; word-break: break-word;">
+                  ${label.clienteDireccion || '-'}
+                </div>
+                
+                ${label.codigoPostal ? `<div style="margin-top: 8px;"><span style="font-weight: 700;">CP:</span> ${label.codigoPostal}</div>` : ''}
+                
+                ${label.referenciaEntrega ? `<div style="margin-top: 8px;"><span style="font-weight: 700;">Referencia:</span> ${label.referenciaEntrega}</div>` : ''}
+              </div>
+
+              <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-size: 11px;">
+                <div style="margin-bottom: 4px;"><span style="font-weight: 700;">Teléfono:</span> ${label.clienteTelefono || '-'}</div>
+                <div><span style="font-weight: 700;">Email:</span> ${label.clienteEmail || '-'}</div>
+              </div>
+            </div>
+
+            <div class="label-section">
+              <h4>Detalles de Envío:</h4>
+              <div class="label-info">
+                <span style="font-weight: 700;">Método de envío:</span> ${label.metodoEnvio || '-'}
+              </div>
+              ${label.puntoDeRetiro && label.metodoEnvio === 'Punto de retiro' ? `
+                <div class="label-info">
+                  <span style="font-weight: 700;">Punto de retiro:</span> ${label.puntoDeRetiro}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="label-section">
+              <h4 style="text-align: center; font-size: 18px;">Pedido #${label.idPedido}</h4>
+            </div>
+
+            <div class="signature-area">
+              Firma del receptor:
+              <div style="margin-top: 30px; border-top: 1px solid var(--border); height: 10px;"></div>
+            </div>
+
+            <div style="margin-top: 16px; text-align: center; border-top: 1px solid var(--border); padding-top: 8px; font-size: 10px; color: var(--muted);">
+              Para consultas: www.farmacias-generalpaz.com
+            </div>
+          </div>
+
           <script>window.addEventListener('load', () => window.print());</script>
         </body>
       </html>
@@ -229,11 +318,15 @@ export const DetallePedidoModal: React.FC<Props> = ({ isOpen, onClose, pedido })
 
   const handleImprimirHoja = async () => {
     try {
-      const data = await getPrintData(pedido.idPedido);
+      if (!fullData || !labelData) {
+        console.error('Datos incompletos para imprimir');
+        return;
+      }
+      const html = buildPrintHTML(fullData, labelData);
       const ventana = window.open('', '_blank');
       if (!ventana) return;
       ventana.document.open();
-      ventana.document.write(buildPrintHTML(data));
+      ventana.document.write(html);
       ventana.document.close();
       ventana.focus();
     } catch (error) {
