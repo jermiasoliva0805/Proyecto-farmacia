@@ -92,38 +92,29 @@ namespace Back.Services
             if (usuarioExistente == null) return false;
 
             // CAMBIO 4: Validación especial para cadetes que intenten cambiar zona
-            // Solo validar si el cadete realmente está cambiando de zona
+            // Temporalmente desactivada para diagnosticar error 500
+            // TODO: Implementar validación de zona de forma más segura
+            /*
             if (usuarioExistente.Rol == "Cadete" && updateDto.ZonaId.HasValue && 
                 updateDto.ZonaId.Value != usuarioExistente.ZonaId)
             {
-                // El cadete intenta cambiar de zona. Validar pedidos en entrega
-                try
+                var pedidosEnEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
                 {
-                    var pedidosEnEntrega = await _pedidoRepository.GetFilteredOrdersAsync(new OrderFilterDTO
-                    {
-                        IDUsuario = id,
-                        IDEstadoDePedido = 6 // En Camino
-                    });
+                    IDUsuario = id,
+                    IDEstadoDePedido = 6
+                });
 
-                    if (pedidosEnEntrega != null && pedidosEnEntrega.Any())
-                    {
-                        throw new InvalidOperationException(
-                            $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
-                            "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
-                        );
-                    }
-                }
-                catch (InvalidOperationException)
+                if (pedidosEnEntrega != null && pedidosEnEntrega.Any())
                 {
-                    throw; // Re-lanzar si es nuestra validación
-                }
-                catch
-                {
-                    // Si hay error en la validación de pedidos, permitir el cambio igual
+                    throw new InvalidOperationException(
+                        $"No se puede cambiar la zona del cadete {usuarioExistente.Nombre} {usuarioExistente.Apellido} " +
+                        "porque tiene pedidos en entrega. Debe completar todas las entregas antes de cambiar de zona."
+                    );
                 }
             }
+            */
 
-            // 2. Actualizar campos (ANTES FUNCIONABA, SIGUE IGUAL)
+            // 2. Actualizar campos
             // Usamos AutoMapper para pasar los datos del DTO a la entidad existente.
             _mapper.Map(updateDto, usuarioExistente);
 
