@@ -435,6 +435,7 @@ const OrderFormPage: React.FC = () => {
                                             <p className="text-base text-gray-700 mt-1">{direccionClienteSeleccionado}</p>
                                         </div>
                                     )}
+                                </div>
                                 )}
 
                                 {/* Cliente Nuevo */}
