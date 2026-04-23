@@ -61,7 +61,7 @@ const MainLayout = () => {
       )}
       <div className="flex pt-16">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 transition-all duration-300 lg:ml-64">
+        <main className="flex-1 transition-all duration-300">
           <Outlet />
         </main>
       </div>
