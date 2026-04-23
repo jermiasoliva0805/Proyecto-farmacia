@@ -276,9 +276,14 @@ export const DashboardAdmin: React.FC = () => {
                             {/* Tablero/Tabla Pedidos con Toggle */}
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center">
-                                    <div>
-                                        <h2 className="text-lg font-bold">Gestión de Pedidos</h2>
-                                        <p className="text-blue-100 text-sm">Visualiza y gestiona todos tus pedidos</p>
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-white/20 p-3 rounded-full text-white">
+                                            <Package size={20} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold">Gestión de Pedidos</h2>
+                                            <p className="text-blue-100 text-sm">Visualiza y gestiona todos tus pedidos</p>
+                                        </div>
                                     </div>
                                     <div className="flex gap-2 bg-blue-700 p-1 rounded-lg">
                                         <button
