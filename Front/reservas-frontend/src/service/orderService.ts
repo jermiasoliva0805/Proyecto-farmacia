@@ -127,7 +127,7 @@ export async function getPrintData(idPedido: number): Promise<PrintData> {
   const data: PrintData = {
     idPedido: Number(json.idPedido ?? json.id ?? idPedido),
     fecha: json.fecha ? String(json.fecha) : undefined,
-    formaPago: json.formaPago ? String(json.formaPago) : undefined,
+    formaPago: (json.formaPago || json.FormaDePago) ? String(json.formaPago || json.FormaDePago) : undefined,
     metodoEnvio: json.metodoEnvio ? String(json.metodoEnvio) : undefined,
     puntoDeRetiro: json.puntoDeRetiro ? String(json.puntoDeRetiro) : undefined,
     clienteNombre: String(json.clienteNombre ?? json.cliente?.nombre ?? ''),
