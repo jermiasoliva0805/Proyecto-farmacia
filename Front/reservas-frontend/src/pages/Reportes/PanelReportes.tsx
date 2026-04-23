@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DashboardLayout } from '@components/layout/DashboardLayout';
 import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
 import { RankingClientes } from './RankingClientes';
@@ -17,8 +18,9 @@ export const PanelReportes = () => {
     const [tabActiva, setTabActiva] = useState('entregas');
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de Reportes</h1>
+        <DashboardLayout>
+            <div className="p-6">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de Reportes</h1>
 
             {/* Selectores de Pestaña - Sin iconos ni emojis */}
             <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-2xl w-fit flex-wrap">
@@ -132,20 +134,21 @@ export const PanelReportes = () => {
             </div>
 
             {/* Contenido Dinámico */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                {tabActiva === 'entregas' && <ReporteEntregas />}
-                {tabActiva === 'fueraDeplazo' && <ReportePedidosFueraDeplazo />}
-                {tabActiva === 'operarios' && <ReporteOperarios />}
-                {tabActiva === 'ranking' && <RankingClientes />}
-                {tabActiva === 'facturacion' && <ReporteFacturacion />}
-                {tabActiva === 'cancelados' && <ReporteCancelados />}
-                {tabActiva === 'motivosCancelacion' && <ReporteCancelacionesPorMotivos />}
-                {tabActiva === 'productos' && <ReporteProductos />}
-                {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
-                {tabActiva === 'formasPago' && <ReporteFormasPago />}
-                {tabActiva === 'pedidosPorZona' && <ReportePedidosPorZona />}
-                {tabActiva === 'encuestaSatisfaccion' && <ReporteEncuestaSatisfaccion />}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    {tabActiva === 'entregas' && <ReporteEntregas />}
+                    {tabActiva === 'fueraDeplazo' && <ReportePedidosFueraDeplazo />}
+                    {tabActiva === 'operarios' && <ReporteOperarios />}
+                    {tabActiva === 'ranking' && <RankingClientes />}
+                    {tabActiva === 'facturacion' && <ReporteFacturacion />}
+                    {tabActiva === 'cancelados' && <ReporteCancelados />}
+                    {tabActiva === 'motivosCancelacion' && <ReporteCancelacionesPorMotivos />}
+                    {tabActiva === 'productos' && <ReporteProductos />}
+                    {tabActiva === 'tiempos' && <ReporteTiemposProceso />}
+                    {tabActiva === 'formasPago' && <ReporteFormasPago />}
+                    {tabActiva === 'pedidosPorZona' && <ReportePedidosPorZona />}
+                    {tabActiva === 'encuestaSatisfaccion' && <ReporteEncuestaSatisfaccion />}
+                </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { DashboardLayout } from '@components/layout/DashboardLayout';
 import { usuariosService, RegisterDTO } from '../service/usuariosService';
 import { api } from '../service/api';
 import { UserDTO } from '../types/auth.types';
@@ -327,23 +328,24 @@ const UsuariosPage = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Gestión de Personal</h1>
+        <DashboardLayout>
+            <div className="p-6 bg-gray-50 min-h-screen">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Gestión de Personal</h1>
+                    </div>
+                    <button
+                        onClick={() => abrirModalNuevo()}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                    >
+                        <Plus size={20} />
+                        Nuevo Usuario
+                    </button>
                 </div>
-                <button 
-                    onClick={() => abrirModalNuevo()}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
-                >
-                    <Plus size={20} />
-                    Nuevo Usuario
-                </button>
-            </div>
 
-            {/* Tabla Principal */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Tabla Principal */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b border-gray-100">
                         <tr>
@@ -400,11 +402,11 @@ const UsuariosPage = () => {
                         })}
                     </tbody>
                 </table>
-            </div>
+                </div>
 
-            {/* Modal de Registro/Edición */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                {/* Modal de Registro/Edición */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                         <div className={`p-6 border-b ${ROLE_THEMES[formData.rol].border} bg-gray-50`}>
                             <h2 className={`text-xl font-bold ${ROLE_THEMES[formData.rol].textMain}`}>
@@ -537,12 +539,12 @@ const UsuariosPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                    </div>
+                )}
 
-            {/* Modal de Confirmación de Eliminación */}
-            {isDeleteModalOpen && userToDelete && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                {/* Modal de Confirmación de Eliminación */}
+                {isDeleteModalOpen && userToDelete && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="p-6 border-b border-red-200 bg-red-50">
                             <h2 className="text-xl font-bold text-red-700">
@@ -572,21 +574,22 @@ const UsuariosPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                    </div>
+                )}
 
-            {/* Toast Notification */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-2xl text-white font-medium animate-in fade-in slide-in-from-right-5 duration-300 z-[60] ${
-                    toast.type === 'success' 
-                        ? 'bg-green-500 hover:bg-green-600' 
-                        : 'bg-red-500 hover:bg-red-600'
-                } transition-all`}>
-                    {toast.type === 'success' ? '✓ ' : '✕ '}
-                    {toast.message}
-                </div>
-            )}
-        </div>
+                {/* Toast Notification */}
+                {toast && (
+                    <div className={`fixed bottom-6 right-6 px-6 py-4 rounded-lg shadow-2xl text-white font-medium animate-in fade-in slide-in-from-right-5 duration-300 z-[60] ${
+                        toast.type === 'success'
+                            ? 'bg-green-500 hover:bg-green-600'
+                            : 'bg-red-500 hover:bg-red-600'
+                    } transition-all`}>
+                        {toast.type === 'success' ? '✓ ' : '✕ '}
+                        {toast.message}
+                    </div>
+                )}
+            </div>
+        </DashboardLayout>
     );
 };
 
