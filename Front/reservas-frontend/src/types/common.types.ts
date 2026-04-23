@@ -5,6 +5,7 @@ export interface ClientDTO {
     dni?: string;
     email?: string;
     telefono?: string;
+    direccion?: string;
     idLocalidad?: number;
 }
 

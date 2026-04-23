@@ -24,6 +24,7 @@ namespace Back.Mappings
                 .ForMember(dest => dest.DNI, opt => opt.MapFrom(src => src.DNI))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Mail))
                 .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono))
+                .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion))
                 .ForMember(dest => dest.IDLocalidad, opt => opt.MapFrom(src => src.IDLocalidad))
                 .ForMember(dest => dest.NombreLocalidad, opt => opt.MapFrom(src => src.Localidad != null ? src.Localidad.Ciudad : "Sin localidad"));
 

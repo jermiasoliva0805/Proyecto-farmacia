@@ -42,10 +42,24 @@ const OrderFormPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [saving, setSaving] = useState(false);
+    const [direccionClienteSeleccionado, setDireccionClienteSeleccionado] = useState<string>('');
 
     useEffect(() => {
         loadData();
     }, []);
+
+    // Efecto: Cargar dirección del cliente existente cuando se selecciona
+    useEffect(() => {
+        if (tipoCliente === 'existente' && clienteId) {
+            const clienteSeleccionado = clientes.find(c => c.id === parseInt(clienteId));
+            if (clienteSeleccionado) {
+                setDireccionClienteSeleccionado(clienteSeleccionado.direccion || '');
+                console.log('✅ Dirección del cliente cargada:', clienteSeleccionado.direccion);
+            }
+        } else {
+            setDireccionClienteSeleccionado('');
+        }
+    }, [clienteId, tipoCliente, clientes]);
 
     const loadData = async () => {
         try {
@@ -271,7 +285,7 @@ const OrderFormPage: React.FC = () => {
 
             const direccionEntrega = tipoCliente === 'nuevo' 
                 ? nuevoCliente.direccion 
-                : (clienteData?.email || '');
+                : (clienteData?.direccion || '');
 
             const pedido: any = {
                 IDSucursal: parseInt(sucursalId),
@@ -413,6 +427,14 @@ const OrderFormPage: React.FC = () => {
                                             placeholder="Seleccione un cliente..."
                                         />
                                     </div>
+
+                                    {/* Mostrar dirección del cliente seleccionado */}
+                                    {clienteId && direccionClienteSeleccionado && (
+                                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <p className="text-sm"><strong>📍 Dirección de entrega:</strong></p>
+                                            <p className="text-base text-gray-700 mt-1">{direccionClienteSeleccionado}</p>
+                                        </div>
+                                    )}
                                 )}
 
                                 {/* Cliente Nuevo */}
