@@ -292,6 +292,7 @@ const OrderFormPage: React.FC = () => {
                 IDUsuario: userData.id,
                 FormaDePago: medioPago,
                 ReferenciaEntrega: referenciaEnvio,
+                Direccion: direccionEntrega,
                 Detalles: detallesValidos
                     .map(i => {
                         const producto = productos.find(p => String(p.id) === i.productId);
@@ -316,7 +317,6 @@ const OrderFormPage: React.FC = () => {
                 pedido.NombreCliente = `${nuevoCliente.nombre} ${nuevoCliente.apellido}`;
                 pedido.Telefono = nuevoCliente.telefono;
                 pedido.Email = nuevoCliente.email;
-                pedido.Direccion = nuevoCliente.direccion;
             }
 
             console.log('📤 Enviando pedido:', pedido);
