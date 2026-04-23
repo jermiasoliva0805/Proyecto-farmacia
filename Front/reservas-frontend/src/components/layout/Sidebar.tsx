@@ -63,9 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
     return (
         <aside 
-            className={`onClick={handleNavClick}
-                        fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-50 lg:z-40 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none ${visibilityClass}`}
-        >
+    onClick={handleNavClick}
+    className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-50 lg:z-40 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none ${visibilityClass}`}
+>
             <nav className="p-4 space-y-2">
                 {currentMenu.map((item) => (
                     <NavLink
