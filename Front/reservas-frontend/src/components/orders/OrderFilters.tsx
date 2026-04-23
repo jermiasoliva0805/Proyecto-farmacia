@@ -17,7 +17,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({ userRole, onFilterCh
         { label: 'Preparar pedido', value: 'Preparar pedido' },
         { label: 'Demorado', value: 'Demorado' },
         { label: 'Listo para despachar', value: 'Listo para despachar' },
-        { label: 'Despachado', value: 'Despachado' },
+        { label: 'Despachando', value: 'Despachando' },
         { label: 'En camino', value: 'En camino' },
         { label: 'Entregado', value: 'Entregado' },
         { label: 'Entrega fallida', value: 'Entrega fallida' },
@@ -26,7 +26,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({ userRole, onFilterCh
 
     // 2. Lógica de visibilidad por Rol
     const getFilteredOptions = () => {
-        if (userRole === 'Encargado' || userRole === 'Encargado') return allFilters;
+        if (userRole === 'Encargado') return allFilters;
 
         if (userRole === 'Operario') {
             return allFilters.filter(f => 
