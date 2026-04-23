@@ -33,32 +33,22 @@ export const SeguimientoPedidos: React.FC = () => {
         { value: '10', label: 'Cancelado' },
     ];
 
-    // Función de colores unificada
     const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
         if (estaDemorado) return 'bg-orange-100 text-orange-600 border-orange-200';
-        
         const est = estado.toLowerCase();
         switch (est) {
-            case 'sin preparar':
-                return 'bg-gray-100 text-gray-400 border-gray-200';
+            case 'sin preparar': return 'bg-gray-100 text-gray-400 border-gray-200';
             case 'preparar pedido':
             case 'preparando':
-            case 'en preparación':
-                return 'bg-blue-100 text-blue-600 border-blue-200';
-            case 'demorado':
-                return 'bg-orange-100 text-orange-600 border-orange-200';
-            case 'listo para despachar':
-                return 'bg-green-100 text-green-600 border-green-200';
+            case 'en preparación': return 'bg-blue-100 text-blue-600 border-blue-200';
+            case 'demorado': return 'bg-orange-100 text-orange-600 border-orange-200';
+            case 'listo para despachar': return 'bg-green-100 text-green-600 border-green-200';
             case 'en camino':
-            case 'despachando':
-                return 'bg-indigo-100 text-indigo-600 border-indigo-200';
-            case 'entregado':
-                return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'despachando': return 'bg-indigo-100 text-indigo-600 border-indigo-200';
+            case 'entregado': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
             case 'cancelado':
-            case 'entrega fallida':
-                return 'bg-red-100 text-red-600 border-red-200';
-            default:
-                return 'bg-gray-50 text-gray-500 border-gray-100';
+            case 'entrega fallida': return 'bg-red-100 text-red-600 border-red-200';
+            default: return 'bg-gray-50 text-gray-500 border-gray-100';
         }
     };
 
@@ -89,136 +79,128 @@ export const SeguimientoPedidos: React.FC = () => {
     };
 
     const handleFilterChange = (field: keyof OrderFilterDTO, value: any) => {
-        setFilters(prev => ({
-            ...prev,
-            [field]: value || undefined,
-        }));
+        setFilters(prev => ({ ...prev, [field]: value || undefined }));
     };
 
-    const clearFilters = () => {
-        setFilters({});
-    };
+    const clearFilters = () => setFilters({});
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                        <Search className="w-8 h-8" />
-                        Seguimiento de Pedidos
-                    </h1>
-                </div>
+            <div className="p-6 bg-gray-50 min-h-screen">
+                <div className="max-w-6xl mx-auto space-y-6">
 
-                <Card>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Filter className="w-5 h-5 text-gray-600" />
-                        <h2 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Select
-                            label="Estado"
-                            value={filters.idEstadoDePedido?.toString() || ''}
-                            onChange={(e) => handleFilterChange('idEstadoDePedido', e.target.value ? parseInt(e.target.value) : undefined)}
-                            options={estadosOptions}
-                        />
-
-                        <Input
-                            type="date"
-                            label="Fecha Desde"
-                            value={filters.fechaDesde || ''}
-                            onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
-                        />
-
-                        <Input
-                            type="date"
-                            label="Fecha Hasta"
-                            value={filters.fechaHasta || ''}
-                            onChange={(e) => handleFilterChange('fechaHasta', e.target.value)}
-                        />
-                    </div>
-
-                    <div className="flex gap-3 mt-4">
-                        <Button variant="primary" onClick={handleSearch} isLoading={loading}>
-                            <Search className="w-4 h-4 mr-2" />
-                            Buscar
-                        </Button>
-                        <Button variant="secondary" onClick={clearFilters}>
-                            Limpiar Filtros
-                        </Button>
-                    </div>
-                </Card>
-
-                <Card>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            Resultados de la Búsqueda
-                        </h2>
-                        <Badge variant="info">{pedidos.length} pedidos</Badge>
-                    </div>
-
-                    {loading ? (
-                        <div className="flex justify-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    {/* Header */}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                <Search className="w-7 h-7" />
+                                Seguimiento de Pedidos
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1">Buscá y filtrá el historial de pedidos</p>
                         </div>
-                    ) : pedidos.length === 0 ? (
-                        <Alert type="info">
-                            No se encontraron pedidos con los filtros aplicados.
-                        </Alert>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Fecha</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Responsable</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {pedidos.map((pedido) => (
-                                        <tr key={pedido.idPedido} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                #{pedido.idPedido}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600">
-                                                {new Date(pedido.fecha).toLocaleDateString('es-AR')}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">
-                                                {pedido.clienteNombre}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
-                                                    {pedido.estadoNombre.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">
-                                                {pedido.responsableNombre}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                ${pedido.total.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="primary"
-                                                    onClick={() => handleVerSeguimiento(pedido.idPedido)}
-                                                >
-                                                    <Eye className="w-4 h-4 mr-1" />
-                                                    Ver Historial
-                                                </Button>
-                                            </td>
+                    </div>
+
+                    {/* Filtros */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Filter className="w-5 h-5 text-gray-600" />
+                            <h2 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Select
+                                label="Estado"
+                                value={filters.idEstadoDePedido?.toString() || ''}
+                                onChange={(e) => handleFilterChange('idEstadoDePedido', e.target.value ? parseInt(e.target.value) : undefined)}
+                                options={estadosOptions}
+                            />
+                            <Input
+                                type="date"
+                                label="Fecha Desde"
+                                value={filters.fechaDesde || ''}
+                                onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
+                            />
+                            <Input
+                                type="date"
+                                label="Fecha Hasta"
+                                value={filters.fechaHasta || ''}
+                                onChange={(e) => handleFilterChange('fechaHasta', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex gap-3 mt-4">
+                            <Button variant="primary" onClick={handleSearch} isLoading={loading}>
+                                <Search className="w-4 h-4 mr-2" />
+                                Buscar
+                            </Button>
+                            <Button variant="secondary" onClick={clearFilters}>
+                                Limpiar Filtros
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Resultados */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900">Resultados de la Búsqueda</h2>
+                            <Badge variant="info">{pedidos.length} pedidos</Badge>
+                        </div>
+
+                        {loading ? (
+                            <div className="flex justify-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : pedidos.length === 0 ? (
+                            <div className="p-6">
+                                <Alert type="info">No se encontraron pedidos con los filtros aplicados.</Alert>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Fecha</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Responsable</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </Card>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {pedidos.map((pedido) => (
+                                            <tr key={pedido.idPedido} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">#{pedido.idPedido}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-600">
+                                                    {new Date(pedido.fecha).toLocaleDateString('es-AR')}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">{pedido.clienteNombre}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre, pedido.estaDemorado)}`}>
+                                                        {pedido.estadoNombre.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">{pedido.responsableNombre}</td>
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">${pedido.total.toFixed(2)}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="primary"
+                                                        onClick={() => handleVerSeguimiento(pedido.idPedido)}
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-1" />
+                                                        Ver Historial
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {selectedTracking && (
@@ -243,9 +225,7 @@ export const SeguimientoPedidos: React.FC = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                Historial de Estados
-                            </h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Historial de Estados</h3>
                             <TrackingTimeline tracking={selectedTracking} />
                         </div>
                     </div>

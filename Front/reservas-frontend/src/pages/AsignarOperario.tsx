@@ -4,7 +4,7 @@ import { Card } from '@components/common/Card';
 import { Badge } from '@components/common/Badge';
 import { Button } from '@components/common/Button';
 import { AsignarOperarioModal } from '@components/pedidos/AsignarOperarioModal';
-import { pedidosService } from '../service/PedidosService'; 
+import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '@/types/pedido.types';
 import { Users } from 'lucide-react';
 
@@ -18,11 +18,10 @@ export const AsignarOperarioPage: React.FC = () => {
         loadPedidos();
     }, []);
 
-    // Función de colores para mantener la consistencia visual
     const getEstadoStyle = (estado: string) => {
         const est = estado.toLowerCase();
         if (est === 'sin preparar') {
-            return 'bg-gray-100 text-gray-400 border-gray-200'; // Gris para "Sin preparar"
+            return 'bg-gray-100 text-gray-400 border-gray-200';
         }
         return 'bg-blue-100 text-blue-600 border-blue-200';
     };
@@ -31,11 +30,7 @@ export const AsignarOperarioPage: React.FC = () => {
         setLoading(true);
         try {
             const data = await pedidosService.getPendientesOperario();
-            if (data && data.length > 0) {
-                setPedidos(data);
-            } else {
-                setPedidos([]);
-            }
+            setPedidos(data && data.length > 0 ? data : []);
         } catch (error) {
             console.error('Error cargando pedidos:', error);
             setPedidos([]);
@@ -56,82 +51,80 @@ export const AsignarOperarioPage: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                            <Users className="w-8 h-8" />
-                            Asignar Operarios
-                        </h1>
-                        <p className="text-gray-600 mt-1">
-                            Solo se muestran pedidos en estado <strong>'Sin preparar'</strong>.
-                        </p>
+            <div className="p-6 bg-gray-50 min-h-screen">
+                <div className="max-w-6xl mx-auto">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800">Asignar Operarios</h1>
+                            <p className="text-sm text-gray-500 mt-1">Asignación de pedidos a operarios</p>
+                        </div>
+                        <Badge variant="info" size="md">
+                            {pedidos.length} pedidos por asignar
+                        </Badge>
                     </div>
-                    <Badge variant="info" size="md">
-                        {pedidos.length} pedidos por asignar
-                    </Badge>
-                </div>
 
-                <Card>
-                    {loading ? (
-                        <div className="flex justify-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                        </div>
-                    ) : pedidos.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No hay pedidos pendientes de asignación de operario.</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Fecha</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {pedidos.map((pedido) => (
-                                        <tr key={pedido.idPedido} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                #{pedido.idPedido}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-700">
-                                                {pedido.clienteNombre}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600">
-                                                {new Date(pedido.fecha).toLocaleDateString('es-AR')}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                ${pedido.total.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {/* AQUÍ VA EL COLOR Y EL ESTADO */}
-                                                <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
-                                                    {pedido.estadoNombre.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="primary"
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                    onClick={() => handleAsignar(pedido)}
-                                                >
-                                                    Asignar Operario
-                                                </Button>
-                                            </td>
+                    {/* Tabla */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        {loading ? (
+                            <div className="flex justify-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : pedidos.length === 0 ? (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500">No hay pedidos pendientes de asignación de operario.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">ID</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Cliente</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Fecha</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Estado</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Acciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </Card>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {pedidos.map((pedido) => (
+                                            <tr key={pedido.idPedido} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                    #{pedido.idPedido}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">
+                                                    {pedido.clienteNombre}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-600">
+                                                    {new Date(pedido.fecha).toLocaleDateString('es-AR')}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                    ${pedido.total.toFixed(2)}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getEstadoStyle(pedido.estadoNombre)}`}>
+                                                        {pedido.estadoNombre.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="primary"
+                                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                        onClick={() => handleAsignar(pedido)}
+                                                    >
+                                                        Asignar Operario
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {selectedPedido && (

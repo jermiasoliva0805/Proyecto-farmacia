@@ -33,7 +33,7 @@ namespace Back.Services
             var footerColor = "#6B7280";
             var accentColor = "#10B981";
 
-            var trackingButton = string.IsNullOrEmpty(trackingUrl) ? "" : $@"
+            var trackingButton = (string.IsNullOrEmpty(trackingUrl) || idEstado == 7) ? "" : $@"
           <tr>
             <td style=""padding:16px 24px;text-align:center;"">
               <a href=""{trackingUrl}"" style=""display:inline-block;background-color:{accentColor};color:#ffffff;padding:12px 32px;border-radius:6px;font-weight:600;text-decoration:none;font-size:14px;border:none;cursor:pointer;"">
@@ -97,16 +97,17 @@ namespace Back.Services
               </a>
             </td>
           </tr>")}
+          {(idEstado == 7 ? "" : $@"
           <tr>
             <td style=""padding:8px 24px 24px;text-align:center;"">
               <span style=""display:inline-block;padding:10px 14px;border-radius:6px;background:{badgeColor};color:#ffffff;font-weight:600;font-size:14px;"">
                 Estado: {badgeText}
               </span>
             </td>
-          </tr>
+          </tr>")}
           <tr>
             <td style=""padding:16px 24px 24px;text-align:center;color:{footerColor};font-size:12px;border-top:1px solid {borderColor};"">
-              <p style=""margin:8px 0;"">Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.</p>
+              {(idEstado == 7 ? "" : $@"<p style=""margin:8px 0;"">Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.</p>")}
               <p style=""margin:8px 0;"">© {DateTime.Now.Year} {brandName}. Todos los derechos reservados.</p>
               <p style=""margin:8px 0;"">Este es un correo automático, por favor no responder.</p>
             </td>
@@ -180,7 +181,7 @@ namespace Back.Services
                 4 => "Hemos preparado completamente tu pedido y está listo para salir a entrega. Pronto estará en camino.",
                 5 => "Tu pedido ya salió de nuestra farmacia y está en manos de nuestro equipo de entrega. Pronto lo recibirás en tu domicilio.",
                 6 => "Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.",
-                7 => "Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos.",
+                7 => "",
                 8 => "Por favor, asegúrate de estar disponible o contáctanos para coordinar una nueva entrega.",
                 9 => "Si deseas reintentar la entrega o tienes alguna pregunta, por favor contáctanos de inmediato.",
                 10 => "Si no solicitaste esta cancelación, por favor contáctanos para revisar tu caso.",
