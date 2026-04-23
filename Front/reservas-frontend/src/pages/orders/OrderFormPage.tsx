@@ -411,31 +411,32 @@ const OrderFormPage: React.FC = () => {
 
                                 {/* Cliente Existente */}
                                 {tipoCliente === 'existente' && (
-                                    <div className="mb-4 max-w-md">
-                                        <SearchableSelect 
-                                            label="Seleccionar Cliente" 
-                                            options={clientes.map(c => ({
-                                                id: c.id,
-                                                label: `${c.nombre || ''} ${c.apellido || ''}`.trim(),
-                                                subtext: c.telefono
-                                            }))}
-                                            onSelect={(opt: any) => {
-                                                setClienteId(String(opt.id));
-                                                console.log('✅ Cliente seleccionado:', opt.id);
-                                            }}
-                                            icon={User} 
-                                            placeholder="Seleccione un cliente..."
-                                        />
-                                    </div>
-
-                                    {/* Mostrar dirección del cliente seleccionado */}
-                                    {clienteId && direccionClienteSeleccionado && (
-                                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                            <p className="text-sm"><strong>📍 Dirección de entrega:</strong></p>
-                                            <p className="text-base text-gray-700 mt-1">{direccionClienteSeleccionado}</p>
+                                    <>
+                                        <div className="mb-4 max-w-md">
+                                            <SearchableSelect 
+                                                label="Seleccionar Cliente" 
+                                                options={clientes.map(c => ({
+                                                    id: c.id,
+                                                    label: `${c.nombre || ''} ${c.apellido || ''}`.trim(),
+                                                    subtext: c.telefono
+                                                }))}
+                                                onSelect={(opt: any) => {
+                                                    setClienteId(String(opt.id));
+                                                    console.log('✅ Cliente seleccionado:', opt.id);
+                                                }}
+                                                icon={User} 
+                                                placeholder="Seleccione un cliente..."
+                                            />
                                         </div>
-                                    )}
-                                </div>
+
+                                        {/* Mostrar dirección del cliente seleccionado */}
+                                        {clienteId && direccionClienteSeleccionado && (
+                                            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <p className="text-sm"><strong>📍 Dirección de entrega:</strong></p>
+                                                <p className="text-base text-gray-700 mt-1">{direccionClienteSeleccionado}</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Cliente Nuevo */}
