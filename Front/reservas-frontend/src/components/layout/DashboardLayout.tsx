@@ -40,7 +40,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             )}
             <div className="flex pt-16">
                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-                <main className="w-full min-w-0 transition-all duration-300 lg:ml-64 lg:w-[calc(100%-16rem)]">
+                <main className="w-full min-w-0 transition-all duration-300 lg:pl-64">
                     <div className="p-4 sm:p-6">
                         {children}
                     </div>
