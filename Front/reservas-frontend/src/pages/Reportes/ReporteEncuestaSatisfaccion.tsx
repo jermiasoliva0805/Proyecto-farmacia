@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, MessageSquare, ListChecks } from 'lucide-react';
+import { Download, Users, BarChart3 } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { ExportDialog } from '../../components/ExportDialog';
 import { exportToExcel, exportToPDF } from '../../service/exportService';
@@ -9,9 +9,9 @@ import { ReporteEncuestaSatisfaccionDTO } from '../../types/pedido.types';
 interface MetricCardProps {
     title: string;
     value: string;
-    sub: string;
     icon: React.ReactNode;
     color?: string;
+    bgColor?: string;
 }
 
 export const ReporteEncuestaSatisfaccion: React.FC = () => {
@@ -36,11 +36,6 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
 
         cargarData();
     }, []);
-
-    const totalOpciones = useMemo(
-        () => reporte?.preguntas.reduce((acc, p) => acc + p.opciones.length, 0) ?? 0,
-        [reporte]
-    );
 
     const handleExportExcel = async () => {
         try {
@@ -92,71 +87,64 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
 
     return (
         <div className="p-6 bg-[#f8f9fa] min-h-screen">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Encuesta de Satisfacción</h1>
-                    <p className="text-sm text-gray-500">Resultados consolidados por pregunta de Google Forms</p>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Encuesta de Satisfacción</h1>
+                    <p className="text-sm text-gray-500 mt-1">Análisis de respuestas de clientes</p>
                 </div>
                 <button
                     onClick={() => setShowExportDialog(true)}
-                    className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-md"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
                 >
-                    <Download size={16} />
+                    <Download size={18} />
                     Exportar Reporte
                 </button>
             </div>
 
             <div ref={contentRef}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <MetricCard
-                        title="Respuestas recibidas"
-                        value={reporte.totalRespuestas.toString()}
-                        sub="Formularios contestados"
-                        icon={<MessageSquare className="text-blue-500" size={24} />}
+                        title="Clientes que respondieron"
+                        value={reporte.cantidadClientesRespondieron.toString()}
+                        icon={<Users className="w-8 h-8" />}
                         color="text-blue-600"
+                        bgColor="bg-blue-50"
                     />
                     <MetricCard
-                        title="Preguntas analizadas"
-                        value={reporte.preguntas.length.toString()}
-                        sub="Columnas mapeadas"
-                        icon={<ListChecks className="text-purple-500" size={24} />}
-                        color="text-purple-600"
-                    />
-                    <MetricCard
-                        title="Opciones registradas"
-                        value={totalOpciones.toString()}
-                        sub="Respuestas distintas"
-                        icon={<ListChecks className="text-green-500" size={24} />}
-                        color="text-green-600"
+                        title="Total de respuestas recibidas"
+                        value={reporte.cantidadTotalRespuestas.toString()}
+                        icon={<BarChart3 className="w-8 h-8" />}
+                        color="text-emerald-600"
+                        bgColor="bg-emerald-50"
                     />
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {reporte.preguntas.map((pregunta, index) => (
-                        <Card key={`${pregunta.pregunta}-${index}`} className="p-6">
-                            <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">{pregunta.pregunta}</h3>
-                            <p className="text-xs text-gray-500 mb-4">
-                                Total respuestas: <strong>{pregunta.totalRespuestas}</strong>
-                            </p>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="text-gray-400 text-xs uppercase border-b border-gray-100">
-                                            <th className="pb-3 font-semibold">Respuesta</th>
-                                            <th className="pb-3 font-semibold text-center">Cantidad</th>
-                                            <th className="pb-3 font-semibold text-right">Porcentaje</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {pregunta.opciones.map((opcion, opcionIndex) => (
-                                            <tr key={`${opcion.respuesta}-${opcionIndex}`} className="hover:bg-gray-50 transition-all">
-                                                <td className="py-3 font-medium text-gray-700">{opcion.respuesta}</td>
-                                                <td className="py-3 text-center text-gray-600">{opcion.cantidad}</td>
-                                                <td className="py-3 text-right font-bold text-gray-900">{opcion.porcentaje.toFixed(2)}%</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <Card key={`${pregunta.pregunta}-${index}`} className="p-6 border border-gray-200">
+                            <div className="mb-6">
+                                <h3 className="text-base font-bold text-gray-900">{pregunta.pregunta}</h3>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {pregunta.totalRespuestas} respuestas
+                                </p>
+                            </div>
+                            <div className="space-y-3">
+                                {pregunta.opciones.map((opcion, opcionIndex) => (
+                                    <div key={`${opcion.respuesta}-${opcionIndex}`} className="flex items-center gap-3">
+                                        <div className="flex-1">
+                                            <div className="flex justify-between mb-1">
+                                                <span className="text-sm font-medium text-gray-700">{opcion.respuesta}</span>
+                                                <span className="text-sm font-bold text-gray-900">{opcion.cantidad} ({opcion.porcentaje.toFixed(1)}%)</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all"
+                                                    style={{ width: `${opcion.porcentaje}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </Card>
                     ))}
@@ -175,13 +163,16 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
     );
 };
 
-const MetricCard = ({ title, value, sub, icon, color = 'text-gray-900' }: MetricCardProps) => (
-    <Card className="p-5 flex justify-between items-start border-gray-100 shadow-sm">
-        <div>
-            <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">{title}</p>
-            <h4 className={`text-2xl font-bold ${color}`}>{value}</h4>
-            <p className="text-[10px] text-gray-400 mt-2 uppercase font-semibold italic">{sub}</p>
+const MetricCard = ({ title, value, icon, color = 'text-gray-900', bgColor = 'bg-gray-50' }: MetricCardProps) => (
+    <Card className={`p-6 border-0 shadow-sm ${bgColor}`}>
+        <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+                <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-2">{title}</p>
+                <h4 className={`text-4xl font-bold ${color}`}>{value}</h4>
+            </div>
+            <div className={`${color} opacity-20`}>
+                {icon}
+            </div>
         </div>
-        <div className="bg-gray-50 p-2 rounded-lg">{icon}</div>
     </Card>
 );

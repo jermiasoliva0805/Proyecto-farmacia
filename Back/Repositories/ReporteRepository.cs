@@ -548,7 +548,7 @@ namespace Back.Repositories
             {
                 var filaTieneDatos = false;
 
-                for (int i = 1; i < headers.Length; i++)
+                for (int i = 2; i < headers.Length; i++)
                 {
                     var respuesta = csv.GetField(i)?.Trim();
                     if (string.IsNullOrWhiteSpace(respuesta))
@@ -575,7 +575,7 @@ namespace Back.Repositories
 
             var preguntas = new List<PreguntaEncuestaDTO>();
 
-            for (int i = 1; i < headers.Length; i++)
+            for (int i = 2; i < headers.Length; i++)
             {
                 var pregunta = headers[i]?.Trim();
                 if (string.IsNullOrWhiteSpace(pregunta))
@@ -611,7 +611,8 @@ namespace Back.Repositories
 
             return new ReporteEncuestaSatisfaccionDTO
             {
-                TotalRespuestas = totalRespuestasFormulario,
+                CantidadClientesRespondieron = totalRespuestasFormulario,
+                CantidadTotalRespuestas = preguntas.Sum(p => p.Opciones.Sum(o => o.Cantidad)),
                 Preguntas = preguntas
             };
         }

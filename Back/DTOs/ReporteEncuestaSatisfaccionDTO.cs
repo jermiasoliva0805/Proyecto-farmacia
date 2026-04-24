@@ -2,7 +2,8 @@ namespace Back.DTOs
 {
     public class ReporteEncuestaSatisfaccionDTO
     {
-        public int TotalRespuestas { get; set; }
+        public int CantidadClientesRespondieron { get; set; }
+        public int CantidadTotalRespuestas { get; set; }
         public List<PreguntaEncuestaDTO> Preguntas { get; set; } = new();
     }
 
