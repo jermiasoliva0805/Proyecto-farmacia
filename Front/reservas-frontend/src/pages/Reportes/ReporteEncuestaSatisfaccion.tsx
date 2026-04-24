@@ -94,7 +94,7 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
         <div className="p-6 bg-[#f8f9fa] min-h-screen">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Encuesta de Satisfacción</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Encuesta de Satisfacción</h1>
                     <p className="text-sm text-gray-500">Resultados consolidados por pregunta de Google Forms</p>
                 </div>
                 <button

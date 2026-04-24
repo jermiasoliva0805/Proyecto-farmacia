@@ -113,7 +113,7 @@ export const ReporteCancelados = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Pedidos Cancelados</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Pedidos Cancelados</h1>
                     <p className="text-sm text-gray-500">Visualiza la cantidad total de pedidos cancelados por intentos de entrega fallida</p>
                 </div>
                 <button 

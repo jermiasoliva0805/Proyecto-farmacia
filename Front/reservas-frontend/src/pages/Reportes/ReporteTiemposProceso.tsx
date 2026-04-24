@@ -96,8 +96,8 @@ export const ReporteTiemposProceso: React.FC = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800">Analítica de Tiempos de Proceso</h1>
-                    <p className="text-sm text-gray-500">Lead Time y cuellos de botella en operaciones</p>
+                    <h1 className="text-xl font-bold text-gray-800">Tiempos de Proceso</h1>
+                    <p className="text-sm text-gray-500">Agilidad operativa y cuellos de botella en operaciones</p>
                 </div>
                 <button 
                     onClick={handleExportClick}

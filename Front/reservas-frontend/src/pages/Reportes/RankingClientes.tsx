@@ -88,7 +88,7 @@ export const RankingClientes: React.FC = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800">Ranking de Clientes Frecuentes</h1>
+                    <h1 className="text-xl font-bold text-gray-800">Clientes por volumen</h1>
                     <p className="text-sm text-gray-500">Top 10 clientes por volumen de pedidos</p>
                 </div>
                 <button 

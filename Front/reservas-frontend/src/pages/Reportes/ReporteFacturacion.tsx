@@ -92,7 +92,7 @@ export const ReporteFacturacion = () => {
             {/* Header unificado */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Reporte de Facturación</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Clientes por facturación</h1>
                     <p className="text-sm text-gray-500">Visualiza métricas y estadísticas de facturación por cliente</p>
                 </div>
                 <button 
