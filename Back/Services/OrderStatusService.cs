@@ -266,6 +266,8 @@ namespace Back.Services
                 pedido.FechaEntregaReal = DateTime.UtcNow;
                 pedido.HoraEntregaReal = DateTime.UtcNow.TimeOfDay;
                 pedido.IntentosEntregaFallida = 0;
+                pedido.EstadoActual = ObtenerDescripcionEstado(7);
+                pedido.Estado = ObtenerDescripcionEstado(7);
             }
             else if (changeStatusDto.IDNuevoEstado == 8)
             {
@@ -276,6 +278,7 @@ namespace Back.Services
                 {
                     pedido.IDEstadoDePedido = 9;
                     pedido.EstadoActual = "Cancelado automáticamente";
+                    pedido.Estado = ObtenerDescripcionEstado(9);
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
                     estadoFinal = 9;
                 }
@@ -377,6 +380,7 @@ namespace Back.Services
             pedido.IDEstadoDePedido = 9;
             pedido.MotivoCancelacionId = dto.MotivoCancelacionId;
             pedido.JustificacionCancelacion = dto.Justificacion;
+            pedido.Estado = ObtenerDescripcionEstado(9);
  
             var historial = new HistorialDeEstados
             {
@@ -441,6 +445,7 @@ namespace Back.Services
             pedido.IDEstadoDePedido = 9;
             pedido.MotivoCancelacionId = dto.MotivoCancelacionId;
             pedido.JustificacionCancelacion = dto.Justificacion;
+            pedido.Estado = ObtenerDescripcionEstado(9);
  
             var historial = new HistorialDeEstados
             {

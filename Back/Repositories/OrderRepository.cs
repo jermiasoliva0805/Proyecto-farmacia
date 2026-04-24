@@ -22,7 +22,9 @@ namespace Back.Repositories
                     Fecha = p.Fecha,
                     Total = p.Total,
                     IDEstadoDePedido = p.IDEstadoDePedido,
-                    EstadoNombre = p.EstadoActual,
+                    EstadoNombre = p.Estado == "Demorado"
+                        ? "Demorado"
+                        : p.EstadoActual,
                     ClienteNombre = p.Cliente != null ? p.Cliente.Nombre : "Consumidor Final",
                     ResponsableNombre = p.Usuario != null ? p.Usuario.Nombre : "Sin asignar"
                 })

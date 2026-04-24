@@ -678,9 +678,12 @@ namespace Back.Repositories
                 .Include(p => p.Cliente)
                 .Include(p => p.Usuario)
                 .Include(p => p.EstadoDePedido)
-                .Where(p => p.IDEstadoDePedido != 7) // No entregados
-                .Where(p => p.FechaEntregaEstimada != DateTime.MinValue) // Con fecha estimada válida
-                .Where(p => ahora > p.FechaEntregaEstimada) // Pasó la fecha estimada
+                .Where(p => p.Estado == "Demorado" || (
+                    p.IDEstadoDePedido != 7 &&
+                    p.IDEstadoDePedido != 9 &&
+                    p.IDEstadoDePedido != 10 &&
+                    p.FechaEntregaEstimada != DateTime.MinValue &&
+                    ahora > p.FechaEntregaEstimada))
                 .OrderBy(p => p.FechaEntregaEstimada) // Más antiguos primero = mayor prioridad
                 .ToListAsync();
 
@@ -688,7 +691,9 @@ namespace Back.Repositories
             {
                 IDPedido = p.IDPedido,
                 ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
-                EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido",
+                EstadoNombre = p.Estado == "Demorado"
+                    ? "Demorado"
+                    : (p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido"),
                 Total = p.Total,
                 Fecha = p.Fecha,
                 EstaDemorado = true, // Indicar que está demorado

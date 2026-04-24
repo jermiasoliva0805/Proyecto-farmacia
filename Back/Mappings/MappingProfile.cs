@@ -87,7 +87,10 @@ namespace Back.Mappings
             // --- Mapeos de Tracking / Historial ---
             CreateMap<Pedido, OrderTrackingDTO>()
                 .ForMember(dest => dest.IDPedido, opt => opt.MapFrom(src => src.IDPedido))
-                .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src => src.EstadoDePedido != null ? src.EstadoDePedido.NombreEstado : src.EstadoActual))
+                .ForMember(dest => dest.EstadoActual, opt => opt.MapFrom(src =>
+                    src.Estado == "Demorado"
+                        ? "Demorado"
+                        : (src.EstadoDePedido != null ? src.EstadoDePedido.NombreEstado : src.EstadoActual)))
                 .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src =>
                     src.HistorialDeEstados != null && src.HistorialDeEstados.Any()
                         ? src.HistorialDeEstados.Max(h => h.fecha_hora_inicio)

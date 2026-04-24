@@ -127,7 +127,7 @@ export const RankingClientes: React.FC = () => {
                             <th className="pb-4 font-semibold">Cliente</th>
                             <th className="pb-4 font-semibold text-center">Pedidos</th>
                             <th className="pb-4 font-semibold text-right">Gasto Total</th>
-                            <th className="pb-4 font-semibold text-right text-green-600">Ticket Prom.</th>
+                            <th className="pb-4 font-semibold text-right text-green-600">Ticket Promedio</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-sm">

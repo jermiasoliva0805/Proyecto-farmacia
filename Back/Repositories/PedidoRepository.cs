@@ -74,7 +74,9 @@ namespace Back.Repositories
                     Fecha = p.Fecha,
                     Total = p.Total,
                     IDEstadoDePedido = p.IDEstadoDePedido,
-                    EstadoNombre = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
+                    EstadoNombre = p.Estado == "Demorado"
+                        ? "Demorado"
+                        : (p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado"),
                     ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
                     ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
                     FechaEntregaReal = p.FechaEntregaReal, 
@@ -84,6 +86,12 @@ namespace Back.Repositories
                     DireccionEntrega = p.DireccionEntrega,
                     LocalidadNombre = p.Cliente != null && p.Cliente.Localidad != null ? p.Cliente.Localidad.Ciudad : null,
                     CodigoPostalEntrega = p.CodigoPostalEntrega,
+                    EstaDemorado = p.Estado == "Demorado" || (
+                        p.IDEstadoDePedido != 7 &&
+                        p.IDEstadoDePedido != 9 &&
+                        p.IDEstadoDePedido != 10 &&
+                        p.FechaEntregaEstimada != DateTime.MinValue &&
+                        DateTime.Now > p.FechaEntregaEstimada),
                     // ✅ CU25: Incluir fechas de armado para detectar si ya inició
                     FechaInicioArmado = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
                     FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
@@ -122,6 +130,7 @@ namespace Back.Repositories
                     estadoFinal = 9;
                     pedido.IDEstadoDePedido = 9;
                     pedido.EstadoActual = "Cancelado";
+                    pedido.Estado = "Cancelado";
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
                 }
                 else
@@ -136,6 +145,8 @@ namespace Back.Repositories
                 if (dto.IDNuevoEstado == 7) 
                 {
                     pedido.IntentosEntregaFallida = 0;
+                    pedido.EstadoActual = "Entregado";
+                    pedido.Estado = "Entregado";
                     // --- ESTA ES LA LÍNEA MÁGICA ---
                     pedido.FechaEntregaReal = DateTime.Now; 
                     // -------------------------------

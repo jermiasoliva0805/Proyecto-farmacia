@@ -139,6 +139,7 @@ namespace Back
             builder.Services.AddScoped<IDeliveryService, DeliveryService>();
             builder.Services.AddScoped<ICancellationService, CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
+            builder.Services.AddHostedService<PedidosDemoradosBackgroundService>();
 
             // 6a. SMTP Configuration
             // Prioridad: Smtp:* (appsettings / Azure Smtp__*) > SMTP_* (env vars legacy) > defaults

@@ -114,7 +114,7 @@ const ReporteOperarios = () => {
             {/* ENCABEZADO - AJUSTADO TAMAÑO Y FUENTE */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Rendimiento de Operarios</h1>
+                    <h1 className="text-xl font-bold text-gray-800 tracking-tight">Rendimiento Operarios</h1>
                     <p className="text-sm text-gray-500 font-medium">Análisis de eficiencia y preparación (Umbral: 30 min)</p>
                 </div>
                 <button 

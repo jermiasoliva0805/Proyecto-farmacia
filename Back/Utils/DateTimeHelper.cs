@@ -77,5 +77,19 @@ namespace Back.Utils
         {
             return fecha.DayOfWeek != DayOfWeek.Saturday && fecha.DayOfWeek != DayOfWeek.Sunday;
         }
+
+        /// <summary>
+        /// Determina si un pedido ya excedió su fecha estimada y sigue activo.
+        /// </summary>
+        public static bool EsPedidoDemorado(DateTime fechaEntregaEstimada, int estadoPedido, DateTime? ahora = null)
+        {
+            if (fechaEntregaEstimada == DateTime.MinValue)
+                return false;
+
+            if (estadoPedido == 7 || estadoPedido == 9 || estadoPedido == 10)
+                return false;
+
+            return (ahora ?? DateTime.Now) > fechaEntregaEstimada;
+        }
     }
 }
