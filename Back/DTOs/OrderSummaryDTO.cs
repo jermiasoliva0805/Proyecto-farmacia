@@ -28,5 +28,10 @@ namespace Back.DTOs
 
         // Zona de reparto
         public string? ZonaNombre { get; set; }
+
+        // Datos de entrega para navegación (Maps)
+        public string? DireccionEntrega { get; set; }
+        public string? LocalidadNombre { get; set; }
+        public string? CodigoPostalEntrega { get; set; }
     }
 }

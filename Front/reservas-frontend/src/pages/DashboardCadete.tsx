@@ -68,6 +68,26 @@ export const DashboardCadete: React.FC = () => {
         setModalDetalleOpen(true);
     };
 
+    const buildMapsQuery = (pedido: OrderSummaryDTO) => {
+        const parts = [pedido.direccionEntrega, pedido.localidadNombre, pedido.codigoPostalEntrega]
+            .filter((value): value is string => !!value && value.trim().length > 0)
+            .map((value) => value.trim());
+
+        return parts.join(', ');
+    };
+
+    const handleVerEnMaps = (pedido: OrderSummaryDTO) => {
+        const query = buildMapsQuery(pedido);
+
+        if (!query) {
+            toast.warning('El pedido no tiene dirección suficiente para abrir Google Maps.');
+            return;
+        }
+
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     const getAvatarColor = (name: string) => {
         const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
@@ -185,7 +205,7 @@ export const DashboardCadete: React.FC = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
@@ -193,6 +213,14 @@ export const DashboardCadete: React.FC = () => {
                                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm"
                                                 >
                                                     <Play className="w-3 h-3 mr-1 sm:mr-2" /> Iniciar ruta
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleVerEnMaps(pedido)}
+                                                    className="w-full border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-lg text-xs sm:text-sm"
+                                                >
+                                                    <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Ver Maps
                                                 </Button>
                                                 <Button
                                                     variant="secondary"

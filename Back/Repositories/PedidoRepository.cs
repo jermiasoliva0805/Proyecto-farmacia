@@ -23,6 +23,7 @@ namespace Back.Repositories
         {
             var query = _context.Pedidos
                 .Include(p => p.Cliente)
+                .ThenInclude(c => c.Localidad)
                 .Include(p => p.EstadoDePedido)
                 .Include(p => p.Usuario)
                 .Include(p => p.Zona)
@@ -80,6 +81,9 @@ namespace Back.Repositories
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
                     FechaEntregaEstimada = p.FechaEntregaEstimada,
                     ZonaNombre = p.Zona != null ? p.Zona.Nombre : "Sin asignar",
+                    DireccionEntrega = p.DireccionEntrega,
+                    LocalidadNombre = p.Cliente != null && p.Cliente.Localidad != null ? p.Cliente.Localidad.Ciudad : null,
+                    CodigoPostalEntrega = p.CodigoPostalEntrega,
                     // ✅ CU25: Incluir fechas de armado para detectar si ya inició
                     FechaInicioArmado = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
                     FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null

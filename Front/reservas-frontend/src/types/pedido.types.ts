@@ -16,6 +16,9 @@ export interface OrderSummaryDTO {
     fechaInicioArmado?: string;
     fechaFinArmado?: string;
     zonaNombre?: string;
+    direccionEntrega?: string;
+    localidadNombre?: string;
+    codigoPostalEntrega?: string;
 }
 
 export interface OrderDetailDTO {
