@@ -84,8 +84,9 @@ export const DashboardCadete: React.FC = () => {
             return;
         }
 
-        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
+        // URL de direcciones para que Maps abra en modo ruta (similar a "Como llegar / Iniciar").
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}&travelmode=driving&dir_action=navigate`;
+        window.location.href = url;
     };
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
