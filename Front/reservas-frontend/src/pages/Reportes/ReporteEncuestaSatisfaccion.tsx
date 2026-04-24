@@ -14,6 +14,92 @@ interface MetricCardProps {
     bgColor?: string;
 }
 
+interface ColorConfig {
+    bar: string;
+    bg: string;
+    text: string;
+}
+
+// Mapeo de opciones a colores
+const getColorForOption = (respuesta: string): ColorConfig => {
+    const respuestaLower = respuesta.toLowerCase().trim();
+    
+    // Escala de satisfacción (rojo -> naranja -> amarillo -> verde claro -> verde)
+    if (respuestaLower === 'mala' || respuestaLower === 'no') {
+        return {
+            bar: 'from-red-500 to-red-600',
+            bg: 'bg-red-100',
+            text: 'text-red-700'
+        };
+    }
+    if (respuestaLower === 'regular' || respuestaLower === 'tal vez') {
+        return {
+            bar: 'from-orange-500 to-orange-600',
+            bg: 'bg-orange-100',
+            text: 'text-orange-700'
+        };
+    }
+    if (respuestaLower === 'buena') {
+        return {
+            bar: 'from-amber-500 to-amber-600',
+            bg: 'bg-amber-100',
+            text: 'text-amber-700'
+        };
+    }
+    if (respuestaLower === 'muy buena') {
+        return {
+            bar: 'from-lime-500 to-lime-600',
+            bg: 'bg-lime-100',
+            text: 'text-lime-700'
+        };
+    }
+    if (respuestaLower === 'excelente' || respuestaLower === 'si') {
+        return {
+            bar: 'from-green-500 to-green-600',
+            bg: 'bg-green-100',
+            text: 'text-green-700'
+        };
+    }
+    
+    // Color por defecto para valores numéricos (1-5)
+    const numValue = parseFloat(respuesta);
+    if (!isNaN(numValue)) {
+        if (numValue <= 2) {
+            return {
+                bar: 'from-red-500 to-red-600',
+                bg: 'bg-red-100',
+                text: 'text-red-700'
+            };
+        }
+        if (numValue <= 3) {
+            return {
+                bar: 'from-amber-500 to-amber-600',
+                bg: 'bg-amber-100',
+                text: 'text-amber-700'
+            };
+        }
+        if (numValue <= 4) {
+            return {
+                bar: 'from-lime-500 to-lime-600',
+                bg: 'bg-lime-100',
+                text: 'text-lime-700'
+            };
+        }
+        return {
+            bar: 'from-green-500 to-green-600',
+            bg: 'bg-green-100',
+            text: 'text-green-700'
+        };
+    }
+    
+    // Color por defecto
+    return {
+        bar: 'from-blue-500 to-blue-600',
+        bg: 'bg-blue-100',
+        text: 'text-blue-700'
+    };
+};
+
 export const ReporteEncuestaSatisfaccion: React.FC = () => {
     const [reporte, setReporte] = useState<ReporteEncuestaSatisfaccionDTO | null>(null);
     const [loading, setLoading] = useState(true);
@@ -129,22 +215,36 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
                                 </p>
                             </div>
                             <div className="space-y-3">
-                                {pregunta.opciones.map((opcion, opcionIndex) => (
-                                    <div key={`${opcion.respuesta}-${opcionIndex}`} className="flex items-center gap-3">
-                                        <div className="flex-1">
-                                            <div className="flex justify-between mb-1">
-                                                <span className="text-sm font-medium text-gray-700">{opcion.respuesta}</span>
-                                                <span className="text-sm font-bold text-gray-900">{opcion.cantidad} ({opcion.porcentaje.toFixed(1)}%)</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                <div 
-                                                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all"
-                                                    style={{ width: `${opcion.porcentaje}%` }}
-                                                ></div>
+                                {pregunta.opciones.map((opcion, opcionIndex) => {
+                                    const colorConfig = getColorForOption(opcion.respuesta);
+                                    return (
+                                        <div key={`${opcion.respuesta}-${opcionIndex}`} className="flex items-center gap-3">
+                                            <div className="flex-1">
+                                                <div className="flex justify-between mb-2 items-center">
+                                                    <span className={`text-sm font-semibold ${colorConfig.text} ${colorConfig.bg} px-3 py-1 rounded-lg`}>
+                                                        {opcion.respuesta}
+                                                    </span>
+                                                    <div className="flex gap-6 text-right">
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 font-semibold">Cantidad</p>
+                                                            <p className="text-sm font-bold text-gray-900">{opcion.cantidad}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 font-semibold">Porcentaje</p>
+                                                            <p className="text-sm font-bold text-gray-900">{opcion.porcentaje.toFixed(1)}%</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                                    <div 
+                                                        className={`bg-gradient-to-r ${colorConfig.bar} h-3 rounded-full transition-all`}
+                                                        style={{ width: `${opcion.porcentaje}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </Card>
                     ))}

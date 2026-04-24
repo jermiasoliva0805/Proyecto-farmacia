@@ -548,8 +548,15 @@ namespace Back.Repositories
             {
                 var filaTieneDatos = false;
 
-                for (int i = 2; i < headers.Length; i++)
+                for (int i = 1; i < headers.Length; i++)
                 {
+                    var header = headers[i]?.Trim() ?? "";
+                    // Saltar columnas vacías o que parecen ser emails
+                    if (string.IsNullOrWhiteSpace(header) || header.Contains("@"))
+                    {
+                        continue;
+                    }
+
                     var respuesta = csv.GetField(i)?.Trim();
                     if (string.IsNullOrWhiteSpace(respuesta))
                     {
@@ -575,10 +582,11 @@ namespace Back.Repositories
 
             var preguntas = new List<PreguntaEncuestaDTO>();
 
-            for (int i = 2; i < headers.Length; i++)
+            for (int i = 1; i < headers.Length; i++)
             {
                 var pregunta = headers[i]?.Trim();
-                if (string.IsNullOrWhiteSpace(pregunta))
+                // Saltar columnas vacías o que parecen ser emails
+                if (string.IsNullOrWhiteSpace(pregunta) || pregunta.Contains("@"))
                 {
                     continue;
                 }
