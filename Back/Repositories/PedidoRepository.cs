@@ -139,6 +139,22 @@ namespace Back.Repositories
                     pedido.EstadoActual = "Entrega fallida";
                 }
             }
+            else if (pedido.IDEstadoDePedido == 3 &&
+                     (dto.IDNuevoEstado == 4 ||
+                      dto.IDNuevoEstado == 5 ||
+                      dto.IDNuevoEstado == 6 ||
+                      dto.IDNuevoEstado == 7))
+            {
+                pedido.IDEstadoDePedido = dto.IDNuevoEstado;
+                pedido.EstadoActual = dto.IDNuevoEstado == 7 ? "Entregado" : pedido.EstadoActual;
+
+                if (dto.IDNuevoEstado == 7)
+                {
+                    pedido.IntentosEntregaFallida = 0;
+                    pedido.FechaEntregaReal = DateTime.Now;
+                    _context.Entry(pedido).State = EntityState.Modified;
+                }
+            }
             else
             {
                 pedido.IDEstadoDePedido = dto.IDNuevoEstado;

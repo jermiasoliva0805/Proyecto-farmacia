@@ -261,6 +261,17 @@ namespace Back.Services
             {
                 pedido.FechaFinArmado = DateTime.UtcNow;
             }
+            else if (pedido.IDEstadoDePedido == 3 &&
+                     (changeStatusDto.IDNuevoEstado == 4 ||
+                      changeStatusDto.IDNuevoEstado == 5 ||
+                      changeStatusDto.IDNuevoEstado == 6 ||
+                      changeStatusDto.IDNuevoEstado == 7 ||
+                      changeStatusDto.IDNuevoEstado == 8))
+            {
+                pedido.IDEstadoDePedido = changeStatusDto.IDNuevoEstado;
+                pedido.EstadoActual = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
+                pedido.Estado = ObtenerDescripcionEstado(changeStatusDto.IDNuevoEstado);
+            }
             else if (changeStatusDto.IDNuevoEstado == 7)
             {
                 pedido.FechaEntregaReal = DateTime.UtcNow;

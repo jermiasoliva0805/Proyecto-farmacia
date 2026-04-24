@@ -55,6 +55,8 @@ namespace Back.Services
 
             foreach (var pedido in pedidosDemorados)
             {
+                pedido.IDEstadoDePedido = 3;
+                pedido.EstadoActual = "Demorado";
                 pedido.Estado = "Demorado";
 
                 var historial = new HistorialDeEstados
