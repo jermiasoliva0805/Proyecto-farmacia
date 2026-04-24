@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
 import { Calendar, MapPin, Package, TrendingUp, Download } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getPedidosPorZona } from '../../service/reporteService';
@@ -182,6 +182,9 @@ export const ReportePedidosPorZona = () => {
         recaudado: Math.round(z.totalRecaudado)
     }));
 
+    const maxPedidos = Math.max(3, ...barData.map(z => z.pedidos), 0);
+    const xAxisTicks = Array.from({ length: maxPedidos }, (_, index) => index + 1);
+
     return (
         <div className="p-6 bg-[#f8f9fa] min-h-screen">
             {/* Header */}
@@ -267,13 +270,17 @@ export const ReportePedidosPorZona = () => {
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={barData} layout="vertical" margin={{ left: 120, right: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <XAxis type="number" domain={[0, maxPedidos]} ticks={xAxisTicks} allowDecimals={false} tick={{ fontSize: 12 }} />
                                 <YAxis dataKey="nombre" type="category" tick={{ fontSize: 12 }} />
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                                     formatter={(value: any) => value.toLocaleString('es-AR')}
                                 />
-                                <Bar dataKey="pedidos" fill="#3b82f6" name="Cantidad de Pedidos" />
+                                <Bar dataKey="pedidos" name="Cantidad de Pedidos">
+                                    {barData.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </Card>
