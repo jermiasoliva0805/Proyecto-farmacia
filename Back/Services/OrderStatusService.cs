@@ -240,6 +240,13 @@ namespace Back.Services
                 transicionValida = true;
             else if (pedido.IDEstadoDePedido == 2 && changeStatusDto.IDNuevoEstado == 4)
                 transicionValida = true;
+            else if (pedido.IDEstadoDePedido == 3 &&
+                     (changeStatusDto.IDNuevoEstado == 4 ||
+                      changeStatusDto.IDNuevoEstado == 5 ||
+                      changeStatusDto.IDNuevoEstado == 6 ||
+                      changeStatusDto.IDNuevoEstado == 7 ||
+                      changeStatusDto.IDNuevoEstado == 8))
+                transicionValida = true;
             else if ((pedido.IDEstadoDePedido == 5 || pedido.IDEstadoDePedido == 6 || pedido.IDEstadoDePedido == 8) &&
                      (changeStatusDto.IDNuevoEstado == 6 || changeStatusDto.IDNuevoEstado == 7 || changeStatusDto.IDNuevoEstado == 8))
                 transicionValida = true;

@@ -672,6 +672,8 @@ namespace Back.Repositories
 
         public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosAsync()
         {
+            await MarcarPedidosDemoradosAutomaticamenteAsync();
+
             var ahora = DateTime.Now;
 
             var pedidosDemorados = await _context.Pedidos
@@ -701,6 +703,30 @@ namespace Back.Repositories
             }).ToList();
 
             return resultado;
+        }
+
+        private async Task MarcarPedidosDemoradosAutomaticamenteAsync()
+        {
+            var ahora = DateTime.Now;
+
+            var pedidosDemorados = await _context.Pedidos
+                .Where(p => p.IDEstadoDePedido != 3)
+                .Where(p => p.IDEstadoDePedido != 7 && p.IDEstadoDePedido != 9 && p.IDEstadoDePedido != 10)
+                .Where(p => p.FechaEntregaEstimada != DateTime.MinValue)
+                .Where(p => ahora > p.FechaEntregaEstimada)
+                .ToListAsync();
+
+            if (!pedidosDemorados.Any())
+                return;
+
+            foreach (var pedido in pedidosDemorados)
+            {
+                pedido.IDEstadoDePedido = 3;
+                pedido.EstadoActual = "Demorado";
+                pedido.Estado = "Demorado";
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

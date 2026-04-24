@@ -21,6 +21,8 @@ namespace Back.Repositories
 
         public async Task<IEnumerable<OrderSummaryDTO>> GetFilteredOrdersAsync(OrderFilterDTO filters)
         {
+            await MarcarPedidosDemoradosAutomaticamenteAsync();
+
             var query = _context.Pedidos
                 .Include(p => p.Cliente)
                 .ThenInclude(c => c.Localidad)
@@ -97,6 +99,30 @@ namespace Back.Repositories
                     FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
                 })
                 .ToListAsync();
+        }
+
+        private async Task MarcarPedidosDemoradosAutomaticamenteAsync()
+        {
+            var ahora = DateTime.Now;
+
+            var pedidosDemorados = await _context.Pedidos
+                .Where(p => p.IDEstadoDePedido != 3)
+                .Where(p => p.IDEstadoDePedido != 7 && p.IDEstadoDePedido != 9 && p.IDEstadoDePedido != 10)
+                .Where(p => p.FechaEntregaEstimada != DateTime.MinValue)
+                .Where(p => ahora > p.FechaEntregaEstimada)
+                .ToListAsync();
+
+            if (!pedidosDemorados.Any())
+                return;
+
+            foreach (var pedido in pedidosDemorados)
+            {
+                pedido.IDEstadoDePedido = 3;
+                pedido.EstadoActual = "Demorado";
+                pedido.Estado = "Demorado";
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task<Pedido?> GetByIdAsync(int idPedido)

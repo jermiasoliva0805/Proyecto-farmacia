@@ -58,17 +58,6 @@ namespace Back.Services
                 pedido.IDEstadoDePedido = 3;
                 pedido.EstadoActual = "Demorado";
                 pedido.Estado = "Demorado";
-
-                var historial = new HistorialDeEstados
-                {
-                    IDPedido = pedido.IDPedido,
-                    IDEstadoDePedido = 3,
-                    IDUsuario = pedido.IDUsuario > 0 ? pedido.IDUsuario : 1,
-                    fecha_hora_inicio = DateTime.UtcNow,
-                    Observaciones = "Marcado automáticamente como demorado por superar la fecha estimada de entrega."
-                };
-
-                context.HistorialesDeEstados.Add(historial);
             }
 
             await context.SaveChangesAsync(cancellationToken);
