@@ -17,6 +17,26 @@ const COLORS = [
     '#06b6d4', '#6366f1', '#f43f5e', '#14b8a6', '#f97316'
 ];
 
+const COLORS_TAILWIND = [
+    'text-blue-600', 'text-purple-600', 'text-pink-600', 'text-amber-600', 'text-emerald-600',
+    'text-cyan-600', 'text-indigo-600', 'text-rose-600', 'text-teal-600', 'text-orange-600'
+];
+
+const COLORS_ICONS = [
+    'text-blue-500', 'text-purple-500', 'text-pink-500', 'text-amber-500', 'text-emerald-500',
+    'text-cyan-500', 'text-indigo-500', 'text-rose-500', 'text-teal-500', 'text-orange-500'
+];
+
+// Función para obtener el color basado en el ID de la zona
+const getColorByZonaId = (zonaId: number) => {
+    const colorIndex = (zonaId - 1) % COLORS.length;
+    return {
+        hex: COLORS[colorIndex],
+        tailwind: COLORS_TAILWIND[colorIndex],
+        icon: COLORS_ICONS[colorIndex]
+    };
+};
+
 export const ReportePedidosPorZona = () => {
     const [datos, setDatos] = useState<PedidosPorZonaDTO[]>([]);
     const [zonas, setZonas] = useState<ZonaDTO[]>([]);
@@ -239,8 +259,8 @@ export const ReportePedidosPorZona = () => {
                         title="Total Pedidos" 
                         value={totalPedidos.toString()} 
                         sub="En el período seleccionado" 
-                        icon={<Package className="text-blue-500" />} 
-                        color="text-blue-600"
+                        icon={<Package className={idZona ? getColorByZonaId(idZona).icon : "text-blue-500"} />} 
+                        color={idZona ? getColorByZonaId(idZona).tailwind : "text-blue-600"}
                     />
                     {zonaTop && (
                         <>
@@ -248,8 +268,8 @@ export const ReportePedidosPorZona = () => {
                                 title="Zona Principal" 
                                 value={zonaTop.nombreZona} 
                                 sub={`${zonaTop.cantidadPedidos} pedidos (${zonaTop.porcentaje.toFixed(1)}%)`} 
-                                icon={<MapPin className="text-green-500" />} 
-                                color="text-green-600"
+                                icon={<MapPin className={getColorByZonaId(zonaTop.zonaId).icon} />} 
+                                color={getColorByZonaId(zonaTop.zonaId).tailwind}
                             />
                             <MetricCard 
                                 title="Total Recaudado" 
@@ -285,28 +305,6 @@ export const ReportePedidosPorZona = () => {
                         </ResponsiveContainer>
                     </Card>
                 </div>
-
-                {/* Leyenda de Zonas */}
-                <Card className="p-6 mb-8">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Resumen de Zonas</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {datos.map((zona, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-all border border-gray-100"
-                            >
-                                <div
-                                    className="w-4 h-4 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-700">{zona.nombreZona}</p>
-                                    <p className="text-xs text-gray-500">{zona.cantidadPedidos} pedidos ({zona.porcentaje.toFixed(1)}%)</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
 
                 {/* Tabla de Detalles */}
                 <Card className="p-6">
