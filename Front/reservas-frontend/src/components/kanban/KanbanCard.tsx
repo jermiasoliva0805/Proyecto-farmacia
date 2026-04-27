@@ -124,12 +124,6 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
                             </p>
                         )}
 
-                        {/* Indicador de reintento para Cadetes */}
-                        {pedido.idEstadoDePedido === 8 && (
-                            <div className="bg-blue-50 rounded p-1 sm:p-2 text-[10px] sm:text-xs text-blue-700 border border-blue-200">
-                                💡 Reintenta arrastrando
-                            </div>
-                        )}
 
                         {/* Indicador de intentos previos fallidos (cuando está en Despachando pero ya tuvo fallos) */}
                         {pedido.idEstadoDePedido === 5 && pedido.intentosEntregaFallida > 0 && (
