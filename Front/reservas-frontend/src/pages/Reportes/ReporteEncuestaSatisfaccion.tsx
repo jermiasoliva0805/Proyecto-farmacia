@@ -210,7 +210,7 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
                     />
                     <MetricCard
                         title="Cantidad de encuestas enviadas"
-                        value={reporte.cantidadEncuestasEnviadas.toString()}
+                        value={(reporte.cantidadEncuestasEnviadas ?? reporte.cantidadTotalRespuestas ?? 0).toString()}
                         icon={<BarChart3 className="w-8 h-8" />}
                         color="text-emerald-600"
                         bgColor="bg-emerald-50"
