@@ -20,19 +20,36 @@ interface ColorConfig {
     text: string;
 }
 
+// Mapeo de números a nombres de satisfacción
+const mapNumberToSatisfaction = (value: string | number): string => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (!isNaN(numValue)) {
+        switch (Math.round(numValue)) {
+            case 1: return 'Mala';
+            case 2: return 'Regular';
+            case 3: return 'Buena';
+            case 4: return 'Muy buena';
+            case 5: return 'Excelente';
+            default: return value.toString();
+        }
+    }
+    return value.toString();
+};
+
 // Mapeo de opciones a colores
 const getColorForOption = (respuesta: string): ColorConfig => {
     const respuestaLower = respuesta.toLowerCase().trim();
     
     // Escala de satisfacción (rojo -> naranja -> amarillo -> verde claro -> verde)
-    if (respuestaLower === 'mala' || respuestaLower === 'no') {
+    if (respuestaLower === 'mala') {
         return {
             bar: 'from-red-500 to-red-600',
             bg: 'bg-red-100',
             text: 'text-red-700'
         };
     }
-    if (respuestaLower === 'regular' || respuestaLower === 'tal vez') {
+    if (respuestaLower === 'regular') {
         return {
             bar: 'from-orange-500 to-orange-600',
             bg: 'bg-orange-100',
@@ -60,35 +77,18 @@ const getColorForOption = (respuesta: string): ColorConfig => {
             text: 'text-green-700'
         };
     }
-    
-    // Color por defecto para valores numéricos (1-5)
-    const numValue = parseFloat(respuesta);
-    if (!isNaN(numValue)) {
-        if (numValue <= 2) {
-            return {
-                bar: 'from-red-500 to-red-600',
-                bg: 'bg-red-100',
-                text: 'text-red-700'
-            };
-        }
-        if (numValue <= 3) {
-            return {
-                bar: 'from-amber-500 to-amber-600',
-                bg: 'bg-amber-100',
-                text: 'text-amber-700'
-            };
-        }
-        if (numValue <= 4) {
-            return {
-                bar: 'from-lime-500 to-lime-600',
-                bg: 'bg-lime-100',
-                text: 'text-lime-700'
-            };
-        }
+    if (respuestaLower === 'no') {
         return {
-            bar: 'from-green-500 to-green-600',
-            bg: 'bg-green-100',
-            text: 'text-green-700'
+            bar: 'from-red-500 to-red-600',
+            bg: 'bg-red-100',
+            text: 'text-red-700'
+        };
+    }
+    if (respuestaLower === 'tal vez') {
+        return {
+            bar: 'from-amber-500 to-amber-600',
+            bg: 'bg-amber-100',
+            text: 'text-amber-700'
         };
     }
     
@@ -96,7 +96,7 @@ const getColorForOption = (respuesta: string): ColorConfig => {
     return {
         bar: 'from-blue-500 to-blue-600',
         bg: 'bg-blue-100',
-        text: 'text-blue-700'
+n        text: 'text-blue-700'
     };
 };
 
@@ -116,7 +116,33 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
     };
 
     const preguntasValidas = useMemo(() => {
-        return reporte?.preguntas.filter(p => isValidQuestion(p.pregunta)) || [];
+        return reporte?.preguntas.filter(p => isValidQuestion(p.pregunta)).map(pregunta => {
+            // Consolidar opciones duplicadas (ej: "5" y "Excelente" -> "Excelente")
+            const opcionesConsolidadas = new Map();
+            
+            pregunta.opciones.forEach(opcion => {
+                const nombreMapeado = mapNumberToSatisfaction(opcion.respuesta);
+                const clave = nombreMapeado.toLowerCase();
+                
+                if (opcionesConsolidadas.has(clave)) {
+                    // Sumar si ya existe
+                    const existing = opcionesConsolidadas.get(clave);
+                    existing.cantidad += opcion.cantidad;
+                    existing.porcentaje += opcion.porcentaje;
+                } else {
+                    opcionesConsolidadas.set(clave, {
+                        respuesta: nombreMapeado,
+                        cantidad: opcion.cantidad,
+                        porcentaje: opcion.porcentaje
+                    });
+                }
+            });
+            
+            return {
+                ...pregunta,
+                opciones: Array.from(opcionesConsolidadas.values())
+            };
+        }) || [];
     }, [reporte]);
 
     useEffect(() => {
