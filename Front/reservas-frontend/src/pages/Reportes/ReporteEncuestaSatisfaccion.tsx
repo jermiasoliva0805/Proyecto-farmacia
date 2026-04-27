@@ -96,7 +96,7 @@ const getColorForOption = (respuesta: string): ColorConfig => {
     return {
         bar: 'from-blue-500 to-blue-600',
         bg: 'bg-blue-100',
-n        text: 'text-blue-700'
+        text: 'text-blue-700'
     };
 };
 
