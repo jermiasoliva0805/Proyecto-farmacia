@@ -199,7 +199,8 @@ export const ReportePedidosPorZona = () => {
     const barData = datos.map(z => ({
         nombre: z.nombreZona,
         pedidos: z.cantidadPedidos,
-        recaudado: Math.round(z.totalRecaudado)
+        recaudado: Math.round(z.totalRecaudado),
+        zonaId: z.zonaId
     }));
 
     const maxPedidos = Math.max(3, ...barData.map(z => z.pedidos), 0);
@@ -297,8 +298,8 @@ export const ReportePedidosPorZona = () => {
                                     formatter={(value: any) => value.toLocaleString('es-AR')}
                                 />
                                 <Bar dataKey="pedidos" name="Cantidad de Pedidos">
-                                    {barData.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    {barData.map((bar) => (
+                                        <Cell key={`cell-${bar.zonaId}`} fill={getColorByZonaId(bar.zonaId).hex} />
                                     ))}
                                 </Bar>
                             </BarChart>
