@@ -12,6 +12,26 @@ const COLORS = [
     '#06b6d4', '#6366f1', '#f43f5e', '#14b8a6', '#f97316'
 ];
 
+const COLORS_TAILWIND = [
+    'text-blue-600', 'text-purple-600', 'text-pink-600', 'text-amber-600', 'text-emerald-600',
+    'text-cyan-600', 'text-indigo-600', 'text-rose-600', 'text-teal-600', 'text-orange-600'
+];
+
+const COLORS_ICONS = [
+    'text-blue-500', 'text-purple-500', 'text-pink-500', 'text-amber-500', 'text-emerald-500',
+    'text-cyan-500', 'text-indigo-500', 'text-rose-500', 'text-teal-500', 'text-orange-500'
+];
+
+// Función para obtener el color basado en el índice del producto
+const getColorByProductIndex = (index: number) => {
+    const colorIndex = index % COLORS.length;
+    return {
+        hex: COLORS[colorIndex],
+        tailwind: COLORS_TAILWIND[colorIndex],
+        icon: COLORS_ICONS[colorIndex]
+    };
+};
+
 export const ReporteProductos = () => {
     const [datos, setDatos] = useState<TopProductosDTO[]>([]);
     const [loading, setLoading] = useState(true);
@@ -168,15 +188,15 @@ export const ReporteProductos = () => {
                             title="Producto Top #1" 
                             value={productoTop.nombreProducto} 
                             sub={`${productoTop.unidadesVendidas} unidades vendidas`} 
-                            icon={<ShoppingCart className="text-green-500" />} 
-                            color="text-green-600"
+                            icon={<ShoppingCart className={getColorByProductIndex(0).icon} />} 
+                            color={getColorByProductIndex(0).tailwind}
                         />
                         <MetricCard 
                             title="Precio Promedio (Top 1)" 
                             value={`$${productoTop.precioPromedio.toLocaleString('es-AR')}`} 
                             sub={`${productoTop.porcentaje.toFixed(1)}% del total` }
-                            icon={<TrendingUp className="text-orange-500" />} 
-                            color="text-orange-600"
+                            icon={<TrendingUp className={getColorByProductIndex(0).icon} />} 
+                            color={getColorByProductIndex(0).tailwind}
                         />
                     </>
                 )}
