@@ -75,5 +75,13 @@ namespace Back.Repositories.Interfaces
         /// Obtiene pedidos demorados en tiempo real (sin entregar, que ya pasaron FechaEntregaEstimada)
         /// </summary>
         Task<List<OrderSummaryDTO>> GetPedidosDemoradosAsync();
+
+        /// <summary>
+        /// Obtiene pedidos demorados filtrados según el rol del usuario logueado.
+        /// - Encargado: Ve todos los pedidos demorados
+        /// - Operario: Ve solo los pedidos demorados que tiene asignados
+        /// - Cadete: Ve solo los pedidos demorados de su zona
+        /// </summary>
+        Task<List<OrderSummaryDTO>> GetPedidosDemoradosPorUsuarioAsync(int usuarioId, string rolUsuario);
     }
 }

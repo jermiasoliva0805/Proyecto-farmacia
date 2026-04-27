@@ -12,6 +12,8 @@ namespace Back.DTOs
         public string EstadoNombre { get; set; } = string.Empty;
         public string ClienteNombre { get; set; } = string.Empty;
         public string ResponsableNombre { get; set; } = string.Empty;
+        public string ResponsableRol { get; set; } = string.Empty; // "Operario" o "Cadete"
+        public int? ResponsableId { get; set; } // ID del usuario responsable
 
         public DateTime FechaEntregaEstimada { get; set; }
         public DateTime? FechaEntregaReal { get; set; }

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '@context/AuthContext';
 import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
 import { UserProfileModal } from '../profile/UserProfileModal';
+import { NotificationsModal } from '../common/NotificationsModal';
+import { useDemoradoNotifications } from '@hooks/useDemoradoNotifications';
 // import { Badge } from './Badge'; // Descomenta si usas el Badge separado
 
 interface NavbarProps {
@@ -12,6 +14,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     const { user, logout } = useAuth();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    
+    // Hook para obtener notificaciones
+    const { notifications, loading, hasUnread, markAsRead } = useDemoradoNotifications();
 
     return (
         <nav className="fixed top-0 left-0 right-0 bg-[#1e3a8a] text-white z-50 h-16 shadow-md">
@@ -48,9 +54,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
                     {/* Sección Derecha: Notificaciones y Usuario */}
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <button className="relative p-2 rounded-lg hover:bg-blue-800 transition-colors">
+                        <button 
+                            onClick={() => {
+                                setNotificationsOpen(true);
+                                markAsRead();
+                            }}
+                            className="relative p-2 rounded-lg hover:bg-blue-800 transition-colors"
+                            title={`${notifications.length} pedido(s) demorado(s)`}
+                        >
                             <Bell className="w-5 sm:w-6 h-5 sm:h-6 text-white" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yellow-400 rounded-full"></span>
+                            {hasUnread && (
+                                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse"></span>
+                            )}
+                            {notifications.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                    {notifications.length}
+                                </span>
+                            )}
                         </button>
 
                         <div className="h-8 w-px bg-blue-700 mx-1 hidden sm:block"></div>
@@ -113,6 +133,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                     <UserProfileModal 
                         isOpen={profileModalOpen}
                         onClose={() => setProfileModalOpen(false)}
+                    />
+
+                    {/* Modal Notificaciones */}
+                    <NotificationsModal 
+                        isOpen={notificationsOpen}
+                        onClose={() => setNotificationsOpen(false)}
+                        notifications={notifications}
+                        loading={loading}
                     />
                 </div>
             </div>

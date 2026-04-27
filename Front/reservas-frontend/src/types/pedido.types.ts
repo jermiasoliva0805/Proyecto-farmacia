@@ -1,20 +1,40 @@
 export interface OrderSummaryDTO {
-    operarioNombre: string;
-    idPedido: number;
-    fecha: string;
-    total: number;
-    estadoNombre: string;
-    idEstadoDePedido: number;
-    clienteNombre: string;
-    responsableNombre: string;
-    fechaEntregaEstimada: string;
-    estaDemorado: boolean;
-    fechaEntregaReal?: string;
+    IDPedido: number;
+    Fecha: string | Date;
+    Total: number;
+    EstadoNombre: string;
+    IDEstadoDePedido: number;
+    ClienteNombre: string;
+    ResponsableNombre: string;
+    ResponsableRol?: string; // "Operario" o "Cadete"
+    ResponsableId?: number;
+    FechaEntregaEstimada: string | Date;
+    EstaDemorado: boolean;
+    FechaEntregaReal?: string | Date;
+    IntentosEntregaFallida: number;
+    FechaInicioArmado?: string | Date;
+    FechaFinArmado?: string | Date;
+    ZonaNombre?: string;
+    DireccionEntrega?: string;
+    LocalidadNombre?: string;
+    CodigoPostalEntrega?: string;
+    
+    // Legacy fields (para retrocompatibilidad)
+    operarioNombre?: string;
+    idPedido?: number;
+    fecha?: string | Date;
+    total?: number;
+    estadoNombre?: string;
+    idEstadoDePedido?: number;
+    clienteNombre?: string;
+    responsableNombre?: string;
+    fechaEntregaEstimada?: string | Date;
+    estaDemorado?: boolean;
+    fechaEntregaReal?: string | Date;
     detalles?: OrderDetailDTO[];
-    intentosEntregaFallida: number;
-    // ✅ CU25: Para detectar si ya inició el armado
-    fechaInicioArmado?: string;
-    fechaFinArmado?: string;
+    intentosEntregaFallida?: number;
+    fechaInicioArmado?: string | Date;
+    fechaFinArmado?: string | Date;
     zonaNombre?: string;
     direccionEntrega?: string;
     localidadNombre?: string;

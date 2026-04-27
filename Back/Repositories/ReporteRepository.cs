@@ -708,7 +708,79 @@ namespace Back.Repositories
                 Total = p.Total,
                 Fecha = p.Fecha,
                 EstaDemorado = true, // Indicar que está demorado
-                FechaEntregaEstimada = p.FechaEntregaEstimada
+                FechaEntregaEstimada = p.FechaEntregaEstimada,
+                ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                ResponsableRol = p.Usuario?.Rol ?? "Desconocido",
+                ResponsableId = p.IDUsuario
+            }).ToList();
+
+            return resultado;
+        }
+
+        /// <summary>
+        /// Obtiene pedidos demorados filtrados según el rol del usuario logueado.
+        /// - Encargado: Ve todos los pedidos demorados
+        /// - Operario: Ve solo los pedidos demorados que tiene asignados
+        /// - Cadete: Ve solo los pedidos demorados de su zona
+        /// </summary>
+        public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosPorUsuarioAsync(int usuarioId, string rolUsuario)
+        {
+            await MarcarPedidosDemoradosAutomaticamenteAsync();
+
+            var ahora = DateTime.Now;
+
+            var query = _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .Include(p => p.EstadoDePedido)
+                .Where(p => p.Estado == "Demorado" || (
+                    p.IDEstadoDePedido != 7 &&
+                    p.IDEstadoDePedido != 9 &&
+                    p.IDEstadoDePedido != 10 &&
+                    p.FechaEntregaEstimada != DateTime.MinValue &&
+                    ahora > p.FechaEntregaEstimada));
+
+            // Filtrar según el rol
+            if (rolUsuario == "Operario")
+            {
+                // Operario solo ve sus pedidos
+                query = query.Where(p => p.IDUsuario == usuarioId);
+            }
+            else if (rolUsuario == "Cadete")
+            {
+                // Cadete solo ve pedidos de su zona
+                var usuarioCadete = await _context.Usuarios.FirstOrDefaultAsync(u => u.IDUsuario == usuarioId);
+                if (usuarioCadete?.ZonaId.HasValue == true)
+                {
+                    query = query.Where(p => p.ZonaId == usuarioCadete.ZonaId);
+                }
+            }
+            // Si es Encargado, ve todos (sin filtro adicional)
+
+            var pedidosDemorados = await query
+                .OrderBy(p => p.FechaEntregaEstimada)
+                .ToListAsync();
+
+            var resultado = pedidosDemorados.Select(p => new OrderSummaryDTO
+            {
+                IDPedido = p.IDPedido,
+                ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
+                EstadoNombre = p.Estado == "Demorado"
+                    ? "Demorado"
+                    : (p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido"),
+                Total = p.Total,
+                Fecha = p.Fecha,
+                EstaDemorado = true,
+                FechaEntregaEstimada = p.FechaEntregaEstimada,
+                ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                ResponsableRol = p.Usuario?.Rol ?? "Desconocido",
+                ResponsableId = p.IDUsuario,
+                IDEstadoDePedido = p.IDEstadoDePedido,
+                FechaEntregaReal = p.FechaEntregaReal,
+                IntentosEntregaFallida = p.IntentosEntregaFallida,
+                ZonaNombre = p.Zona?.Nombre,
+                DireccionEntrega = p.DireccionEntrega,
+                LocalidadNombre = p.IDLocalidad.ToString() // TODO: Join con tabla Localidades si es necesario
             }).ToList();
 
             return resultado;

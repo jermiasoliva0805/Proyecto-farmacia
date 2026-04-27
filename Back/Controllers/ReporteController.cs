@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Back.Data;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace Back.Controllers
 {
@@ -299,6 +300,42 @@ namespace Back.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = "Error al obtener pedidos demorados", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene pedidos demorados del usuario logueado según su rol.
+        /// El filtrado se realiza automáticamente según:
+        /// - Encargado: Ve todos los pedidos demorados
+        /// - Operario: Ve solo sus pedidos demorados
+        /// - Cadete: Ve solo los pedidos demorados de su zona
+        /// Endpoint usado por la campanita de notificaciones en el frontend
+        /// </summary>
+        [HttpGet("pedidos-demorados-usuario")]
+        public async Task<ActionResult<List<OrderSummaryDTO>>> GetPedidosDemoradosUsuario()
+        {
+            try
+            {
+                // Obtener el ID y rol del usuario del token JWT
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var rolClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (!int.TryParse(userIdClaim, out var usuarioId))
+                {
+                    return Unauthorized(new { message = "No se pudo identificar al usuario" });
+                }
+
+                if (string.IsNullOrEmpty(rolClaim))
+                {
+                    return Unauthorized(new { message = "No se pudo determinar el rol del usuario" });
+                }
+
+                var pedidosDemorados = await _reporteRepository.GetPedidosDemoradosPorUsuarioAsync(usuarioId, rolClaim);
+                return Ok(pedidosDemorados);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error al obtener pedidos demorados del usuario", error = ex.Message });
             }
         }
     }
