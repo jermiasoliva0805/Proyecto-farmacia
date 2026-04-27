@@ -9,6 +9,24 @@ import { ReporteFormasPagoDTO } from '../../types/pedido.types';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
+const COLORS_TAILWIND = [
+    'text-blue-600', 'text-purple-600', 'text-pink-600', 'text-amber-600', 'text-emerald-600', 'text-cyan-600'
+];
+
+const COLORS_ICONS = [
+    'text-blue-500', 'text-purple-500', 'text-pink-500', 'text-amber-500', 'text-emerald-500', 'text-cyan-500'
+];
+
+// Función para obtener el color basado en el índice de la forma de pago
+const getColorByFormaIndex = (index: number) => {
+    const colorIndex = index % COLORS.length;
+    return {
+        hex: COLORS[colorIndex],
+        tailwind: COLORS_TAILWIND[colorIndex],
+        icon: COLORS_ICONS[colorIndex]
+    };
+};
+
 interface SelectorOption {
     value: string;
     label: string;
@@ -171,8 +189,8 @@ export const ReporteFormasPago: React.FC = () => {
                         title="Forma principal"
                         value={formaPrincipalLabel}
                         sub={formaPrincipalSub}
-                        icon={<CreditCard className="text-purple-500" size={24} />}
-                        color="text-purple-600"
+                        icon={<CreditCard className={formaPrincipal ? getColorByFormaIndex(reporte.distribucionFormasPago.indexOf(formaPrincipal)).icon : "text-purple-500"} size={24} />}
+                        color={formaPrincipal ? getColorByFormaIndex(reporte.distribucionFormasPago.indexOf(formaPrincipal)).tailwind : "text-purple-600"}
                     />
                 </div>
 
