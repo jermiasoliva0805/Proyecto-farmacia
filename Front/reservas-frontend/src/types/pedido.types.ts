@@ -178,6 +178,6 @@ export interface PreguntaEncuestaDTO {
 
 export interface ReporteEncuestaSatisfaccionDTO {
     cantidadClientesRespondieron: number;
-    cantidadTotalRespuestas: number;
+    cantidadEncuestasEnviadas: number;
     preguntas: PreguntaEncuestaDTO[];
 }

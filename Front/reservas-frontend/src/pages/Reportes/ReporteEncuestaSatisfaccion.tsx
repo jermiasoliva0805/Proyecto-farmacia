@@ -107,6 +107,18 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const contentRef = useRef<HTMLDivElement>(null);
 
+    // Función para filtrar preguntas vacías o inválidas
+    const isValidQuestion = (pregunta: string): boolean => {
+        const preguntaLower = pregunta.toLowerCase().trim();
+        // Filtrar preguntas vacías, columnas genéricas, mails y otros campos inválidos
+        const invalidPatterns = ['columna', 'mail', 'email', 'sin contenido', 'timestamps'];
+        return !invalidPatterns.some(pattern => preguntaLower.includes(pattern)) && pregunta.trim().length > 0;
+    };
+
+    const preguntasValidas = useMemo(() => {
+        return reporte?.preguntas.filter(p => isValidQuestion(p.pregunta)) || [];
+    }, [reporte]);
+
     useEffect(() => {
         const cargarData = async () => {
             try {
@@ -131,7 +143,7 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
                 return;
             }
 
-            const dataExport = reporte.preguntas.flatMap((pregunta) =>
+            const dataExport = preguntasValidas.flatMap((pregunta) =>
                 pregunta.opciones.map((opcion) => ({
                     Pregunta: pregunta.pregunta,
                     Respuesta: opcion.respuesta,
@@ -197,8 +209,8 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
                         bgColor="bg-blue-50"
                     />
                     <MetricCard
-                        title="Total de respuestas recibidas"
-                        value={reporte.cantidadTotalRespuestas.toString()}
+                        title="Cantidad de encuestas enviadas"
+                        value={reporte.cantidadEncuestasEnviadas.toString()}
                         icon={<BarChart3 className="w-8 h-8" />}
                         color="text-emerald-600"
                         bgColor="bg-emerald-50"
@@ -206,7 +218,7 @@ export const ReporteEncuestaSatisfaccion: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                    {reporte.preguntas.map((pregunta, index) => (
+                    {preguntasValidas.map((pregunta, index) => (
                         <Card key={`${pregunta.pregunta}-${index}`} className="p-6 border border-gray-200">
                             <div className="mb-6">
                                 <h3 className="text-base font-bold text-gray-900">{pregunta.pregunta}</h3>

@@ -156,7 +156,7 @@ export const ReporteCancelacionesPorMotivos = () => {
                 />
                 <MetricCard 
                     title="Cancelados"
-                    value={`${reporte.totalCancelados} (${reporte.porcentajeCancelacion.toFixed(1)}%)`}
+                    value={`${reporte.totalCancelados}`}
                     sub="Del total de pedidos"
                     icon={<TrendingDown className="text-red-500" size={24} />}
                     color="text-red-600"
