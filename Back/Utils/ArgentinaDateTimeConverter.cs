@@ -34,30 +34,21 @@ namespace Back.Utils
                 return;
             }
 
-            // Convertir a zona horaria de Argentina (UTC-3)
-            var argentinaZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
-            
-            // Si el DateTime no tiene Kind especificado, asumir que es Local
-            DateTime dateTimeToConvert = value;
-            if (value.Kind == DateTimeKind.Unspecified)
-            {
-                // Tratarlo como Local y convertir a Argentina
-                dateTimeToConvert = TimeZoneInfo.ConvertTime(value, argentinaZone);
-            }
-            else if (value.Kind == DateTimeKind.Utc)
-            {
-                // Si es UTC, convertir a Argentina
-                dateTimeToConvert = TimeZoneInfo.ConvertTimeFromUtc(value, argentinaZone);
-            }
-            else
-            {
-                // Si es Local, convertir a Argentina
-                dateTimeToConvert = TimeZoneInfo.ConvertTime(value, argentinaZone);
-            }
+            DateTime dateTimeToWrite = value;
 
-            // Serializar en formato ISO 8601 sin información de zona (ya es hora de Argentina)
-            // Ej: "2026-04-27T22:09:00"
-            string isoString = dateTimeToConvert.ToString("yyyy-MM-ddTHH:mm:ss.fff");
+            // Los DateTime que vienen de la BD son Unspecified, pero YA están en hora de Argentina
+            // (porque se guardaron con GetArgentinaTime())
+            // Solo hacer conversión si es UTC explícito
+            if (value.Kind == DateTimeKind.Utc)
+            {
+                var argentinaZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+                dateTimeToWrite = TimeZoneInfo.ConvertTimeFromUtc(value, argentinaZone);
+            }
+            // Si es Unspecified o Local, devolver como está
+
+            // Serializar en formato ISO 8601
+            // Ej: "2026-04-27T22:18:00"
+            string isoString = dateTimeToWrite.ToString("yyyy-MM-ddTHH:mm:ss.fff");
             writer.WriteStringValue(isoString);
         }
     }
