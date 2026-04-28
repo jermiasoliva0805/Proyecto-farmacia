@@ -7,124 +7,94 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+ 
 namespace Back.Repositories
 {
     public class PedidoRepository : IPedidoRepository
     {
         private readonly AppDbContext _context;
-
+ 
         public PedidoRepository(AppDbContext context)
         {
             _context = context;
         }
-
+ 
         public async Task<IEnumerable<OrderSummaryDTO>> GetFilteredOrdersAsync(OrderFilterDTO filters)
         {
-            await MarcarPedidosDemoradosAutomaticamenteAsync();
-
             var query = _context.Pedidos
-                .Include(p => p.Cliente)
-                .ThenInclude(c => c.Localidad)
+                .Include(p => p.Cliente).ThenInclude(c => c.Localidad)
                 .Include(p => p.EstadoDePedido)
                 .Include(p => p.Usuario)
                 .Include(p => p.Zona)
                 .AsNoTracking()
                 .AsQueryable();
-            
-            // --- NUEVO FILTRO DE SEGURIDAD/PERTENENCIA ---
-            // Si viene un IDUsuario en el filtro, solo traemos lo que le pertenece
+ 
+            // Filtro por usuario (cadete/operario)
             if (filters.IDUsuario.HasValue && filters.IDUsuario.Value > 0)
-            {
-                // Filtramos por el ID del cadete/operario asignado al pedido
                 query = query.Where(p => p.IDUsuario == filters.IDUsuario.Value);
-            }
-            // ---------------------------------------------
-
+ 
+            // Filtro de búsqueda por ID o nombre de cliente
             if (!string.IsNullOrWhiteSpace(filters.Search))
             {
                 string term = filters.Search.ToLower();
                 query = query.Where(p =>
                     p.IDPedido.ToString().Contains(term) ||
                     (p.Cliente != null && p.Cliente.Nombre.ToLower().Contains(term)) ||
-                    (p.Cliente != null && p.Cliente.Apellido.ToLower().Contains(term))
-                );
+                    (p.Cliente != null && p.Cliente.Apellido.ToLower().Contains(term)));
             }
-
+ 
+            // Filtro por estado principal
             if (filters.IDEstadoDePedido.HasValue && filters.IDEstadoDePedido.Value > 0)
                 query = query.Where(p => p.IDEstadoDePedido == filters.IDEstadoDePedido.Value);
-
+ 
+            // Filtro por subestado demorado (puede combinarse con IDEstadoDePedido)
+            if (filters.SoloDemorados == true)
+                query = query.Where(p => p.EsDemorado);
+ 
             // Filtro por Fecha Desde
             if (filters.FechaDesde.HasValue)
-            {
-                // Usamos .Date para comparar solo el día, o >= si queremos desde el inicio del día
                 query = query.Where(p => p.Fecha >= filters.FechaDesde.Value);
-            }
-
-            // Filtro por Fecha Hasta
+ 
+            // Filtro por Fecha Hasta (incluye todo el día)
             if (filters.FechaHasta.HasValue)
             {
-                // Para incluir los pedidos de TODO el día hasta el final, sumamos 1 día
                 var fechaHastaLimite = filters.FechaHasta.Value.AddDays(1);
                 query = query.Where(p => p.Fecha < fechaHastaLimite);
             }
+ 
             return await query
                 .OrderByDescending(p => p.Fecha)
                 .Select(p => new OrderSummaryDTO
                 {
-                    IDPedido = p.IDPedido,
-                    Fecha = p.Fecha,
-                    Total = p.Total,
-                    IDEstadoDePedido = p.IDEstadoDePedido,
-                    EstadoNombre = p.Estado == "Demorado"
-                        ? "Demorado"
-                        : (p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado"),
-                    ClienteNombre = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
-                    ResponsableNombre = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
-                    FechaEntregaReal = p.FechaEntregaReal, 
+                    IDPedido              = p.IDPedido,
+                    Fecha                 = p.Fecha,
+                    Total                 = p.Total,
+                    IDEstadoDePedido      = p.IDEstadoDePedido,
+                    // Estado real del pedido, ya no se sobreescribe con "Demorado"
+                    EstadoNombre          = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Sin Estado",
+                    ClienteNombre         = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Sin Cliente",
+                    ResponsableNombre     = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                    ResponsableRol        = p.Usuario != null ? p.Usuario.Rol : string.Empty,
+                    FechaEntregaReal      = p.FechaEntregaReal,
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
-                    FechaEntregaEstimada = p.FechaEntregaEstimada,
-                    ZonaNombre = p.Zona != null ? p.Zona.Nombre : "Sin asignar",
-                    DireccionEntrega = p.DireccionEntrega,
-                    LocalidadNombre = p.Cliente != null && p.Cliente.Localidad != null ? p.Cliente.Localidad.Ciudad : null,
-                    CodigoPostalEntrega = p.CodigoPostalEntrega,
-                    EstaDemorado = p.Estado == "Demorado" || (
-                        p.IDEstadoDePedido != 7 &&
-                        p.IDEstadoDePedido != 9 &&
-                        p.IDEstadoDePedido != 10 &&
-                        p.FechaEntregaEstimada != DateTime.MinValue &&
-                        DateTime.Now > p.FechaEntregaEstimada),
-                    // ✅ CU25: Incluir fechas de armado para detectar si ya inició
-                    FechaInicioArmado = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
-                    FechaFinArmado = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
+                    FechaEntregaEstimada  = p.FechaEntregaEstimada,
+                    ZonaNombre            = p.Zona != null ? p.Zona.Nombre : "Sin asignar",
+                    DireccionEntrega      = p.DireccionEntrega,
+                    LocalidadNombre       = p.Cliente != null && p.Cliente.Localidad != null ? p.Cliente.Localidad.Ciudad : null,
+                    CodigoPostalEntrega   = p.CodigoPostalEntrega,
+                    // EsDemorado es ahora la columna del flag, no una evaluación en tiempo real
+                    EstaDemorado          = p.EsDemorado,
+                    FechaMarcadoDemorado  = p.FechaMarcadoDemorado,
+                    // CU25: fechas de armado
+                    FechaInicioArmado     = p.FechaInicioArmado.HasValue ? p.FechaInicioArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null,
+                    FechaFinArmado        = p.FechaFinArmado.HasValue ? p.FechaFinArmado.Value.ToString("yyyy-MM-dd HH:mm:ss") : null
                 })
                 .ToListAsync();
         }
-
-        private async Task MarcarPedidosDemoradosAutomaticamenteAsync()
-        {
-            var ahora = DateTime.Now;
-
-            var pedidosDemorados = await _context.Pedidos
-                .Where(p => p.IDEstadoDePedido != 3)
-                .Where(p => p.IDEstadoDePedido != 7 && p.IDEstadoDePedido != 9 && p.IDEstadoDePedido != 10)
-                .Where(p => p.FechaEntregaEstimada != DateTime.MinValue)
-                .Where(p => ahora > p.FechaEntregaEstimada)
-                .ToListAsync();
-
-            if (!pedidosDemorados.Any())
-                return;
-
-            foreach (var pedido in pedidosDemorados)
-            {
-                pedido.IDEstadoDePedido = 3;
-                pedido.EstadoActual = "Demorado";
-                pedido.Estado = "Demorado";
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
+ 
+        // No-op: la lógica de marcado vive exclusivamente en PedidosDemoradosBackgroundService
+        private Task MarcarPedidosDemoradosAutomaticamenteAsync() => Task.CompletedTask;
+ 
         public async Task<Pedido?> GetByIdAsync(int idPedido)
         {
             return await _context.Pedidos
@@ -134,21 +104,21 @@ namespace Back.Repositories
                 .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(p => p.IDPedido == idPedido);
         }
-
+ 
         public async Task UpdateAsync(Pedido pedido)
         {
             _context.Pedidos.Update(pedido);
             await _context.SaveChangesAsync();
         }
-
+ 
         public async Task<bool> ActualizarEstadoPedidoAsync(ChangeOrderStatusDTO dto)
         {
             var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.IDPedido == dto.IDPedido);
             if (pedido == null) return false;
-
+ 
             int estadoFinal = dto.IDNuevoEstado;
-
-            if (dto.IDNuevoEstado == 8) 
+ 
+            if (dto.IDNuevoEstado == 8) // Entrega fallida
             {
                 pedido.IntentosEntregaFallida++;
                 if (pedido.IntentosEntregaFallida >= 3)
@@ -158,6 +128,9 @@ namespace Back.Repositories
                     pedido.EstadoActual = "Cancelado";
                     pedido.Estado = "Cancelado";
                     pedido.JustificacionCancelacion = "Superó los 3 intentos fallidos.";
+                    // Al cancelar, limpiar el subestado demorado
+                    pedido.EsDemorado = false;
+                    pedido.FechaMarcadoDemorado = null;
                 }
                 else
                 {
@@ -165,114 +138,107 @@ namespace Back.Repositories
                     pedido.EstadoActual = "Entrega fallida";
                 }
             }
-            else if (pedido.IDEstadoDePedido == 3 &&
-                     (dto.IDNuevoEstado == 4 ||
-                      dto.IDNuevoEstado == 5 ||
-                      dto.IDNuevoEstado == 6 ||
-                      dto.IDNuevoEstado == 7))
-            {
-                pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-                pedido.EstadoActual = dto.IDNuevoEstado == 7 ? "Entregado" : pedido.EstadoActual;
-
-                if (dto.IDNuevoEstado == 7)
-                {
-                    pedido.IntentosEntregaFallida = 0;
-                    pedido.FechaEntregaReal = DateTime.Now;
-                    _context.Entry(pedido).State = EntityState.Modified;
-                }
-            }
             else
             {
+                // Eliminada la rama especial para IDEstadoDePedido == 3 ("Demorado").
+                // Ahora el cambio de estado funciona igual para todos los estados
+                // independientemente de si el pedido tiene el subestado demorado.
                 pedido.IDEstadoDePedido = dto.IDNuevoEstado;
-                if (dto.IDNuevoEstado == 7) 
+ 
+                if (dto.IDNuevoEstado == 7) // Entregado
                 {
                     pedido.IntentosEntregaFallida = 0;
                     pedido.EstadoActual = "Entregado";
                     pedido.Estado = "Entregado";
-                    // --- ESTA ES LA LÍNEA MÁGICA ---
-                    pedido.FechaEntregaReal = DateTime.Now; 
-                    // -------------------------------
+                    pedido.FechaEntregaReal = DateTime.Now;
+                    // Al entregar, limpiar el subestado demorado
+                    pedido.EsDemorado = false;
+                    pedido.FechaMarcadoDemorado = null;
                     _context.Entry(pedido).State = EntityState.Modified;
                 }
+                else if (dto.IDNuevoEstado == 9) // Cancelado
+                {
+                    pedido.EstadoActual = "Cancelado";
+                    pedido.Estado = "Cancelado";
+                    // Al cancelar, limpiar el subestado demorado
+                    pedido.EsDemorado = false;
+                    pedido.FechaMarcadoDemorado = null;
+                }
             }
-
+ 
             var nuevoHistorial = new HistorialDeEstados
             {
-                IDPedido = pedido.IDPedido,
-                IDEstadoDePedido = estadoFinal,
-                IDUsuario = dto.IDUsuario,
+                IDPedido          = pedido.IDPedido,
+                IDEstadoDePedido  = estadoFinal,
+                IDUsuario         = dto.IDUsuario,
                 fecha_hora_inicio = DateTime.UtcNow,
-                Observaciones = dto.Observaciones
+                Observaciones     = dto.Observaciones
             };
-
             _context.HistorialesDeEstados.Add(nuevoHistorial);
             await _context.SaveChangesAsync();
             return true;
         }
-
+ 
         // REPORTE ACTUALIZADO PARA DASHBOARD (RF6.4)
         public async Task<List<ReporteOperarioDTO>> GetTiempoPromedioArmadoAsync(int dias = 7, int? idSucursal = null)
         {
             DateTime fechaInicioFiltro = DateTime.Now.AddDays(-dias);
-            const int UMBRAL_MINUTOS = 30; // Definido para el análisis de eficiencia
-
+            const int UMBRAL_MINUTOS = 30;
+ 
             Console.WriteLine($"[REPO DEBUG] GetTiempoPromedioArmadoAsync - Dias: {dias}, IdSucursal: {idSucursal}");
             Console.WriteLine($"[REPO DEBUG] FechaInicio Filtro: {fechaInicioFiltro:yyyy-MM-dd}");
-
+ 
             var query = _context.HistorialesDeEstados
                 .Include(h => h.Usuario)
                 .Include(h => h.Pedido)
-                .Where(h => h.Usuario != null && !h.Usuario.IsDeleted) // Excluir operarios eliminados (soft delete)
+                .Where(h => h.Usuario != null && !h.Usuario.IsDeleted)
                 .Where(h => h.fecha_hora_inicio >= fechaInicioFiltro)
                 .Where(h => h.IDEstadoDePedido == 2 || h.IDEstadoDePedido == 4)
                 .AsQueryable();
-
+ 
             if (idSucursal.HasValue && idSucursal.Value > 0)
             {
                 Console.WriteLine($"[REPO DEBUG] Aplicando filtro de sucursal: {idSucursal.Value}");
                 query = query.Where(h => h.Pedido != null && h.Pedido.IDSucursal == idSucursal.Value);
             }
-
+ 
             var historiales = await query.ToListAsync();
             Console.WriteLine($"[REPO DEBUG] Total historiales encontrados: {historiales.Count}");
-
+ 
             var reporte = historiales
                 .GroupBy(h => h.IDPedido)
                 .Select(g => new
                 {
                     PedidoId = g.Key,
                     Inicio = g.Where(h => h.IDEstadoDePedido == 2).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
-                    Fin = g.Where(h => h.IDEstadoDePedido == 4).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
+                    Fin    = g.Where(h => h.IDEstadoDePedido == 4).OrderBy(h => h.fecha_hora_inicio).Select(h => h.fecha_hora_inicio).FirstOrDefault(),
                     NombreCompleto = g.Where(h => h.Usuario != null)
-                                    .Select(h => h.Usuario != null ? $"{h.Usuario.Nombre} {h.Usuario.Apellido}" : null)
-                                    .FirstOrDefault(n => !string.IsNullOrEmpty(n))
+                        .Select(h => h.Usuario != null ? $"{h.Usuario.Nombre} {h.Usuario.Apellido}" : null)
+                        .FirstOrDefault(n => !string.IsNullOrEmpty(n))
                 })
                 .Where(x => x.Inicio != default && x.Fin != default && !string.IsNullOrEmpty(x.NombreCompleto))
-                .Select(x => new 
-                { 
-                    x.NombreCompleto, 
-                    Minutos = (x.Fin - x.Inicio).TotalMinutes 
-                })
+                .Select(x => new { x.NombreCompleto, Minutos = (x.Fin - x.Inicio).TotalMinutes })
                 .GroupBy(x => x.NombreCompleto)
-                .Select(g => 
+                .Select(g =>
                 {
                     int totales = g.Count();
-                    int dentro = g.Count(x => x.Minutos <= UMBRAL_MINUTOS);
+                    int dentro  = g.Count(x => x.Minutos <= UMBRAL_MINUTOS);
                     return new ReporteOperarioDTO
                     {
-                        NombreOperario = g.Key ?? string.Empty,
-                        PedidosTotales = totales, // Antes era TotalPedidosArmados
-                        DentroUmbral = dentro,
-                        FueraUmbral = totales - dentro,
+                        NombreOperario        = g.Key ?? string.Empty,
+                        PedidosTotales        = totales,
+                        DentroUmbral          = dentro,
+                        FueraUmbral           = totales - dentro,
                         TiempoPromedioMinutos = Math.Round(g.Average(x => x.Minutos), 2),
-                        PorcentajeEficiencia = Math.Round((double)dentro / totales * 100, 2)
+                        PorcentajeEficiencia  = Math.Round((double)dentro / totales * 100, 2)
                     };
                 })
                 .OrderByDescending(r => r.PorcentajeEficiencia)
                 .ToList();
-
+ 
             Console.WriteLine($"[REPO DEBUG] Reporte final: {reporte.Count} operarios");
             return reporte;
         }
     }
 }
+ 

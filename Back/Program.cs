@@ -1,5 +1,6 @@
 using AutoMapper;
 using Back.Data;
+using Back.Hubs;                          // NUEVO: Hub de SignalR
 using Back.Interfaces;
 using Back.Repositories;
 using Back.Repositories.Interfaces;
@@ -16,7 +17,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
+ 
 namespace Back
 {
     public class Program
@@ -24,42 +25,42 @@ namespace Back
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // ------------------------------------------------------------
+ 
+            // -----------------------------------------------------------
             // LOGGING: necesario para ver stdout en Azure (Log Stream)
-            // ------------------------------------------------------------
+            // -----------------------------------------------------------
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
-
-            // ------------------------------------------------------------
+ 
+            // -----------------------------------------------------------
             // PUERTO / URLS (Azure contenedor)
             // En Azure App Settings:
-            //   WEBSITES_PORT   = 8080
+            //   WEBSITES_PORT = 8080
             //   ASPNETCORE_URLS = http://0.0.0.0:8080
-            // Fallback si no está seteado:
-            // ------------------------------------------------------------
+            // -----------------------------------------------------------
             var urls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
             if (string.IsNullOrWhiteSpace(urls))
             {
                 builder.WebHost.UseUrls("http://0.0.0.0:8080");
             }
-
+ 
             // 1. Configuración de Controladores y JSON
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    options.JsonSerializerOptions.PropertyNamingPolicy        = JsonNamingPolicy.CamelCase;
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                    options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                    // ✅ Agregar converter personalizado para DateTime (zona horaria Argentina)
-                    options.JsonSerializerOptions.Converters.Add(new Back.Utils.ArgentinaDateTimeConverter());
+                    options.JsonSerializerOptions.ReferenceHandler            = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.WriteIndented               = true;
+                    options.JsonSerializerOptions.DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull;
                 });
-
+ 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddHttpClient();
-
+ 
+            // NUEVO: SignalR
+            builder.Services.AddSignalR();
+ 
             // 2. Configuración de Swagger
             builder.Services.AddSwaggerGen(c =>
             {
@@ -67,10 +68,10 @@ namespace Back
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: 'Bearer 12345abcdef'",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
+                    Name        = "Authorization",
+                    In          = ParameterLocation.Header,
+                    Type        = SecuritySchemeType.ApiKey,
+                    Scheme      = "Bearer"
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
@@ -80,162 +81,169 @@ namespace Back
                             Reference = new Microsoft.OpenApi.Models.OpenApiReference
                             {
                                 Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                                Id = "Bearer"
+                                Id   = "Bearer"
                             }
                         },
                         System.Array.Empty<string>()
                     }
                 });
             });
-
+ 
             // 3. DB Context
             // Prioridad: ConnectionStrings:DefaultConnection (appsettings / Azure Connection strings)
-            //            > DATABASE_CONNECTION_STRING (variable de entorno Azure Application settings)
+            //          > DATABASE_CONNECTION_STRING (variable de entorno Azure Application settings)
             var connectionString =
                 builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING");
-
+ 
             if (string.IsNullOrWhiteSpace(connectionString))
-                Console.WriteLine("[DB Config] ⚠️ ADVERTENCIA: ConnectionString no configurada. La app no funcionará correctamente.");
+                Console.WriteLine("[DB Config] ⚠️  ADVERTENCIA: ConnectionString no configurada. La app no funcionará correctamente.");
             else
                 Console.WriteLine("[DB Config] ✅ ConnectionString configurada correctamente.");
-
+ 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connectionString));
-
+ 
             // 4. AutoMapper y Validaciones
             builder.Services.AddAutoMapper(typeof(Back.Mappings.MappingProfile));
             builder.Services.AddFluentValidationAutoValidation();
-
-            // Registro manual del/los validadores para evitar el error:
             builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterUserValidator>();
-
+ 
             // 5. Inyección de Repositorios
             builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-            builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
-            builder.Services.AddScoped<IOrderStatusRepository, OrderStatusRepository>();
-            builder.Services.AddScoped<ITrackingRepository, TrackingRepository>();
-            builder.Services.AddScoped<IClientRepository, ClientRepository>();
-            builder.Services.AddScoped<IProductRepository, ProductRepository>();
-            builder.Services.AddScoped<ILocalityRepository, LocalityRepository>();
-            builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
-            builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
-            builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
-            builder.Services.AddScoped<ICancellationRepository, CancellationRepository>();
-
+            builder.Services.AddScoped<IOrderRepository,         OrderRepository>();
+            builder.Services.AddScoped<IUserRepository,          UserRepository>();
+            builder.Services.AddScoped<IAuthRepository,          AuthRepository>();
+            builder.Services.AddScoped<IPedidoRepository,        PedidoRepository>();
+            builder.Services.AddScoped<IOrderStatusRepository,   OrderStatusRepository>();
+            builder.Services.AddScoped<ITrackingRepository,      TrackingRepository>();
+            builder.Services.AddScoped<IClientRepository,        ClientRepository>();
+            builder.Services.AddScoped<IProductRepository,       ProductRepository>();
+            builder.Services.AddScoped<ILocalityRepository,      LocalityRepository>();
+            builder.Services.AddScoped<IReporteRepository,       ReporteRepository>();
+            builder.Services.AddScoped<IHistoryRepository,       HistoryRepository>();
+            builder.Services.AddScoped<IDeliveryRepository,      DeliveryRepository>();
+            builder.Services.AddScoped<ICancellationRepository,  CancellationRepository>();
+ 
             // 6. Inyección de Servicios
-            builder.Services.AddScoped<IOrderService, OrderService>();
-            builder.Services.AddScoped<IClientService, ClientService>();
-            builder.Services.AddScoped<IProductService, ProductService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<ILocalidadService, LocalidadService>();
-            builder.Services.AddScoped<IPedidoService, PedidoService>();
-            builder.Services.AddScoped<IOrderStatusService, OrderStatusService>();
-            builder.Services.AddScoped<ITrackingService, TrackingService>();
-            builder.Services.AddScoped<IUserManagementService, UserManagementService>();
-            builder.Services.AddScoped<IHistoryService, HistoryService>();
-            builder.Services.AddScoped<IDeliveryService, DeliveryService>();
-            builder.Services.AddScoped<ICancellationService, CancellationService>();
+            builder.Services.AddScoped<IOrderService,            OrderService>();
+            builder.Services.AddScoped<IClientService,           ClientService>();
+            builder.Services.AddScoped<IProductService,          ProductService>();
+            builder.Services.AddScoped<IAuthService,             AuthService>();
+            builder.Services.AddScoped<IUserService,             UserService>();
+            builder.Services.AddScoped<ILocalidadService,        LocalidadService>();
+            builder.Services.AddScoped<IPedidoService,           PedidoService>();
+            builder.Services.AddScoped<IOrderStatusService,      OrderStatusService>();
+            builder.Services.AddScoped<ITrackingService,         TrackingService>();
+            builder.Services.AddScoped<IUserManagementService,   UserManagementService>();
+            builder.Services.AddScoped<IHistoryService,          HistoryService>();
+            builder.Services.AddScoped<IDeliveryService,         DeliveryService>();
+            builder.Services.AddScoped<ICancellationService,     CancellationService>();
             builder.Services.AddScoped<ClientProductRelationService>();
             builder.Services.AddHostedService<PedidosDemoradosBackgroundService>();
-
+ 
             // 6a. SMTP Configuration
             // Prioridad: Smtp:* (appsettings / Azure Smtp__*) > SMTP_* (env vars legacy) > defaults
-            static int GetInt(string? value, int fallback) => int.TryParse(value, out var v) ? v : fallback;
+            static int  GetInt (string? value, int  fallback) => int.TryParse (value, out var v) ? v : fallback;
             static bool GetBool(string? value, bool fallback) => bool.TryParse(value, out var v) ? v : fallback;
-
+ 
             var smtpConfig = builder.Configuration.GetSection("Smtp");
-            var host = smtpConfig["Host"]
-                ?? Environment.GetEnvironmentVariable("SMTP_HOST")
-                ?? "smtp.gmail.com";
-            var port = GetInt(
-                smtpConfig["Port"] ?? Environment.GetEnvironmentVariable("SMTP_PORT"),
-                587);
-            var user = smtpConfig["User"]
-                ?? Environment.GetEnvironmentVariable("SMTP_USER")
-                ?? "";
-            var password = smtpConfig["Password"]
-                ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")
-                ?? "";
-            var enableSsl = GetBool(
-                smtpConfig["EnableSsl"] ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL"),
-                true);
-
+            var host       = smtpConfig["Host"]     ?? Environment.GetEnvironmentVariable("SMTP_HOST")       ?? "smtp.gmail.com";
+            var port       = GetInt(smtpConfig["Port"]     ?? Environment.GetEnvironmentVariable("SMTP_PORT"),      587);
+            var user       = smtpConfig["User"]     ?? Environment.GetEnvironmentVariable("SMTP_USER")       ?? "";
+            var password   = smtpConfig["Password"] ?? Environment.GetEnvironmentVariable("SMTP_PASSWORD")   ?? "";
+            var enableSsl  = GetBool(smtpConfig["EnableSsl"] ?? Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL"), true);
+ 
             builder.Services.Configure<SmtpSettings>(s =>
             {
-                s.Host = host;
-                s.Port = port;
-                s.User = user;
-                s.Password = password;
+                s.Host      = host;
+                s.Port      = port;
+                s.User      = user;
+                s.Password  = password;
                 s.EnableSsl = enableSsl;
             });
-
-            // Log seguro (sin password)
+ 
             Console.WriteLine($"[SMTP Config] Host: {host}, Port: {port}, EnableSsl: {enableSsl}");
             if (string.IsNullOrEmpty(user))
-                Console.WriteLine("[SMTP Config] ⚠️ ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
+                Console.WriteLine("[SMTP Config] ⚠️  ADVERTENCIA: Usuario SMTP no configurado. Los emails NO se enviarán.");
             else
                 Console.WriteLine($"[SMTP Config] ✅ Usuario SMTP configurado: {user}");
-
+ 
             builder.Services.AddSingleton<EmailTemplateService>();
             builder.Services.AddTransient<EmailSender>();
-
-            // 7. CORS - Orígenes permitidos desde configuración
-            // ✅ AGREGADO: el front de Azure en el fallback, por si AllowedOrigins no está configurado en Azure
-            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[]
-            {
-                "http://localhost:5173",
-                "https://farmacia-front-ayfhfze7bjcedgb9.chilecentral-01.azurewebsites.net"
-            };
-
+ 
+            // 7. CORS
+            // IMPORTANTE: AllowCredentials() es obligatorio para que SignalR funcione correctamente.
+            var allowedOrigins =
+                builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? new[]
+                {
+                    "http://localhost:5173",
+                    "https://farmacia-front-ayfhfze7bjcedgb9.chilecentral-01.azurewebsites.net"
+                };
+ 
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigins", policy =>
                 {
                     policy.WithOrigins(allowedOrigins)
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials();
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials(); // Requerido por SignalR
                 });
             });
-
+ 
             // 8. SEGURIDAD JWT
             // Prioridad: AppSettings:Token (appsettings / Azure AppSettings__Token)
-            //            > JWT_TOKEN (variable de entorno Azure Application settings)
+            //          > JWT_TOKEN (variable de entorno Azure Application settings)
             var jwtSecret =
                 builder.Configuration.GetSection("AppSettings:Token").Value
                 ?? Environment.GetEnvironmentVariable("JWT_TOKEN");
-
+ 
             if (string.IsNullOrWhiteSpace(jwtSecret))
                 throw new InvalidOperationException(
                     "JWT secret no configurado. Configure 'AppSettings:Token' en appsettings.json " +
                     "o la variable de entorno 'JWT_TOKEN' / 'AppSettings__Token' en Azure.");
-
+ 
             var key = Encoding.ASCII.GetBytes(jwtSecret);
+ 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ClockSkew = TimeSpan.Zero
+                        IssuerSigningKey         = new SymmetricSecurityKey(key),
+                        ValidateIssuer           = false,
+                        ValidateAudience         = false,
+                        ClockSkew                = TimeSpan.Zero
+                    };
+ 
+                    // NUEVO: permite que SignalR reciba el token JWT desde la query string
+                    // (los WebSockets no pueden enviar headers, así que el cliente lo manda como ?access_token=...)
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path        = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                path.StartsWithSegments("/hubs/pedidos"))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
                     };
                 });
-
+ 
+            // ──────────────────────────────────────────────────────────────────
             var app = builder.Build();
-
+ 
             // Logs útiles para Azure
-            app.Logger.LogInformation("Environment: {env}", app.Environment.EnvironmentName);
+            app.Logger.LogInformation("Environment: {env}",   app.Environment.EnvironmentName);
             app.Logger.LogInformation("ASPNETCORE_URLS: {urls}", Environment.GetEnvironmentVariable("ASPNETCORE_URLS"));
-            app.Logger.LogInformation("WEBSITES_PORT: {port}", Environment.GetEnvironmentVariable("WEBSITES_PORT"));
-
+            app.Logger.LogInformation("WEBSITES_PORT: {port}",   Environment.GetEnvironmentVariable("WEBSITES_PORT"));
+ 
             // 9. Seeding
             using (var scope = app.Services.CreateScope())
             {
@@ -251,20 +259,20 @@ namespace Back
                     logger.LogError(ex, "Error al sembrar la base de datos.");
                 }
             }
-
+ 
             // Swagger: habilitar en Development o si la config lo permite explícitamente
             var enableSwagger =
                 app.Environment.IsDevelopment() ||
                 builder.Configuration.GetValue<bool>("EnableSwagger");
-
+ 
             if (enableSwagger)
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+ 
             app.UseCors("AllowSpecificOrigins");
-
+ 
             // En App Service (contenedor) a veces conviene NO forzar https interno.
             // Si querés forzarlo, configurá ForceHttpsRedirection=true en appsettings/Azure.
             var forceHttps = builder.Configuration.GetValue<bool>("ForceHttpsRedirection");
@@ -272,14 +280,17 @@ namespace Back
             {
                 app.UseHttpsRedirection();
             }
-
+ 
             app.UseAuthentication();
             app.UseAuthorization();
-
+ 
             // Health endpoint
             app.MapGet("/health", () => Results.Ok("ok"));
-
             app.MapControllers();
+ 
+            // NUEVO: endpoint de SignalR
+            app.MapHub<PedidosHub>("/hubs/pedidos");
+ 
             app.Run();
         }
     }
