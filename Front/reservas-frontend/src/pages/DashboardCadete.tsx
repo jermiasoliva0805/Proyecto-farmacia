@@ -266,7 +266,7 @@ export const DashboardCadete: React.FC = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
@@ -274,6 +274,14 @@ export const DashboardCadete: React.FC = () => {
                                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm"
                                                 >
                                                     <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Entregar
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleVerEnMaps(pedido)}
+                                                    className="w-full border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-lg text-xs sm:text-sm"
+                                                >
+                                                    <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Ver Maps
                                                 </Button>
                                                 <Button
                                                     variant="secondary"
