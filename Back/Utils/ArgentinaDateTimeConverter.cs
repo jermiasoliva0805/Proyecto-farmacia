@@ -34,13 +34,30 @@ namespace Back.Utils
                 return;
             }
 
-            // Convertir a zona horaria de Argentina
+            // Convertir a zona horaria de Argentina (UTC-3)
             var argentinaZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
-            var argentinaTime = TimeZoneInfo.ConvertTime(value, argentinaZone);
+            
+            // Si el DateTime no tiene Kind especificado, asumir que es Local
+            DateTime dateTimeToConvert = value;
+            if (value.Kind == DateTimeKind.Unspecified)
+            {
+                // Tratarlo como Local y convertir a Argentina
+                dateTimeToConvert = TimeZoneInfo.ConvertTime(value, argentinaZone);
+            }
+            else if (value.Kind == DateTimeKind.Utc)
+            {
+                // Si es UTC, convertir a Argentina
+                dateTimeToConvert = TimeZoneInfo.ConvertTimeFromUtc(value, argentinaZone);
+            }
+            else
+            {
+                // Si es Local, convertir a Argentina
+                dateTimeToConvert = TimeZoneInfo.ConvertTime(value, argentinaZone);
+            }
 
-            // Serializar en formato ISO 8601 con zona horaria
-            // Ej: "2026-04-27T14:30:00-03:00"
-            string isoString = argentinaTime.ToString("yyyy-MM-ddTHH:mm:sszzz");
+            // Serializar en formato ISO 8601 sin información de zona (ya es hora de Argentina)
+            // Ej: "2026-04-27T22:09:00"
+            string isoString = dateTimeToConvert.ToString("yyyy-MM-ddTHH:mm:ss.fff");
             writer.WriteStringValue(isoString);
         }
     }
