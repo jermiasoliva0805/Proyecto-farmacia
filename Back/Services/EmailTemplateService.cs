@@ -11,14 +11,14 @@ namespace Back.Services
             string estadoDescripcion,
             int numeroPedido,
             int idEstado,
-            string supportEmail = null,
+            string? supportEmail = null,
             string brandCode = "FGP",
             int? intentoEntrega = null,
             int intentosMax = 3,
-            string trackingUrl = null,
-            string etiquetaLogistica = null,
-            List<string> nombresProductos = null,
-            string surveyUrl = null)
+            string? trackingUrl = null,
+            string? etiquetaLogistica = null,
+            List<string>? nombresProductos = null,
+            string? surveyUrl = null)
         {
             // Generar código personalizado si hay productos, sino usar el formato clásico
             var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
@@ -253,7 +253,7 @@ namespace Back.Services
             string trackingUrl,
             string brandCode = "FGP",
             string supportEmail = "soporte@farmacia.com",
-            List<string> nombresProductos = null)
+            List<string>? nombresProductos = null)
         {
             // Generar código personalizado si hay productos, sino usar el formato clásico
             var pedidoCodigo = (nombresProductos != null && nombresProductos.Count > 0)
