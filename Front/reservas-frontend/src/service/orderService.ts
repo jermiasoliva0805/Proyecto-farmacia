@@ -124,10 +124,11 @@ export async function getPrintData(idPedido: number): Promise<PrintData> {
   const subtotalCalculado =
     productos.reduce((acc, it) => acc + (it.subtotal != null ? it.subtotal : it.cantidad * it.precioUnitario - (it.descuento ?? 0)), 0);
 
+  const formaPagoValue = json.formaPago || json.formaDePago || json.FormaDePago;
   const data: PrintData = {
     idPedido: Number(json.idPedido ?? json.id ?? idPedido),
     fecha: json.fecha ? String(json.fecha) : undefined,
-    formaPago: (json.formaPago || json.FormaDePago) ? String(json.formaPago || json.FormaDePago) : undefined,
+    formaPago: formaPagoValue ? String(formaPagoValue) : undefined,
     metodoEnvio: json.metodoEnvio ? String(json.metodoEnvio) : undefined,
     puntoDeRetiro: json.puntoDeRetiro ? String(json.puntoDeRetiro) : undefined,
     clienteNombre: String(json.clienteNombre ?? json.cliente?.nombre ?? ''),
