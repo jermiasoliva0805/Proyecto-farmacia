@@ -53,6 +53,8 @@ namespace Back
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                     options.JsonSerializerOptions.WriteIndented = true;
                     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                    // ✅ Agregar converter personalizado para DateTime (zona horaria Argentina)
+                    options.JsonSerializerOptions.Converters.Add(new Back.Utils.ArgentinaDateTimeConverter());
                 });
 
             builder.Services.AddEndpointsApiExplorer();
