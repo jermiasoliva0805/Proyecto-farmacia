@@ -48,7 +48,13 @@ namespace Back.Mappings
             CreateMap<CreateOrderDTO, Pedido>()
                 .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId))
                 .ForMember(dest => dest.DireccionEntrega, opt => opt.MapFrom(src => src.Direccion))
-                .ForMember(dest => dest.ReferenciaEntrega, opt => opt.MapFrom(src => src.ReferenciaEntrega));
+                .ForMember(dest => dest.ReferenciaEntrega, opt => opt.MapFrom(src => src.ReferenciaEntrega))
+                // Las fechas se asignan en el repositorio, no aquí
+                .ForMember(dest => dest.Fecha, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaEntregaEstimada, opt => opt.Ignore())
+                .ForMember(dest => dest.HoraEntregaEstimada, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaEntregaReal, opt => opt.Ignore())
+                .ForMember(dest => dest.HoraEntregaReal, opt => opt.Ignore());
             CreateMap<OrderDetailDTO, DetalleDePedido>();
 
             // ==========================================================

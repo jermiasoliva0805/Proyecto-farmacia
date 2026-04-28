@@ -6,6 +6,16 @@ namespace Back.Utils
     public static class DateTimeHelper
     {
         /// <summary>
+        /// Obtiene la hora actual en zona horaria de Argentina (UTC-3)
+        /// </summary>
+        public static DateTime GetArgentinaTime()
+        {
+            // Zona horaria de Argentina (ART = UTC-3)
+            var argentinaZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+            return TimeZoneInfo.ConvertTime(DateTime.UtcNow, argentinaZone);
+        }
+
+        /// <summary>
         /// Calcula la fecha de entrega estimada sumando 48 horas hábiles (lunes a viernes)
         /// </summary>
         /// <param name="fechaCreacion">Fecha de creación del pedido</param>
