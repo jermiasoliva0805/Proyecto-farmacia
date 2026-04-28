@@ -14,7 +14,7 @@ namespace Back.Repositories
             _context = context;
         }
 
-        public async Task<bool> ActualizarEstadoAsync(HistorialDeEstados nuevoHistorial, Pedido pedidoActualizado = null)
+        public async Task<bool> ActualizarEstadoAsync(HistorialDeEstados nuevoHistorial, Pedido? pedidoActualizado = null)
         {
             try
             {
