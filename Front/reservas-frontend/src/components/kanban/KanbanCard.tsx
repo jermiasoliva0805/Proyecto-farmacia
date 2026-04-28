@@ -117,7 +117,7 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({
 
                         {/* Info de entrega estimada */}
                         {pedido.fechaEntregaEstimada && 
-                         !pedido.fechaEntregaEstimada.startsWith('0001') &&
+                         (typeof pedido.fechaEntregaEstimada === 'string' ? !pedido.fechaEntregaEstimada.startsWith('0001') : true) &&
                          new Date(pedido.fechaEntregaEstimada).getFullYear() > 1900 && (
                             <p className="text-[10px] sm:text-xs text-blue-600">
                                 Entrega: {new Date(pedido.fechaEntregaEstimada).toLocaleDateString('es-AR')}

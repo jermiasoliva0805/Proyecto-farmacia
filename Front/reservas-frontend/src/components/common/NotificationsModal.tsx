@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, Clock, User, MapPin } from 'lucide-react';
-import { OrderSummaryDTO } from '@types/pedido.types';
+import type { OrderSummaryDTO } from '@models/pedido.types';
 
 interface NotificationsModalProps {
   isOpen: boolean;

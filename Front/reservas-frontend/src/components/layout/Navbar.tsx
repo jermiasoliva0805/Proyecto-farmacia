@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '@context/AuthContext';
 import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
 import { UserProfileModal } from '../profile/UserProfileModal';
-import { NotificationsModal } from '../common/NotificationsModal';
-import { useDemoradoNotifications } from '@hooks/useDemoradoNotifications';
+// import { NotificationsModal } from '../common/NotificationsModal';
+// import { useDemoradoNotifications } from '@hooks/useDemoradoNotifications';
 // import { Badge } from './Badge'; // Descomenta si usas el Badge separado
 
 interface NavbarProps {
@@ -16,8 +16,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     const [profileModalOpen, setProfileModalOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     
-    // Hook para obtener notificaciones
-    const { notifications, loading, hasUnread, markAsRead } = useDemoradoNotifications();
+    // Hook para obtener notificaciones (desactivado temporalmente)
+    // const { notifications, loading, hasUnread, markAsRead } = useDemoradoNotifications();
 
     return (
         <nav className="fixed top-0 left-0 right-0 bg-[#1e3a8a] text-white z-50 h-16 shadow-md">
@@ -54,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
                     {/* Sección Derecha: Notificaciones y Usuario */}
                     <div className="flex items-center gap-2 sm:gap-4">
+                        {/* Botón de Notificaciones (desactivado temporalmente)
                         <button 
                             onClick={() => {
                                 setNotificationsOpen(true);
@@ -72,6 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                                 </span>
                             )}
                         </button>
+                        */}
 
                         <div className="h-8 w-px bg-blue-700 mx-1 hidden sm:block"></div>
 
@@ -135,13 +137,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                         onClose={() => setProfileModalOpen(false)}
                     />
 
-                    {/* Modal Notificaciones */}
+                    {/* Modal Notificaciones (desactivado temporalmente)
                     <NotificationsModal 
                         isOpen={notificationsOpen}
                         onClose={() => setNotificationsOpen(false)}
                         notifications={notifications}
                         loading={loading}
                     />
+                    */}
                 </div>
             </div>
         </nav>

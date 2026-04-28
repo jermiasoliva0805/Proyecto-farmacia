@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '@service/api';
-import { OrderSummaryDTO } from '@types/pedido.types';
+import { api } from '@services/api';
+import type { OrderSummaryDTO } from '@models/pedido.types';
+
+interface UseDemoradoNotificationsReturn {
+  notifications: OrderSummaryDTO[];
+  loading: boolean;
+  error: string | null;
+  hasUnread: boolean;
+  fetchNotifications: () => Promise<void>;
+  markAsRead: () => void;
+  count: number;
+}
 
 /**
  * Hook personalizado para obtener pedidos demorados del usuario logueado
@@ -9,7 +19,7 @@ import { OrderSummaryDTO } from '@types/pedido.types';
  * - Operario: Ve solo sus pedidos
  * - Cadete: Ve solo los de su zona
  */
-export const useDemoradoNotifications = (interval: number = 30000) => {
+export const useDemoradoNotifications = (interval: number = 30000): UseDemoradoNotificationsReturn => {
   const [notifications, setNotifications] = useState<OrderSummaryDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

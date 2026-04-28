@@ -90,8 +90,8 @@ export const DashboardCadete: React.FC = () => {
         window.location.href = url;
     };
 
-    const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    const getAvatarColor = (name: string) => {
+    const getInitials = (name: string | undefined) => (name || 'XX').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const getAvatarColor = (name: string | undefined) => {
         const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
         return colors[name.length % colors.length];
     };
@@ -113,7 +113,9 @@ export const DashboardCadete: React.FC = () => {
                 observaciones: 'Cadete inicia ruta de entregas'
             });
             // Agregar el pedido a rutasIniciadas ANTES de recargar pedidos
-            setRutasIniciadas(prev => new Set([...prev, pedido.idPedido]));
+            if (pedido.idPedido) {
+                setRutasIniciadas(prev => new Set([...prev, pedido.idPedido]));
+            }
             await loadPedidos();
             toast.success(`Ruta iniciada para el pedido #${pedido.idPedido}.`);
         } catch (error: any) {
@@ -128,10 +130,11 @@ export const DashboardCadete: React.FC = () => {
     };
 
     const entregadosHoyCount = pedidos.filter(p => {
-        if (p.estadoNombre !== 'Entregado') return false;
+        const estado = p.estadoNombre || p.EstadoNombre;
+        if (estado !== 'Entregado') return false;
         const hoy = new Date().toLocaleDateString('es-AR');
-        const fechaABuscar = p.fechaEntregaReal || p.fecha; 
-        return new Date(fechaABuscar).toLocaleDateString('es-AR') === hoy;
+        const fechaABuscar = p.fechaEntregaReal || p.FechaEntregaReal || p.fecha || p.Fecha;
+        return fechaABuscar ? new Date(fechaABuscar).toLocaleDateString('es-AR') === hoy : false;
     }).length;
 
     return (
