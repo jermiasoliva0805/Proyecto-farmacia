@@ -36,12 +36,16 @@ namespace Back.Repositories
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                pedido.Fecha = DateTime.Now;
+                // ✅ Usar hora de Argentina (UTC-3) en lugar de hora del servidor
+                pedido.Fecha = DateTimeHelper.GetArgentinaTime();
                 pedido.IDEstadoDePedido = 1; // "Sin preparar"
                 pedido.EstadoActual = "Sin preparar";
  
                 // ✅ Calcular fecha de entrega estimada: 48 horas hábiles (lunes a viernes)
                 pedido.FechaEntregaEstimada = DateTimeHelper.CalcularFechaEntregaEstimada(pedido.Fecha);
+                
+                // ✅ Asignar hora de entrega estimada (9:00 AM por defecto)
+                pedido.HoraEntregaEstimada = new TimeSpan(9, 0, 0);
  
                 if (pedido.Detalles != null && pedido.Detalles.Any())
                 {
@@ -76,7 +80,7 @@ namespace Back.Repositories
                     IDPedido = pedido.IDPedido,
                     IDEstadoDePedido = 1, // "Sin preparar"
                     IDUsuario = idUsuario,
-                    fecha_hora_inicio = DateTime.UtcNow,
+                    fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                     Observaciones = "Pedido recibido e ingresado al sistema."
                 };
  

@@ -322,9 +322,7 @@ namespace Back.Services
                 IDEstadoDePedido = estadoFinal,
                 IDUsuario = changeStatusDto.IDUsuario,
                 fecha_hora_inicio = DateTime.UtcNow,
-                Observaciones = changeStatusDto.IDNuevoEstado == 8
-                                ? changeStatusDto.MotivoCancelacion
-                                : (changeStatusDto.Observaciones ?? "Estado actualizado por el cadete."),
+                Observaciones = changeStatusDto.Observaciones ?? "Estado actualizado por el cadete.",
                 IntentosEntregaFallida = (estadoFinal == 8 || estadoFinal == 9) ? pedido.IntentosEntregaFallida : 0,
                 IntentosMax = 3
             };
