@@ -21,6 +21,7 @@ export const DashboardCadete: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState<OrderSummaryDTO | null>(null);
     const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+    const [rutasIniciadas, setRutasIniciadas] = useState<Set<number>>(new Set());
 
     // Función de colores unificada para mantener consistencia
     const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
@@ -111,6 +112,8 @@ export const DashboardCadete: React.FC = () => {
                 idUsuario: user.id,
                 observaciones: 'Cadete inicia ruta de entregas'
             });
+            // Agregar el pedido a rutasIniciadas ANTES de recargar pedidos
+            setRutasIniciadas(prev => new Set([...prev, pedido.idPedido]));
             await loadPedidos();
             toast.success(`Ruta iniciada para el pedido #${pedido.idPedido}.`);
         } catch (error: any) {
@@ -215,14 +218,16 @@ export const DashboardCadete: React.FC = () => {
                                                 >
                                                     <Play className="w-3 h-3 mr-1 sm:mr-2" /> Iniciar ruta
                                                 </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="sm"
-                                                    onClick={() => handleVerEnMaps(pedido)}
-                                                    className="w-full border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-lg text-xs sm:text-sm"
-                                                >
-                                                    <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Ver Maps
-                                                </Button>
+                                                {rutasIniciadas.has(pedido.idPedido) && (
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        onClick={() => handleVerEnMaps(pedido)}
+                                                        className="w-full border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-lg text-xs sm:text-sm"
+                                                    >
+                                                        <Navigation className="w-3 h-3 mr-1 sm:mr-2" /> Ver Maps
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="secondary"
                                                     size="sm"
