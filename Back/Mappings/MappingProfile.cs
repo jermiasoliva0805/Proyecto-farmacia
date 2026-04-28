@@ -46,6 +46,7 @@ namespace Back.Mappings
 
             // --- Mapeos de Creación de Pedidos ---
             CreateMap<CreateOrderDTO, Pedido>()
+                .ForMember(dest => dest.FormaDePago, opt => opt.MapFrom(src => src.FormaDePago))
                 .ForMember(dest => dest.ZonaId, opt => opt.MapFrom(src => src.ZonaId))
                 .ForMember(dest => dest.DireccionEntrega, opt => opt.MapFrom(src => src.Direccion))
                 .ForMember(dest => dest.ReferenciaEntrega, opt => opt.MapFrom(src => src.ReferenciaEntrega))
