@@ -63,10 +63,7 @@ const UsuariosPage = () => {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        // En edición, solo validamos los campos que se pueden editar
         if (editingId) {
-            // En edición no validamos nombre/apellido/usuarioNombre a menos que estén siendo editados
-            // Solo validamos los que se pueden cambiar en edición
             if (formData.nombre && formData.nombre.trim().length > 100) {
                 newErrors.nombre = 'El nombre no puede exceder 100 caracteres';
             }
@@ -81,7 +78,6 @@ const UsuariosPage = () => {
                 newErrors.mail = 'El formato del correo no es válido';
             }
 
-            // Validar contraseña solo si la proporciona
             if (formData.contraseña && formData.contraseña.length < 6) {
                 newErrors.contraseña = 'La contraseña debe tener al menos 6 caracteres';
             }
@@ -90,7 +86,6 @@ const UsuariosPage = () => {
             return Object.keys(newErrors).length === 0;
         }
 
-        // En creación, validamos todos los campos
         if (!formData.nombre.trim()) {
             newErrors.nombre = 'El nombre es obligatorio';
         } else if (formData.nombre.length > 100) {
@@ -256,7 +251,6 @@ const UsuariosPage = () => {
 
         try {
             if (editingId) {
-                // Editar usuario
                 const updateData: any = {
                     nombre: formData.nombre,
                     apellido: formData.apellido,
@@ -265,12 +259,10 @@ const UsuariosPage = () => {
                     idSucursal: formData.idSucursal
                 };
                 
-                // Incluir zonaId si es cadete
                 if (formData.rol === 'Cadete') {
                     updateData.zonaId = formData.zonaId || null;
                 }
                 
-                // Solo incluir contraseña si se proporciona
                 if (formData.contraseña.trim()) {
                     updateData.contraseña = formData.contraseña;
                 }
@@ -278,10 +270,8 @@ const UsuariosPage = () => {
                 await usuariosService.updateUsuario(editingId, updateData);
                 setToast({ message: "Usuario actualizado correctamente", type: 'success' });
             } else {
-                // Crear nuevo usuario
                 const createData = { ...formData };
                 
-                // Si no es cadete, eliminar zonaId
                 if (createData.rol !== 'Cadete') {
                     createData.zonaId = undefined;
                 }
@@ -292,7 +282,6 @@ const UsuariosPage = () => {
             
             setIsModalOpen(false);
             await fetchUsuarios();
-            // Limpiamos el formulario
             setFormData({ nombre: '', apellido: '', usuarioNombre: '', contraseña: '', rol: 'Encargado', mail: '', idSucursal: 1, zonaId: undefined });
             setEditingId(null);
             setErrors({});
@@ -327,6 +316,13 @@ const UsuariosPage = () => {
         setUserToDelete(null);
     };
 
+    // Helper: obtener nombre de zona por zonaId
+    const getZonaNombre = (zonaId?: number | null): string => {
+        if (!zonaId) return '-';
+        const zona = zonas.find(z => z.id === zonaId);
+        return zona ? zona.nombre : '-';
+    };
+
     return (
         <DashboardLayout>
             <div className="p-6 bg-gray-50 min-h-screen">
@@ -352,7 +348,8 @@ const UsuariosPage = () => {
                             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Personal</th>
                             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Usuario</th>
                             <th className="px-6 py-4 text-sm font-semibold text-gray-600">Rol</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Sucursal</th>
+                            {/* ← ZONA en lugar de SUCURSAL */}
+                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Zona</th>
                             <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Acciones</th>
                         </tr>
                     </thead>
@@ -380,7 +377,13 @@ const UsuariosPage = () => {
                                             {user.rol.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{user.nombreSucursal}</td>
+                                    {/* ← Muestra zona si es cadete, "-" si no tiene */}
+                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                        {user.rol === 'Cadete'
+                                            ? getZonaNombre(user.zonaId)
+                                            : <span className="text-gray-300">—</span>
+                                        }
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button 
@@ -594,3 +597,4 @@ const UsuariosPage = () => {
 };
 
 export default UsuariosPage;
+
