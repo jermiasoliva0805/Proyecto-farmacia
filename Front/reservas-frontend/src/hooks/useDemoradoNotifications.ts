@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import * as signalR from '@microsoft/signalr';
 import { api } from '@services/api';
 import type { OrderSummaryDTO } from '@models/pedido.types';
  
@@ -29,25 +30,50 @@ export const useDemoradoNotifications = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
  
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      // Este endpoint ya filtra estados finales (7=Entregado, 9=Cancelado)
       const response = await api.get('/reporte/pedidos-demorados-usuario');
       const data = response.data as OrderSummaryDTO[];
       setNotifications(data);
       setHasUnread(data.length > 0);
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || 'Error al obtener notificaciones';
-      setError(errorMessage);
+      setError(err.response?.data?.message || 'Error al obtener notificaciones');
       console.error('Error fetching delayed orders:', err);
     } finally {
       setLoading(false);
     }
   }, []);
  
+  // SignalR: cuando cualquier pedido cambia de estado, todos los roles refrescan
+  useEffect(() => {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL as string)?.replace('/api', '');
+    const hubUrl = `${baseUrl}/hubs/pedidos`;
+ 
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl)
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+ 
+    connectionRef.current = connection;
+ 
+    connection.on('PedidosDemoradosActualizados', () => {
+      fetchNotifications();
+    });
+ 
+    connection.start().catch((err) =>
+      console.error('SignalR connection error:', err)
+    );
+ 
+    return () => { connection.stop(); };
+  }, [fetchNotifications]);
+ 
+  // Polling como fallback
   useEffect(() => {
     fetchNotifications();
     const intervalId = setInterval(fetchNotifications, interval);
@@ -56,7 +82,6 @@ export const useDemoradoNotifications = (
  
   const markAsRead = useCallback(() => {
     setHasUnread(false);
-    localStorage.setItem('lastNotificationCheck', new Date().toISOString());
   }, []);
  
   return {
