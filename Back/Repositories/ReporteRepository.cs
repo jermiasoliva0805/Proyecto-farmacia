@@ -556,7 +556,7 @@ namespace Back.Repositories
                     FechaEntrega  = p.FechaEntregaReal ?? DateTime.Now,
                     // Retraso en días hábiles
                     RetrasoDías  = (int)Math.Round(
-                        DateHelper.CalcularDiasHabilesDiferencia(
+                        DateTimeHelper.CalcularDiasHabilesDiferencia(
                             p.FechaEntregaEstimada,
                             p.FechaEntregaReal ?? DateTime.Now)),
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
@@ -614,6 +614,54 @@ namespace Back.Repositories
  
         // No-op: la lógica de marcado vive exclusivamente en PedidosDemoradosBackgroundService
         private Task MarcarPedidosDemoradosAutomaticamenteAsync() => Task.CompletedTask;
+
+        /// <summary>
+        /// Devuelve pedidos demorados filtrados según el rol del usuario logueado.
+        /// - Encargado: Ve todos los pedidos demorados.
+        /// - Operario: Ve solo los pedidos demorados que tiene asignados (IDUsuario).
+        /// - Cadete: Ve solo los pedidos demorados de su zona (ZonaId).
+        /// </summary>
+        public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosPorUsuarioAsync(int usuarioId, string rolUsuario)
+        {
+            var query = _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Usuario)
+                .Include(p => p.EstadoDePedido)
+                .Where(p => p.EsDemorado)
+                .AsQueryable();
+
+            if (rolUsuario == "Operario")
+            {
+                query = query.Where(p => p.IDUsuario == usuarioId);
+            }
+            else if (rolUsuario == "Cadete")
+            {
+                var usuario = await _context.Usuarios.FindAsync(usuarioId);
+                if (usuario == null) return new List<OrderSummaryDTO>();
+                var zonaId = usuario.ZonaId;
+                query = query.Where(p => p.ZonaId == zonaId);
+            }
+            // Encargado: sin filtro adicional, ve todos los pedidos demorados
+
+            var pedidosDemorados = await query
+                .OrderBy(p => p.FechaEntregaEstimada)
+                .ToListAsync();
+
+            return pedidosDemorados.Select(p => new OrderSummaryDTO
+            {
+                IDPedido             = p.IDPedido,
+                ClienteNombre        = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
+                EstadoNombre         = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido",
+                IDEstadoDePedido     = p.IDEstadoDePedido,
+                Total                = p.Total,
+                Fecha                = p.Fecha,
+                EstaDemorado         = true,
+                FechaEntregaEstimada = p.FechaEntregaEstimada,
+                FechaMarcadoDemorado = p.FechaMarcadoDemorado,
+                ResponsableNombre    = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
+                ResponsableRol       = p.Usuario?.Rol ?? string.Empty
+            }).ToList();
+        }
     }
 }
  

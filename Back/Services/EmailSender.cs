@@ -38,14 +38,14 @@ namespace Back.Services
             int numeroPedido,
             int idEstado,
             string brandName = "Farmacia General Paz",
-            string supportEmail = null,
+            string? supportEmail = null,
             string brandCode = "FGP",
             int? intentoEntrega = null,
             int intentosMax = 3,
-            string trackingUrl = null,
-            string etiquetaLogistica = null,
-            List<string> nombresProductos = null,
-            string surveyUrl = null)
+            string? trackingUrl = null,
+            string? etiquetaLogistica = null,
+            List<string>? nombresProductos = null,
+            string? surveyUrl = null)
         {
             var html = _templates.BuildOrderStatusHtml(
                 brandName, nombreCliente, estadoDescripcion, numeroPedido, idEstado,
@@ -80,7 +80,7 @@ namespace Back.Services
             string brandName = "Farmacia General Paz",
             string supportEmail = "soporte@farmacia.com",
             string brandCode = "FGP",
-            List<string> nombresProductos = null)
+            List<string>? nombresProductos = null)
         {
             try
             {
