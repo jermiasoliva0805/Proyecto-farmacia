@@ -54,13 +54,13 @@ namespace Back.Repositories
                 .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre })
                 .Select(g => new EntregaPorCadeteDTO
                 {
-                    IDCadete               = g.Key.IDUsuario,
-                    NombreCadete           = g.Key.Nombre,
-                    TotalPedidosAsignados  = g.Count(),
-                    EntregasExitosas       = g.Count(p => p.IDEstadoDePedido == 7),
-                    EntregasFallidas       = g.Count(p => p.IDEstadoDePedido == 9),
-                    TotalRecaudado         = g.Sum(p => p.Total),
-                    PorcentajeEfectividad  = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0 / g.Count()) : 0
+                    IDCadete              = g.Key.IDUsuario,
+                    NombreCadete          = g.Key.Nombre,
+                    TotalPedidosAsignados = g.Count(),
+                    EntregasExitosas      = g.Count(p => p.IDEstadoDePedido == 7),
+                    EntregasFallidas      = g.Count(p => p.IDEstadoDePedido == 9),
+                    TotalRecaudado        = g.Sum(p => p.Total),
+                    PorcentajeEfectividad = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0 / g.Count()) : 0
                 })
                 .OrderByDescending(r => r.EntregasExitosas)
                 .ToList();
@@ -174,10 +174,10 @@ namespace Back.Repositories
                 .Where(p => p.IDSucursal == idSucursal)
                 .ToListAsync();
  
-            var totalCancelados      = pedidosCancelados.Count;
+            var totalCancelados       = pedidosCancelados.Count;
             var porcentajeCancelacion = totalPedidos > 0 ? (totalCancelados * 100.0m / totalPedidos) : 0m;
-            var ingresosPerdidos     = pedidosCancelados.Sum(p => p.Total);
-            var principalMotivo      = pedidosCancelados
+            var ingresosPerdidos      = pedidosCancelados.Sum(p => p.Total);
+            var principalMotivo       = pedidosCancelados
                 .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .OrderByDescending(g => g.Count())
                 .FirstOrDefault()?.Key ?? "N/A";
@@ -186,22 +186,22 @@ namespace Back.Repositories
                 .GroupBy(p => p.MotivoCancelacion!.Nombre)
                 .Select(g => new CancelacionPorMotivoDTO
                 {
-                    Motivo        = g.Key,
-                    Cantidad      = g.Count(),
-                    Porcentaje    = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m,
-                    MontoPerdido  = g.Sum(p => p.Total)
+                    Motivo       = g.Key,
+                    Cantidad     = g.Count(),
+                    Porcentaje   = totalCancelados > 0 ? (g.Count() * 100.0m / totalCancelados) : 0m,
+                    MontoPerdido = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(d => d.Cantidad)
                 .ToList();
  
             return new ReporteCancelacionesPorMotivoDTO
             {
-                TotalPedidos           = totalPedidos,
-                TotalCancelados        = totalCancelados,
-                PorcentajeCancelacion  = porcentajeCancelacion,
-                IngresosPerdidos       = ingresosPerdidos,
-                PrincipalMotivo        = principalMotivo,
-                DetalleMotivos         = detalleMotivos
+                TotalPedidos          = totalPedidos,
+                TotalCancelados       = totalCancelados,
+                PorcentajeCancelacion = porcentajeCancelacion,
+                IngresosPerdidos      = ingresosPerdidos,
+                PrincipalMotivo       = principalMotivo,
+                DetalleMotivos        = detalleMotivos
             };
         }
  
@@ -258,10 +258,10 @@ namespace Back.Repositories
             var detalles = new List<DetalleTiempoProcesoDTO>();
             var tiemposPorFase = new Dictionary<string, List<double>>
             {
-                { "Espera",       new List<double>() },
-                { "Preparación",  new List<double>() },
-                { "Despacho",     new List<double>() },
-                { "Viaje",        new List<double>() }
+                { "Espera",      new List<double>() },
+                { "Preparación", new List<double>() },
+                { "Despacho",    new List<double>() },
+                { "Viaje",       new List<double>() }
             };
  
             foreach (var pedido in pedidos)
@@ -341,12 +341,12 @@ namespace Back.Repositories
  
             return new TiemposProcesoDTO
             {
-                Fases                = fases,
-                PuntoCritico         = puntoCritico.Nombre,
-                TiempoPuntoCritico   = puntoCritico.TiempoPromedio,
-                EficienciaDespacho   = eficienciaDespacho,
-                TotalPedidos         = pedidos.Count,
-                Detalles             = detalles.OrderByDescending(d => d.Despacho).ToList()
+                Fases              = fases,
+                PuntoCritico       = puntoCritico.Nombre,
+                TiempoPuntoCritico = puntoCritico.TiempoPromedio,
+                EficienciaDespacho = eficienciaDespacho,
+                TotalPedidos       = pedidos.Count,
+                Detalles           = detalles.OrderByDescending(d => d.Despacho).ToList()
             };
         }
  
@@ -416,11 +416,11 @@ namespace Back.Repositories
                 .GroupBy(p => new { ZonaId = p.ZonaId ?? 0, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
                 .Select(g => new PedidosPorZonaDTO
                 {
-                    ZonaId           = g.Key.ZonaId,
-                    NombreZona       = g.Key.NombreZona,
-                    CantidadPedidos  = g.Count(),
-                    Porcentaje       = (g.Count() * 100.0m / pedidosConZona.Count),
-                    TotalRecaudado   = g.Sum(p => p.Total)
+                    ZonaId          = g.Key.ZonaId,
+                    NombreZona      = g.Key.NombreZona,
+                    CantidadPedidos = g.Count(),
+                    Porcentaje      = (g.Count() * 100.0m / pedidosConZona.Count),
+                    TotalRecaudado  = g.Sum(p => p.Total)
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
                 .ToList();
@@ -441,9 +441,9 @@ namespace Back.Repositories
             using var stringReader = new StringReader(csvData);
             using var csv = new CsvReader(stringReader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                BadDataFound     = null,
+                BadDataFound      = null,
                 MissingFieldFound = null,
-                HeaderValidated  = null
+                HeaderValidated   = null
             });
  
             if (!csv.Read() || !csv.ReadHeader())
@@ -453,8 +453,8 @@ namespace Back.Repositories
             if (headers.Length <= 1)
                 return new ReporteEncuestaSatisfaccionDTO();
  
-            var resultadosPorPregunta      = new Dictionary<int, Dictionary<string, int>>();
-            var totalRespuestasFormulario  = 0;
+            var resultadosPorPregunta     = new Dictionary<int, Dictionary<string, int>>();
+            var totalRespuestasFormulario = 0;
  
             while (csv.Read())
             {
@@ -520,7 +520,6 @@ namespace Back.Repositories
         /// <summary>
         /// Reporte de entregas fuera de plazo.
         /// Solo incluye pedidos Entregados (estado 7) que superaron la FechaEntregaEstimada.
-        /// Modificado: RetrasoDías en días hábiles + campos FueMarcadoDemorado / FechaMarcadoDemorado.
         /// </summary>
         public async Task<PedidosFueraDeplazoDTO> GetReportePedidosFueraDeplazoAsync(
             DateTime? fechaDesde = null,
@@ -544,25 +543,23 @@ namespace Back.Repositories
             var detalles = pedidosFueraDeplazo
                 .Select(p => new DetallePedidoFueraDeplazo
                 {
-                    IDPedido     = p.IDPedido,
+                    IDPedido      = p.IDPedido,
                     ClienteNombre = p.Cliente != null
                         ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}"
                         : "Consumidor Final",
-                    NombreCadete = p.Usuario != null
+                    NombreCadete  = p.Usuario != null
                         ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}"
                         : "Sin asignar",
                     FechaCreacion = p.Fecha,
                     FechaEstimada = p.FechaEntregaEstimada,
                     FechaEntrega  = p.FechaEntregaReal ?? DateTime.Now,
-                    // Retraso en días hábiles
-                    RetrasoDías  = (int)Math.Round(
+                    RetrasoDías   = (int)Math.Round(
                         DateTimeHelper.CalcularDiasHabilesDiferencia(
                             p.FechaEntregaEstimada,
                             p.FechaEntregaReal ?? DateTime.Now)),
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
-                    // Nuevos campos: contexto del subestado demorado
-                    FueMarcadoDemorado   = p.FechaMarcadoDemorado.HasValue,
-                    FechaMarcadoDemorado = p.FechaMarcadoDemorado
+                    FueMarcadoDemorado     = p.FechaMarcadoDemorado.HasValue,
+                    FechaMarcadoDemorado   = p.FechaMarcadoDemorado
                 })
                 .OrderByDescending(d => d.RetrasoDías)
                 .ToList();
@@ -581,8 +578,8 @@ namespace Back.Repositories
         }
  
         /// <summary>
-        /// Devuelve todos los pedidos que actualmente tienen el subestado demorado activo.
-        /// Incluye su estado principal real, responsable y rol (para la campana de notificaciones).
+        /// Devuelve TODOS los pedidos con EsDemorado=true sin filtrar por estado.
+        /// Usado por el dashboard del encargado para el conteo histórico.
         /// </summary>
         public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosAsync()
         {
@@ -591,14 +588,13 @@ namespace Back.Repositories
                 .Include(p => p.Usuario)
                 .Include(p => p.EstadoDePedido)
                 .Where(p => p.EsDemorado)
-                .OrderBy(p => p.FechaEntregaEstimada) // Más antiguos primero = mayor prioridad
+                .OrderBy(p => p.FechaEntregaEstimada)
                 .ToListAsync();
  
             return pedidosDemorados.Select(p => new OrderSummaryDTO
             {
                 IDPedido             = p.IDPedido,
                 ClienteNombre        = p.Cliente != null ? $"{p.Cliente.Nombre} {p.Cliente.Apellido}" : "Consumidor Final",
-                // Estado real del pedido, no "Demorado"
                 EstadoNombre         = p.EstadoDePedido != null ? p.EstadoDePedido.NombreEstado : "Desconocido",
                 IDEstadoDePedido     = p.IDEstadoDePedido,
                 Total                = p.Total,
@@ -606,7 +602,6 @@ namespace Back.Repositories
                 EstaDemorado         = true,
                 FechaEntregaEstimada = p.FechaEntregaEstimada,
                 FechaMarcadoDemorado = p.FechaMarcadoDemorado,
-                // Para la campana: nombre y rol del responsable
                 ResponsableNombre    = p.Usuario != null ? $"{p.Usuario.Nombre} {p.Usuario.Apellido}" : "Sin asignar",
                 ResponsableRol       = p.Usuario?.Rol ?? string.Empty
             }).ToList();
@@ -614,12 +609,14 @@ namespace Back.Repositories
  
         // No-op: la lógica de marcado vive exclusivamente en PedidosDemoradosBackgroundService
         private Task MarcarPedidosDemoradosAutomaticamenteAsync() => Task.CompletedTask;
-
+ 
         /// <summary>
-        /// Devuelve pedidos demorados filtrados según el rol del usuario logueado.
-        /// - Encargado: Ve todos los pedidos demorados.
-        /// - Operario: Ve solo los pedidos demorados que tiene asignados (IDUsuario).
-        /// - Cadete: Ve solo los pedidos demorados de su zona (ZonaId).
+        /// Devuelve pedidos demorados ACTIVOS filtrados según el rol del usuario logueado.
+        /// Usado por la campanita — excluye pedidos finalizados:
+        ///   - Estado 7: Entregado
+        ///   - Estado 9: Cancelado (manual o automático por 3 intentos fallidos)
+        ///   - Estado 8 con IntentosEntregaFallida >= 3: defensa por inconsistencia en DB
+        /// EsDemorado sigue siendo true en DB para reportes históricos.
         /// </summary>
         public async Task<List<OrderSummaryDTO>> GetPedidosDemoradosPorUsuarioAsync(int usuarioId, string rolUsuario)
         {
@@ -628,8 +625,13 @@ namespace Back.Repositories
                 .Include(p => p.Usuario)
                 .Include(p => p.EstadoDePedido)
                 .Where(p => p.EsDemorado)
+                // Excluir estados finales para que desaparezcan de la campanita.
+                // EsDemorado permanece true en la DB para reportes históricos.
+                .Where(p => p.IDEstadoDePedido != 7   // No Entregado
+                         && p.IDEstadoDePedido != 9   // No Cancelado (incluye cancelación por 3 intentos)
+                         && !(p.IDEstadoDePedido == 8 && p.IntentosEntregaFallida >= 3)) // defensa
                 .AsQueryable();
-
+ 
             if (rolUsuario == "Operario")
             {
                 query = query.Where(p => p.IDUsuario == usuarioId);
@@ -641,12 +643,12 @@ namespace Back.Repositories
                 var zonaId = usuario.ZonaId;
                 query = query.Where(p => p.ZonaId == zonaId);
             }
-            // Encargado: sin filtro adicional, ve todos los pedidos demorados
-
+            // Encargado: sin filtro adicional, ve todos los demorados activos
+ 
             var pedidosDemorados = await query
                 .OrderBy(p => p.FechaEntregaEstimada)
                 .ToListAsync();
-
+ 
             return pedidosDemorados.Select(p => new OrderSummaryDTO
             {
                 IDPedido             = p.IDPedido,
@@ -664,4 +666,3 @@ namespace Back.Repositories
         }
     }
 }
- 
