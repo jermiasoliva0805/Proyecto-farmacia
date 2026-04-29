@@ -7,6 +7,7 @@ import { KanbanColumn } from './KanbanColumn';
 import { KanbanMobileView } from './KanbanMobileView';
 import { CancelarConMotivoModal } from './CancelarConMotivoModal';
 import { AsignarCadeteModal } from '../pedidos/AsignarCadeteModal';
+import { ConfirmarEntregaModal } from '../pedidos/ConfirmarEntregaModal'; // ← NUEVO
 import {
     COLUMNAS_POR_ROL,
     VALIDACIONES_OPERARIO,
@@ -50,6 +51,10 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     const [showAsignarCadeteModal, setShowAsignarCadeteModal] = useState(false);
     const [pedidoAAsignarCadete, setPedidoAAsignarCadete] = useState<OrderSummaryDTO | null>(null);
 
+    // ← NUEVO: Estado para modal de confirmar entrega (cuando cadete arrastra a Entrega Fallida)
+    const [showConfirmarEntregaModal, setShowConfirmarEntregaModal] = useState(false);
+    const [pedidoAConfirmarEntrega, setPedidoAConfirmarEntrega] = useState<OrderSummaryDTO | null>(null);
+
     // Detectar cambios de tamaño de pantalla
     useEffect(() => {
         const handleResize = () => {
@@ -80,8 +85,6 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
         setIsLoadingPedidoId(pedidoId);
 
         try {
-            // El modal ya canceló el pedido, solo refrescar datos desde servidor
-            // y actualizar estado local
             const nuevaListaPedidos = pedidosLocal.map(p => {
                 if (p.idPedido === pedidoId) {
                     return {
@@ -94,24 +97,17 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             });
 
             setPedidosLocal(nuevaListaPedidos);
-
             showToast('success', `Pedido #${pedidoId} cancelado correctamente`);
-
-            // Ejecutar callback para refrescar datos desde servidor
             await onUpdate();
-
-            // Cerrar modal
             setShowCancelModal(false);
             setPedidoACancelar(null);
             setOperacionCancelacionPendiente(false);
 
         } catch (error: any) {
             console.error('Error al procesar cancelación:', error);
-            
             const mensajeError = error.response?.data?.message || 
                                  error.response?.data?.title ||
                                  'Error al procesar la cancelación';
-            
             showToast('error', mensajeError);
         } finally {
             setDragBlockedPedidoId(undefined);
@@ -149,13 +145,11 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     const handleDragEnd = async (result: DropResult) => {
         const { source, destination, draggableId } = result;
 
-        // Si se suelta fuera de una zona válida
         if (!destination) {
             showToast('info', 'Operación cancelada');
             return;
         }
 
-        // Si no hay cambio de posición
         if (
             source.droppableId === destination.droppableId &&
             source.index === destination.index
@@ -163,12 +157,10 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             return;
         }
 
-        // Extraer IDs de estado
         const estadoOrigenId = parseInt(source.droppableId.split('-')[1]);
         const estadoDestinoId = parseInt(destination.droppableId.split('-')[1]);
         const pedidoId = parseInt(draggableId.split('-')[1]);
 
-        // Obtener el pedido
         const pedido = pedidosLocal.find(p => p.idPedido === pedidoId);
         if (!pedido) return;
 
@@ -176,40 +168,42 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
         const validador = getValidador();
         const columnasVisibles = getColumnasVisibles();
 
-        // Validación 1: No puede mover hacia estados no visibles
         if (!columnasVisibles.includes(estadoDestinoId)) {
             showToast('error', 'No tienes permisos para cambiar a este estado');
             return;
         }
 
-        // Validación 2: Aplicar reglas del rol
         if (!validador.puedeMoverHacia(estadoOrigenId, estadoDestinoId)) {
             showToast('error', 'No tienes permisos para este cambio de estado');
             return;
         }
 
-        // Validación 3: El estado 9 (Cancelado) y 7 (Entregado) son finales
         if ([7, 9].includes(estadoOrigenId)) {
             showToast('error', 'Este pedido ya alcanzó un estado final y no puede modificarse');
             return;
         }
 
-        // Validación 4: Para Operarios - Debe haber presionado "Comenzar armado" antes de cambiar estados
         if (user?.rol === 'Operario' && !pedido.fechaInicioArmado) {
             showToast('error', `⚠️ Debes presionar "Comenzar armado" antes de cambiar estados. Vuelve a la vista Tabla para iniciarlo.`);
             return;
         }
 
         // ========== CASO ESPECIAL: ASIGNAR CADETE AL PASAR A DESPACHANDO ==========
-        // Si es encargado y mueve de 4→5, debe asignar cadete
         if (user?.rol === 'Encargado' && estadoOrigenId === 4 && estadoDestinoId === 5) {
             setPedidoAAsignarCadete(pedido);
             setShowAsignarCadeteModal(true);
             return;
         }
 
+        // ← NUEVO: ========== CASO ESPECIAL: ENTREGA FALLIDA ==========
+        // Si el cadete arrastra al estado 8 (Entrega Fallida), mostrar modal de confirmación
+        if (estadoDestinoId === 8) {
+            setPedidoAConfirmarEntrega(pedido);
+            setShowConfirmarEntregaModal(true);
+            return;
+        }
+
         // ========== CASO ESPECIAL: CANCELACIÓN CON MOTIVO ==========
-        // Si se arrastra al estado 9 (Cancelado), mostrar modal para pedir motivo
         if (estadoDestinoId === 9) {
             setPedidoACancelar(pedido);
             setShowCancelModal(true);
@@ -222,7 +216,6 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
         setIsLoadingPedidoId(pedidoId);
 
         try {
-            // Llamar al backend
             await pedidosService.cambiarEstado({
                 idPedido: pedidoId,
                 idNuevoEstado: estadoDestinoId,
@@ -230,7 +223,6 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
                 observaciones: ''
             });
 
-            // Actualizar estado localmente
             const nuevaListaPedidos = pedidosLocal.map(p => {
                 if (p.idPedido === pedidoId) {
                     return {
@@ -243,10 +235,8 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
             });
 
             setPedidosLocal(nuevaListaPedidos);
-
             showToast('success', `Pedido #${pedidoId} movido a ${ESTADO_MAP[estadoDestinoId]}`);
 
-            // Si Operario llega al estado 4 (Listo), remover del tablero después de 1s
             if (user?.rol === 'Operario' && estadoDestinoId === 4) {
                 setTimeout(() => {
                     setPedidosLocal(prev => prev.filter(p => p.idPedido !== pedidoId));
@@ -254,19 +244,14 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
                 }, 1000);
             }
 
-            // Ejecutar callback para refrescar datos desde servidor
             await onUpdate();
 
         } catch (error: any) {
             console.error('Error al cambiar estado:', error);
-            
-            // Revertir la lista local
             setPedidosLocal(pedidos);
-            
             const mensajeError = error.response?.data?.message || 
                                  error.response?.data?.title ||
                                  'Error al cambiar estado del pedido';
-            
             showToast('error', mensajeError);
         } finally {
             setDragBlockedPedidoId(undefined);
@@ -275,7 +260,6 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
     };
 
     // ========== RENDER ==========
-    // Si es mobile, mostrar vista colapsable vertical
     if (isMobile) {
         return (
             <KanbanMobileView
@@ -286,7 +270,6 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
         );
     }
 
-    // Si es desktop, mostrar vista PC normal con columnas horizontales
     return (
         <div className="w-full">
             {/* Toast de notificaciones */}
@@ -366,6 +349,25 @@ export const TableroKanban: React.FC<TableroKanbanProps> = ({
                     }}
                 />
             )}
+
+            {/* ← NUEVO: Modal de Confirmar Entrega (cuando cadete arrastra a Entrega Fallida) */}
+            {pedidoAConfirmarEntrega && (
+                <ConfirmarEntregaModal
+                    isOpen={showConfirmarEntregaModal}
+                    pedido={pedidoAConfirmarEntrega}
+                    onClose={() => {
+                        setShowConfirmarEntregaModal(false);
+                        setPedidoAConfirmarEntrega(null);
+                    }}
+                    onSuccess={() => {
+                        setShowConfirmarEntregaModal(false);
+                        setPedidoAConfirmarEntrega(null);
+                        onUpdate();
+                        showToast('success', `Pedido #${pedidoAConfirmarEntrega.idPedido} actualizado correctamente`);
+                    }}
+                />
+            )}
         </div>
     );
 };
+
