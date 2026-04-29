@@ -76,7 +76,7 @@ export const AsignarCadeteModal: React.FC<AsignarCadeteModalProps> = ({
                     <div className="space-y-1 text-sm text-green-800">
                         <p><span className="font-medium">ID:</span> #{pedido.idPedido}</p>
                         <p><span className="font-medium">Cliente:</span> {pedido.clienteNombre}</p>
-                        <p><span className="font-medium">Dirección:</span> {pedido.clienteNombre}</p>
+                        <p><span className="font-medium">Dirección:</span> {pedido.direccionEntrega}</p>
                         <p><span className="font-medium">Estado Actual:</span> {pedido.estadoNombre}</p>
                     </div>
                 </div>
