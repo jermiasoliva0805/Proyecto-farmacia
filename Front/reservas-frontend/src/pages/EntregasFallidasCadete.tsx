@@ -7,6 +7,8 @@ import { useAuth } from '@context/AuthContext';
 import { pedidosService } from '../service/PedidosService';
 import { OrderSummaryDTO } from '../types/pedido.types';
 import { ConfirmarEntregaModal } from '../components/pedidos/ConfirmarEntregaModal';
+import { Navigation } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const EntregasFallidas = () => {
     const { user } = useAuth();
@@ -48,6 +50,29 @@ const EntregasFallidas = () => {
     const handleGestionar = (pedido: OrderSummaryDTO) => {
         setSelectedPedido(pedido);
         setModalOpen(true);
+    };
+
+    // Construye la query de dirección para Google Maps
+    const buildMapsQuery = (pedido: OrderSummaryDTO) => {
+        const parts = [pedido.direccionEntrega, pedido.localidadNombre, pedido.codigoPostalEntrega]
+            .filter((value): value is string => !!value && value.trim().length > 0)
+            .map((value) => value.trim());
+
+        return parts.join(', ');
+    };
+
+    // Abre Google Maps en modo navegación hacia la dirección del pedido
+    const handleVerEnMaps = (pedido: OrderSummaryDTO) => {
+        const query = buildMapsQuery(pedido);
+
+        if (!query) {
+            toast.warning('El pedido no tiene dirección suficiente para abrir Google Maps.');
+            return;
+        }
+
+        // URL de direcciones para que Maps abra en modo ruta (similar a "Como llegar / Iniciar").
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}&travelmode=driving&dir_action=navigate`;
+        window.location.href = url;
     };
 
     return (
@@ -92,18 +117,30 @@ const EntregasFallidas = () => {
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleGestionar(pedido)}
-                                                    disabled={pedido.idEstadoDePedido === 9}
-                                                    className={`rounded-lg text-xs px-4 py-2 font-bold ${
-                                                        pedido.idEstadoDePedido === 9 
-                                                        ? "bg-gray-400 cursor-not-allowed text-white border-none" 
-                                                        : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
-                                                    }`}
-                                                >
-                                                    Gestionar Entrega
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    {/* Botón Ver Maps — solo visible en pedidos con entrega fallida (estado 8) */}
+                                                    {pedido.idEstadoDePedido === 8 && (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleVerEnMaps(pedido)}
+                                                            className="rounded-lg text-xs px-4 py-2 font-bold border border-amber-200 text-amber-700 hover:bg-amber-50"
+                                                        >
+                                                            <Navigation className="w-3 h-3 mr-1 inline-block" /> Ver Maps
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleGestionar(pedido)}
+                                                        disabled={pedido.idEstadoDePedido === 9}
+                                                        className={`rounded-lg text-xs px-4 py-2 font-bold ${
+                                                            pedido.idEstadoDePedido === 9 
+                                                            ? "bg-gray-400 cursor-not-allowed text-white border-none" 
+                                                            : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                                        }`}
+                                                    >
+                                                        Gestionar Entrega
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -130,18 +167,30 @@ const EntregasFallidas = () => {
                                         <p className="font-medium text-gray-900">{pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR') : '-'}</p>
                                     </div>
 
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleGestionar(pedido)}
-                                        disabled={pedido.idEstadoDePedido === 9}
-                                        className={`w-full rounded-lg text-xs py-2 font-bold ${
-                                            pedido.idEstadoDePedido === 9 
-                                            ? "bg-gray-400 cursor-not-allowed text-white border-none" 
-                                            : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
-                                        }`}
-                                    >
-                                        Gestionar Entrega
-                                    </Button>
+                                    <div className="flex flex-col gap-2">
+                                        {/* Botón Ver Maps — solo visible en pedidos con entrega fallida (estado 8) */}
+                                        {pedido.idEstadoDePedido === 8 && (
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleVerEnMaps(pedido)}
+                                                className="w-full rounded-lg text-xs py-2 font-bold border border-amber-200 text-amber-700 hover:bg-amber-50"
+                                            >
+                                                <Navigation className="w-3 h-3 mr-1 inline-block" /> Ver Maps
+                                            </Button>
+                                        )}
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleGestionar(pedido)}
+                                            disabled={pedido.idEstadoDePedido === 9}
+                                            className={`w-full rounded-lg text-xs py-2 font-bold ${
+                                                pedido.idEstadoDePedido === 9 
+                                                ? "bg-gray-400 cursor-not-allowed text-white border-none" 
+                                                : "bg-green-600 hover:bg-green-700 text-white shadow-sm"
+                                            }`}
+                                        >
+                                            Gestionar Entrega
+                                        </Button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -162,3 +211,4 @@ const EntregasFallidas = () => {
 };
 
 export default EntregasFallidas;
+
