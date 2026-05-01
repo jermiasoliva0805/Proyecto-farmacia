@@ -11,7 +11,8 @@ namespace Back.Repositories.Interfaces
         /// </summary>
         Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
             DateTime fechaDesde,
-            DateTime fechaHasta);
+            DateTime fechaHasta,
+            int idSucursal);
 
         Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7);
 

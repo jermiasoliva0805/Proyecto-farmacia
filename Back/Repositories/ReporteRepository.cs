@@ -35,9 +35,9 @@ namespace Back.Repositories
  
         public async Task<List<EntregaPorCadeteDTO>> GetReporteEntregasPorCadeteAsync(
             DateTime fechaDesde,
-            DateTime fechaHasta)
+            DateTime fechaHasta,
+            int idSucursal)
         {
-            int idSucursal = 1;
             var hasta = fechaHasta.AddDays(1).AddSeconds(-1);
  
             var query = _context.Pedidos

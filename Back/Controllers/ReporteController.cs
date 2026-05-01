@@ -32,10 +32,24 @@ namespace Back.Controllers
         {
             try
             {
+                // Obtener el ID del usuario del token JWT
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var usuarioId))
+                {
+                    return Unauthorized(new { message = "No se pudo identificar al usuario" });
+                }
+
+                // Obtener la sucursal del usuario
+                var usuario = await _context.Usuarios.FindAsync(usuarioId);
+                if (usuario == null)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
                 var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
                 var hasta = fechaHasta ?? DateTime.Now;
 
-                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta);
+                var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta, usuario.IDSucursal);
 
                 return Ok(reporte);
             }
