@@ -529,10 +529,16 @@ namespace Back.Repositories
                 });
             }
  
+            // Contar pedidos entregados (estado 7) - incluye tanto normales como demorados
+            var cantidadEncuestasEnviadas = await _context.Pedidos
+                .Where(p => p.IDEstadoDePedido == 7)
+                .CountAsync();
+
             return new ReporteEncuestaSatisfaccionDTO
             {
                 CantidadClientesRespondieron = totalRespuestasFormulario,
                 CantidadTotalRespuestas      = preguntas.Sum(p => p.Opciones.Sum(o => o.Cantidad)),
+                CantidadEncuestasEnviadas    = cantidadEncuestasEnviadas,
                 Preguntas                    = preguntas
             };
         }
