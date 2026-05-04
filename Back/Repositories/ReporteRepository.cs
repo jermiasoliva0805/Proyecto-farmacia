@@ -556,9 +556,9 @@ namespace Back.Repositories
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .ToListAsync();
  
+            // Filtrar solo los pedidos que fueron marcados como demorados
             var pedidosFueraDeplazo = pedidosEntregados
-                .Where(p => p.FechaEntregaReal.HasValue &&
-                            p.FechaEntregaReal.Value > p.FechaEntregaEstimada)
+                .Where(p => p.EsDemorado)
                 .ToList();
  
             var detalles = pedidosFueraDeplazo
