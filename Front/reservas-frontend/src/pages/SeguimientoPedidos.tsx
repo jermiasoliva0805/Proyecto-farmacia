@@ -30,7 +30,7 @@ export const SeguimientoPedidos: React.FC = () => {
         { value: '6', label: 'En camino' },
         { value: '7', label: 'Entregado' },
         { value: '8', label: 'Entrega fallida' },
-        { value: '10', label: 'Cancelado' },
+        { value: '9', label: 'Cancelado' },
     ];
 
     const getEstadoStyle = (estado: string, estaDemorado: boolean) => {
