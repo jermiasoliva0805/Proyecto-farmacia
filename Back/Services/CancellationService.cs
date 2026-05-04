@@ -3,6 +3,7 @@ using Back.Interfaces;
 using Back.Models;
 using Back.Services.Interfaces;
 using Back.Repositories.Interfaces;
+using Back.Utils;
 using System.Threading.Tasks;
 
 namespace Back.Services
@@ -225,7 +226,7 @@ namespace Back.Services
                     IDPedido = pedido.IDPedido,
                     IDEstadoDePedido = 9,
                     IDUsuario = int.Parse(usuarioId),
-                    fecha_hora_inicio = DateTime.UtcNow,
+                    fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                     Observaciones = observacionHistorial
                 };
 

@@ -89,7 +89,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 2,
                 IDUsuario = dto.OperarioId,
-                fecha_hora_inicio = DateTime.UtcNow,
+                fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                 Observaciones = "Encargado asignó operario para la preparación del pedido."
             };
  
@@ -174,7 +174,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 5,
                 IDUsuario = dto.CadeteId,
-                fecha_hora_inicio = DateTime.UtcNow,
+                fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                 Observaciones = "Cadete asignado. Pedido en despachando."
             };
  
@@ -323,7 +323,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = estadoFinal,
                 IDUsuario = changeStatusDto.IDUsuario,
-                fecha_hora_inicio = DateTime.UtcNow,
+                fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                 Observaciones = changeStatusDto.Observaciones ?? "Estado actualizado por el cadete.",
                 IntentosEntregaFallida = (estadoFinal == 8 || estadoFinal == 9) ? pedido.IntentosEntregaFallida : 0,
                 IntentosMax = 3
@@ -405,7 +405,7 @@ namespace Back.Services
                 IDPedido = pedido.IDPedido,
                 IDEstadoDePedido = 9,
                 IDUsuario = userId,
-                fecha_hora_inicio = DateTime.UtcNow,
+                fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                 Observaciones = $"Cancelación (Motivo ID: {dto.MotivoCancelacionId}). Justificación: {dto.Justificacion ?? "Sin justificación adicional."}"
             };
  

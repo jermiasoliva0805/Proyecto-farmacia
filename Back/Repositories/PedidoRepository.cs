@@ -163,7 +163,7 @@ namespace Back.Repositories
                 IDPedido          = pedido.IDPedido,
                 IDEstadoDePedido  = estadoFinal,
                 IDUsuario         = dto.IDUsuario,
-                fecha_hora_inicio = DateTime.UtcNow,
+                fecha_hora_inicio = DateTimeHelper.GetArgentinaTime(),
                 Observaciones     = dto.Observaciones
             };
             _context.HistorialesDeEstados.Add(nuevoHistorial);
