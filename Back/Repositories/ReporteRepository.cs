@@ -558,7 +558,7 @@ namespace Back.Repositories
  
             var pedidosFueraDeplazo = pedidosEntregados
                 .Where(p => p.FechaEntregaReal.HasValue &&
-                            p.FechaEntregaReal.Value.Date > p.FechaEntregaEstimada.Date)
+                            p.FechaEntregaReal.Value > p.FechaEntregaEstimada)
                 .ToList();
  
             var detalles = pedidosFueraDeplazo
