@@ -40,32 +40,46 @@ namespace Back.Repositories
         {
             var hasta = fechaHasta.AddDays(1).AddSeconds(-1);
  
-            var query = _context.Pedidos
-                .Include(p => p.Usuario)
-                .Where(p => p.Usuario != null && p.Usuario.Rol == "Cadete")
-                .Where(p => p.Usuario != null && !p.Usuario.IsDeleted)
-                .Where(p => p.Usuario.IDSucursal == idSucursal)
+            // Obtener todos los cadetes activos en esta sucursal
+            var cadetes = await _context.Usuarios
+                .Where(u => u.Rol == "Cadete" && u.IDSucursal == idSucursal && !u.IsDeleted)
+                .Select(u => new { u.IDUsuario, u.Nombre })
+                .ToListAsync();
+ 
+            // Si no hay cadetes, devolver lista vacía
+            if (!cadetes.Any())
+                return new List<EntregaPorCadeteDTO>();
+ 
+            var idsCADETES = cadetes.Select(c => c.IDUsuario).ToList();
+ 
+            // Obtener pedidos de esos cadetes en el rango de fechas
+            var pedidos = await _context.Pedidos
+                .Where(p => idsCADETES.Contains(p.IDUsuario))
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
-                .AsQueryable();
+                .ToListAsync();
  
-            var pedidos = await query.ToListAsync();
- 
-            var reporte = pedidos
-                .GroupBy(p => new { p.IDUsuario, p.Usuario.Nombre })
-                .Select(g => new EntregaPorCadeteDTO
+            // Agrupar por cadete
+            var reportePorCadete = cadetes.Select(cadete => 
+            {
+                var pedidosCadete = pedidos.Where(p => p.IDUsuario == cadete.IDUsuario).ToList();
+                
+                return new EntregaPorCadeteDTO
                 {
-                    IDCadete              = g.Key.IDUsuario,
-                    NombreCadete          = g.Key.Nombre,
-                    TotalPedidosAsignados = g.Count(),
-                    EntregasExitosas      = g.Count(p => p.IDEstadoDePedido == 7),
-                    EntregasFallidas      = g.Count(p => p.IDEstadoDePedido == 9),
-                    TotalRecaudado        = g.Sum(p => p.Total),
-                    PorcentajeEfectividad = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0 / g.Count()) : 0
-                })
-                .OrderByDescending(r => r.EntregasExitosas)
-                .ToList();
+                    IDCadete              = cadete.IDUsuario,
+                    NombreCadete          = cadete.Nombre,
+                    TotalPedidosAsignados = pedidosCadete.Count,
+                    EntregasExitosas      = pedidosCadete.Count(p => p.IDEstadoDePedido == 7),
+                    EntregasFallidas      = pedidosCadete.Count(p => p.IDEstadoDePedido == 9),
+                    TotalRecaudado        = pedidosCadete.Sum(p => p.Total),
+                    PorcentajeEfectividad = pedidosCadete.Count > 0 
+                        ? (pedidosCadete.Count(p => p.IDEstadoDePedido == 7) * 100.0 / pedidosCadete.Count)
+                        : 0
+                };
+            })
+            .OrderByDescending(r => r.EntregasExitosas)
+            .ToList();
  
-            return reporte;
+            return reportePorCadete;
         }
  
         public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7)

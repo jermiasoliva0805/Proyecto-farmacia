@@ -49,12 +49,17 @@ namespace Back.Controllers
                 var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
                 var hasta = fechaHasta ?? DateTime.Now;
 
+                System.Diagnostics.Debug.WriteLine($"[REPORTE] UsuarioID: {usuarioId}, SucursalID: {usuario.IDSucursal}, Desde: {desde}, Hasta: {hasta}");
+
                 var reporte = await _reporteRepository.GetReporteEntregasPorCadeteAsync(desde, hasta, usuario.IDSucursal);
+
+                System.Diagnostics.Debug.WriteLine($"[REPORTE] Cadetes encontrados: {reporte.Count}");
 
                 return Ok(reporte);
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[REPORTE] Error: {ex.Message} - {ex.StackTrace}");
                 return BadRequest(new { message = "Error al generar el reporte", error = ex.Message });
             }
         }
