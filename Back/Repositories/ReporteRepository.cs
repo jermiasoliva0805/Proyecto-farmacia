@@ -205,9 +205,8 @@ namespace Back.Repositories
             };
         }
  
-        public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7)
+        public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int idSucursal = 1)
         {
-            int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
             DateTime fechaDesde = DateTime.Now.AddDays(-dias);
  
