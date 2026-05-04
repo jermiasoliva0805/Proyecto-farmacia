@@ -44,7 +44,9 @@ export const ReporteEntregas: React.FC = () => {
         
         console.log("Solicitando datos para:", { periodo, url });
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('farmacia_token')}` }
+        });
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
         
         const data = await response.json();
