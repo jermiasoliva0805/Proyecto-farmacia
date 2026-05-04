@@ -4,6 +4,7 @@ namespace Back.DTOs
     {
         public int CantidadClientesRespondieron { get; set; }
         public int CantidadTotalRespuestas { get; set; }
+        public int CantidadEncuestasEnviadas { get; set; }
         public List<PreguntaEncuestaDTO> Preguntas { get; set; } = new();
     }
 
