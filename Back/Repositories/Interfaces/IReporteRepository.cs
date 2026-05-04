@@ -38,7 +38,7 @@ namespace Back.Repositories.Interfaces
         /// <summary>
         /// Obtiene el top 10 de productos más vendidos
         /// </summary>
-        Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7);
+        Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int idSucursal = 1);
 
         /// <summary>
         /// Obtiene un reporte de tiempos de proceso con análisis de 4 fases críticas

@@ -133,9 +133,23 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias);
+                // Obtener el ID del usuario del token JWT
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var usuarioId))
+                {
+                    return Unauthorized(new { message = "No se pudo identificar al usuario" });
+                }
 
-                if (reporte == null)
+                // Obtener la sucursal del usuario
+                var usuario = await _context.Usuarios.FindAsync(usuarioId);
+                if (usuario == null)
+                {
+                    return NotFound(new { message = "Usuario no encontrado" });
+                }
+
+                var reporte = await _reporteRepository.GetTop10ProductosMasVendidosAsync(dias, usuario.IDSucursal);
+
+                if (reporte == null || reporte.Count == 0)
                 {
                     return Ok(new List<TopProductosDTO>());
                 }
