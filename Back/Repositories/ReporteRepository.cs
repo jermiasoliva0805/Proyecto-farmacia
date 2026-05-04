@@ -44,8 +44,8 @@ namespace Back.Repositories
                 .Include(p => p.Usuario)
                 .Where(p => p.Usuario != null && p.Usuario.Rol == "Cadete")
                 .Where(p => p.Usuario != null && !p.Usuario.IsDeleted)
+                .Where(p => p.Usuario.IDSucursal == idSucursal)
                 .Where(p => p.Fecha >= fechaDesde && p.Fecha <= hasta)
-                .Where(p => p.IDSucursal == idSucursal)
                 .AsQueryable();
  
             var pedidos = await query.ToListAsync();
