@@ -579,7 +579,7 @@ namespace Back.Repositories
                             p.FechaEntregaEstimada,
                             p.FechaEntregaReal ?? argentinaTime)),
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
-                    FueMarcadoDemorado     = p.FechaMarcadoDemorado.HasValue,
+                    EsDemorado             = p.EsDemorado,
                     FechaMarcadoDemorado   = p.FechaMarcadoDemorado
                 })
                 .OrderByDescending(d => d.RetrasoDías)

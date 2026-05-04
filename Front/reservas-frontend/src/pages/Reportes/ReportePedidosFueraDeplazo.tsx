@@ -13,6 +13,8 @@ interface DetallePedidoFueraDeplazo {
   fechaEntrega: string;
   retrasoDías: number;
   intentosEntregaFallida: number;
+  esDemorado: boolean;
+  fechaMarcadoDemorado: string | null;
 }
 
 interface PedidosFueraDeplazoDTO {
@@ -78,6 +80,7 @@ export const ReportePedidosFueraDeplazo: React.FC = () => {
         'Fecha Creación': new Date(d.fechaCreacion).toLocaleDateString('es-AR'),
         'Fecha Estimada': new Date(d.fechaEstimada).toLocaleDateString('es-AR'),
         'Fecha Entrega': new Date(d.fechaEntrega).toLocaleDateString('es-AR'),
+        'Demorado': d.esDemorado ? 'Sí' : 'No',
         'Retraso (Días)': d.retrasoDías,
         'Intentos Fallidos': d.intentosEntregaFallida,
       }));
@@ -199,6 +202,7 @@ export const ReportePedidosFueraDeplazo: React.FC = () => {
                     <th className="pb-4 font-semibold">Cadete</th>
                     <th className="pb-4 font-semibold text-center">Fecha Estimada</th>
                     <th className="pb-4 font-semibold text-center">Fecha Entrega</th>
+                    <th className="pb-4 font-semibold text-center">Demorado</th>
                     <th className="pb-4 font-semibold text-right px-2">Retraso (días)</th>
                   </tr>
                 </thead>
@@ -215,6 +219,17 @@ export const ReportePedidosFueraDeplazo: React.FC = () => {
                         <td className="py-4 text-center text-gray-600">
                           {new Date(item.fechaEntrega).toLocaleDateString('es-AR')}
                         </td>
+                        <td className="py-4 text-center">
+                          {item.esDemorado ? (
+                            <span className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                              Sí
+                            </span>
+                          ) : (
+                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                              No
+                            </span>
+                          )}
+                        </td>
                         <td className="py-4 text-right px-2 font-bold text-orange-600">
                           +{item.retrasoDías}
                         </td>
@@ -222,7 +237,7 @@ export const ReportePedidosFueraDeplazo: React.FC = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-gray-400">
+                      <td colSpan={7} className="py-10 text-center text-gray-400">
                         No hay entregas fuera de plazo en este período
                       </td>
                     </tr>

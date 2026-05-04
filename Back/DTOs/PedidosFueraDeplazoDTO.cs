@@ -34,17 +34,17 @@ namespace Back.DTOs
  
         public int IntentosEntregaFallida { get; set; }
  
-        // ── NUEVOS: contexto sobre el subestado demorado ─────────────────────
+        // ── SUBESTADO DEMORADO ─────────────────────────────────────────
         /// <summary>
-        /// Indica si el pedido fue marcado automáticamente como "demorado"
-        /// en algún momento antes de su entrega.
+        /// Flag que indica si el pedido fue marcado como "demorado"
+        /// (superó su FechaEntregaEstimada sin haber sido entregado)
         /// </summary>
-        public bool FueMarcadoDemorado { get; set; }
+        public bool EsDemorado { get; set; }
  
         /// <summary>
         /// Timestamp de cuándo fue marcado demorado. Null si nunca lo fue.
         /// </summary>
         public DateTime? FechaMarcadoDemorado { get; set; }
-        // ─────────────────────────────────────────────────────────────────────
+        // ──────────────────────────────────────────────────────────────
     }
 }
