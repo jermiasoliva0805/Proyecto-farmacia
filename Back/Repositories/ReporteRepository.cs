@@ -85,7 +85,7 @@ namespace Back.Repositories
         public async Task<List<RankingClienteDTO>> GetRankingClientesFrecuentesAsync(int dias = 7)
         {
             int idSucursal = 1;
-            var fechaDesde = DateTime.Now.AddDays(-dias);
+            var fechaDesde = DateTimeHelper.GetArgentinaTime().AddDays(-dias);
  
             var pedidos = await _context.Pedidos
                 .Include(p => p.Cliente)
@@ -111,7 +111,7 @@ namespace Back.Repositories
         public async Task<List<ClienteFacturacionDTO>> GetRankingClientesFacturacionAsync(int dias = 7)
         {
             int idSucursal = 1;
-            var fechaDesde = DateTime.Now.AddDays(-dias);
+            var fechaDesde = DateTimeHelper.GetArgentinaTime().AddDays(-dias);
  
             var pedidos = await _context.Pedidos
                 .Include(p => p.Cliente)
@@ -138,8 +138,9 @@ namespace Back.Repositories
         {
             int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
-            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
-            var hasta = (fechaHasta ?? DateTime.Now).AddDays(1).AddSeconds(-1);
+            var argentinaTime = DateTimeHelper.GetArgentinaTime();
+            var desde = fechaDesde ?? argentinaTime.AddDays(-7);
+            var hasta = (fechaHasta ?? argentinaTime).AddDays(1).AddSeconds(-1);
  
             var totalPedidos = await _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
@@ -172,8 +173,9 @@ namespace Back.Repositories
         {
             int idSucursal = 1;
             const int ID_ESTADO_CANCELADO = 9;
-            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
-            var hasta = (fechaHasta ?? DateTime.Now).AddDays(1).AddSeconds(-1);
+            var argentinaTime = DateTimeHelper.GetArgentinaTime();
+            var desde = fechaDesde ?? argentinaTime.AddDays(-7);
+            var hasta = (fechaHasta ?? argentinaTime).AddDays(1).AddSeconds(-1);
  
             var totalPedidos = await _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
@@ -222,7 +224,7 @@ namespace Back.Repositories
         public async Task<List<TopProductosDTO>> GetTop10ProductosMasVendidosAsync(int dias = 7, int idSucursal = 1)
         {
             const int ID_ESTADO_CANCELADO = 9;
-            DateTime fechaDesde = DateTime.Now.AddDays(-dias);
+            DateTime fechaDesde = DateTimeHelper.GetArgentinaTime().AddDays(-dias);
  
             var pedidos = await _context.Pedidos
                 .Include(p => p.Detalles).ThenInclude(d => d.Producto)
@@ -252,7 +254,7 @@ namespace Back.Repositories
         public async Task<TiemposProcesoDTO> GetReporteTiemposProcesoAsync(int dias = 7, int? idEstado = null)
         {
             int idSucursal = 1;
-            DateTime fechaDesde = DateTime.Now.AddDays(-dias);
+            DateTime fechaDesde = DateTimeHelper.GetArgentinaTime().AddDays(-dias);
  
             var query = _context.Pedidos
                 .Include(p => p.HistorialDeEstados).ThenInclude(h => h.EstadoDePedido)
@@ -368,8 +370,9 @@ namespace Back.Repositories
             DateTime? fechaHasta = null)
         {
             int idSucursal = 1;
-            var desde = fechaDesde ?? DateTime.Now.AddDays(-7);
-            var hastaAjustado = (fechaHasta ?? DateTime.Now).AddDays(1).AddSeconds(-1);
+            var argentinaTime = DateTimeHelper.GetArgentinaTime();
+            var desde = fechaDesde ?? argentinaTime.AddDays(-7);
+            var hastaAjustado = (fechaHasta ?? argentinaTime).AddDays(1).AddSeconds(-1);
  
             var pedidos = await _context.Pedidos
                 .Where(p => p.Fecha >= desde && p.Fecha <= hastaAjustado)
@@ -404,8 +407,9 @@ namespace Back.Repositories
             DateTime? fechaHasta = null,
             int? idZona = null)
         {
-            var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
-            var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
+            var argentinaTime = DateTimeHelper.GetArgentinaTime();
+            var desde = fechaDesde ?? argentinaTime.AddDays(-30);
+            var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : argentinaTime;
  
             var pedidosConZona = await _context.Pedidos
                 .Include(p => p.Zona)
@@ -541,8 +545,9 @@ namespace Back.Repositories
             DateTime? fechaDesde = null,
             DateTime? fechaHasta = null)
         {
-            var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
-            var hasta = (fechaHasta ?? DateTime.Now).AddDays(1).AddSeconds(-1);
+            var argentinaTime = DateTimeHelper.GetArgentinaTime();
+            var desde = fechaDesde ?? argentinaTime.AddDays(-30);
+            var hasta = (fechaHasta ?? argentinaTime).AddDays(1).AddSeconds(-1);
  
             var pedidosEntregados = await _context.Pedidos
                 .Include(p => p.Cliente)
@@ -568,11 +573,11 @@ namespace Back.Repositories
                         : "Sin asignar",
                     FechaCreacion = p.Fecha,
                     FechaEstimada = p.FechaEntregaEstimada,
-                    FechaEntrega  = p.FechaEntregaReal ?? DateTime.Now,
+                    FechaEntrega  = p.FechaEntregaReal ?? argentinaTime,
                     RetrasoDías   = (int)Math.Round(
                         DateTimeHelper.CalcularDiasHabilesDiferencia(
                             p.FechaEntregaEstimada,
-                            p.FechaEntregaReal ?? DateTime.Now)),
+                            p.FechaEntregaReal ?? argentinaTime)),
                     IntentosEntregaFallida = p.IntentosEntregaFallida,
                     FueMarcadoDemorado     = p.FechaMarcadoDemorado.HasValue,
                     FechaMarcadoDemorado   = p.FechaMarcadoDemorado

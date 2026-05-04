@@ -3,6 +3,7 @@ using Back.DTOs;
 using Back.Hubs;
 using Back.Models;
 using Back.Repositories.Interfaces;
+using Back.Utils;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -145,7 +146,7 @@ namespace Back.Repositories
                     pedido.IntentosEntregaFallida = 0;
                     pedido.EstadoActual = "Entregado";
                     pedido.Estado = "Entregado";
-                    pedido.FechaEntregaReal = DateTime.Now;
+                    pedido.FechaEntregaReal = DateTimeHelper.GetArgentinaTime();
                     // EsDemorado se mantiene intacto — queda para el reporte histórico
                     _context.Entry(pedido).State = EntityState.Modified;
                 }

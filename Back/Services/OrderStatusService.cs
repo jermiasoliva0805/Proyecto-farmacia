@@ -5,6 +5,7 @@ using Back.Models;
 using Back.Repositories.Interfaces;
 using Back.Services.Interfaces;
 using Back.Services; // EmailSender
+using Back.Utils;
 using Microsoft.EntityFrameworkCore;
  
 namespace Back.Services
@@ -281,8 +282,9 @@ namespace Back.Services
             }
             else if (changeStatusDto.IDNuevoEstado == 7)
             {
-                pedido.FechaEntregaReal = DateTime.UtcNow;
-                pedido.HoraEntregaReal = DateTime.UtcNow.TimeOfDay;
+                var argentinaTime = DateTimeHelper.GetArgentinaTime();
+                pedido.FechaEntregaReal = argentinaTime;
+                pedido.HoraEntregaReal = argentinaTime.TimeOfDay;
                 pedido.IntentosEntregaFallida = 0;
                 pedido.EstadoActual = ObtenerDescripcionEstado(7);
                 pedido.Estado = ObtenerDescripcionEstado(7);
