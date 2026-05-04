@@ -101,5 +101,30 @@ namespace Back.Utils
 
             return (ahora ?? DateTime.Now) > fechaEntregaEstimada;
         }
+
+        /// <summary>
+        /// Interpreta una fecha como si fuera hora Argentina (UTC-3)
+        /// Útil para fechas que vienen del frontend sin información de zona horaria
+        /// </summary>
+        public static DateTime InterpretarComoArgentina(DateTime fecha)
+        {
+            if (fecha.Kind == DateTimeKind.Utc)
+            {
+                // Si es UTC, convertir a Argentina
+                var argentinaZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+                return TimeZoneInfo.ConvertTime(fecha, argentinaZone);
+            }
+            else if (fecha.Kind == DateTimeKind.Unspecified)
+            {
+                // Si es Unspecified, tratarlo como si ya estuviera en Argentina
+                // Esto es típico cuando ASP.NET parsea una fecha como "2026-04-04"
+                return fecha;
+            }
+            else
+            {
+                // Si es Local, convertir a Argentina
+                return TimeZoneInfo.ConvertTime(fecha, TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time"));
+            }
+        }
     }
 }

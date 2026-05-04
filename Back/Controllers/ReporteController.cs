@@ -1,5 +1,6 @@
 using Back.Repositories.Interfaces;
 using Back.DTOs;
+using Back.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_farmacia.DTOs;
 using System;
@@ -107,7 +108,14 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesde, fechaHasta);
+                var fechaDesdeNormalizada = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value) 
+                    : (DateTime?)null;
+                var fechaHastaNormalizada = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value) 
+                    : (DateTime?)null;
+
+                var reporte = await _reporteRepository.GetReportePedidosCanceladosAsync(fechaDesdeNormalizada, fechaHastaNormalizada);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -123,7 +131,14 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesde, fechaHasta);
+                var fechaDesdeNormalizada = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value) 
+                    : (DateTime?)null;
+                var fechaHastaNormalizada = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value) 
+                    : (DateTime?)null;
+
+                var reporte = await _reporteRepository.GetReporteCancelacionesPorMotivoAsync(fechaDesdeNormalizada, fechaHastaNormalizada);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -190,7 +205,14 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesde, fechaHasta);
+                var fechaDesdeNormalizada = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value) 
+                    : (DateTime?)null;
+                var fechaHastaNormalizada = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value) 
+                    : (DateTime?)null;
+
+                var reporte = await _reporteRepository.GetReporteFormasPagoAsync(fechaDesdeNormalizada, fechaHastaNormalizada);
                 return Ok(reporte);
             }
             catch (Exception ex)
@@ -207,7 +229,14 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesde, fechaHasta, idZona);
+                var fechaDesdeNormalizada = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value) 
+                    : (DateTime?)null;
+                var fechaHastaNormalizada = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value) 
+                    : (DateTime?)null;
+
+                var reporte = await _reporteRepository.GetReportePedidosPorZonaAsync(fechaDesdeNormalizada, fechaHastaNormalizada, idZona);
 
                 if (reporte == null)
                 {
@@ -229,8 +258,12 @@ namespace Back.Controllers
         {
             try
             {
-                var desde = fechaDesde ?? DateTime.Now.AddDays(-30);
-                var hasta = fechaHasta.HasValue ? fechaHasta.Value.AddDays(1).AddSeconds(-1) : DateTime.Now;
+                var desde = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value)
+                    : DateTimeHelper.GetArgentinaTime().AddDays(-30);
+                var hasta = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value).AddDays(1).AddSeconds(-1)
+                    : DateTimeHelper.GetArgentinaTime().AddDays(1).AddSeconds(-1);
 
                 var pedidos = await _context.Pedidos
                     .Include(p => p.Zona)
@@ -313,7 +346,15 @@ namespace Back.Controllers
         {
             try
             {
-                var reporte = await _reporteRepository.GetReportePedidosFueraDeplazoAsync(fechaDesde, fechaHasta);
+                // Normalizar fechas a hora Argentina si vienen del frontend
+                var fechaDesdeNormalizada = fechaDesde.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaDesde.Value) 
+                    : (DateTime?)null;
+                var fechaHastaNormalizada = fechaHasta.HasValue 
+                    ? DateTimeHelper.InterpretarComoArgentina(fechaHasta.Value) 
+                    : (DateTime?)null;
+
+                var reporte = await _reporteRepository.GetReportePedidosFueraDeplazoAsync(fechaDesdeNormalizada, fechaHastaNormalizada);
                 return Ok(reporte);
             }
             catch (Exception ex)
