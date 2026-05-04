@@ -503,6 +503,9 @@ namespace Back.Repositories
  
                 var totalPorPregunta = respuestasPregunta?.Values.Sum() ?? 0;
  
+                // Filtrar preguntas sin respuestas
+                if (totalPorPregunta == 0) continue;
+ 
                 var opciones = (respuestasPregunta ?? new Dictionary<string, int>())
                     .Select(x => new OpcionRespuestaEncuestaDTO
                     {

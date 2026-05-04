@@ -200,7 +200,6 @@ const MisPedidosOperario = () => {
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                                 <h2 className="text-lg font-bold">Tablero Kanban - Pedidos en Progreso</h2>
-                                <p className="text-blue-100 text-sm">Estados: Preparar (2) • Demorado (3) • Listo (4)</p>
                             </div>
                             <div className="p-4">
                                 <TableroKanban
