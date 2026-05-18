@@ -442,7 +442,8 @@ namespace Back.Repositories
                     EntregasExitosas         = g.Count(p => p.IDEstadoDePedido == 7),
                     EntregasFallidas         = g.Count(p => p.IDEstadoDePedido == 9),
                     PorcentajeEfectividad    = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0m / g.Count()) : 0m,
-                    Cadetes                  = g.GroupBy(p => new { p.IDUsuario, p.Usuario!.Nombre })
+                    Cadetes                  = g.Where(p => p.Usuario != null && p.Usuario.Rol != "Encargado")
+                        .GroupBy(p => new { p.IDUsuario, p.Usuario!.Nombre })
                         .Select(cg => new CadeteZonaDTO
                         {
                             IDCadete              = cg.Key.IDUsuario,
