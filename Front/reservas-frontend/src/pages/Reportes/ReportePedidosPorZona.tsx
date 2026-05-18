@@ -44,7 +44,7 @@ export const ReportePedidosPorZona = () => {
     const [fechaDesde, setFechaDesde] = useState<string>('');
     const [fechaHasta, setFechaHasta] = useState<string>('');
     const [idZona, setIdZona] = useState<number | null>(null);
-    const [zonaSeleccionada, setZonaSeleccionada] = useState<PedidosPorZonaDTO | null>(null);
+    const [cadeteSeleccionado, setCadeteSeleccionado] = useState<{ cadete: any; zona: string } | null>(null);
 
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -190,10 +190,19 @@ export const ReportePedidosPorZona = () => {
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de pedidos por zona...</p>;
 
-    // Si hay zona seleccionada, mostrar vista de detalle
-    if (zonaSeleccionada) {
-        return <VistaDetalle zona={zonaSeleccionada} onVolver={() => setZonaSeleccionada(null)} />;
+    // Si hay cadete seleccionado, mostrar vista de detalle
+    if (cadeteSeleccionado) {
+        return <VistaDetalleCadete cadete={cadeteSeleccionado.cadete} zona={cadeteSeleccionado.zona} onVolver={() => setCadeteSeleccionado(null)} />;
     }
+
+    // Obtener todos los cadetes desde el arreglo de datos
+    const todosCadetes = datos.flatMap(zona => 
+        zona.cadetes.map(cadete => ({
+            ...cadete,
+            nombreZona: zona.nombreZona,
+            zonaId: zona.zonaId
+        }))
+    );
 
     // Prepare data for charts
     const pieData = datos.map(z => ({
@@ -314,7 +323,7 @@ export const ReportePedidosPorZona = () => {
                 </div>
 
                 {/* Tabla de Detalles */}
-                <Card className="p-6">
+                <Card className="p-6 mb-8">
                     <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Detalles por Zona</h3>
                     <table className="w-full text-left text-sm">
                         <thead>
@@ -328,11 +337,7 @@ export const ReportePedidosPorZona = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {datos.map((zona, index) => (
-                                <tr 
-                                    key={index} 
-                                    onClick={() => setZonaSeleccionada(zona)}
-                                    className="hover:bg-blue-50 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-blue-500"
-                                >
+                                <tr key={index} className="hover:bg-gray-50 transition-all">
                                     <td className="py-4 text-center font-bold text-gray-300">{index + 1}</td>
                                     <td className="py-4 px-4 font-semibold text-gray-700">{zona.nombreZona}</td>
                                     <td className="py-4 px-4 text-center font-medium text-gray-600">{zona.cantidadPedidos}</td>
@@ -342,6 +347,53 @@ export const ReportePedidosPorZona = () => {
                                     </td>
                                 </tr>
                             ))}
+                        </tbody>
+                    </table>
+                </Card>
+
+                {/* Tabla de Cadetes */}
+                <Card className="p-6">
+                    <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Cadetes Asignados</h3>
+                    <table className="w-full text-left text-sm">
+                        <thead>
+                            <tr className="text-gray-400 text-xs uppercase border-b border-gray-100">
+                                <th className="pb-4 font-semibold px-2">Cadete</th>
+                                <th className="pb-4 font-semibold px-2">Zona</th>
+                                <th className="pb-4 font-semibold text-center px-2">Asignados</th>
+                                <th className="pb-4 font-semibold text-center px-2">Exitosos</th>
+                                <th className="pb-4 font-semibold text-center px-2">Fallidos</th>
+                                <th className="pb-4 font-semibold text-right px-2">Recaudado</th>
+                                <th className="pb-4 font-semibold text-right px-2">Efectividad</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {todosCadetes && todosCadetes.length > 0 ? (
+                                todosCadetes.map((cadete, index) => (
+                                    <tr 
+                                        key={index} 
+                                        onClick={() => setCadeteSeleccionado({ cadete, zona: cadete.nombreZona })}
+                                        className="hover:bg-blue-50 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-blue-500"
+                                    >
+                                        <td className="py-4 px-2 font-medium text-gray-700">{cadete.nombreCadete}</td>
+                                        <td className="py-4 px-2 text-gray-600">{cadete.nombreZona}</td>
+                                        <td className="py-4 px-2 text-center text-gray-600">{cadete.totalPedidosAsignados}</td>
+                                        <td className="py-4 px-2 text-center text-green-600 font-medium">{cadete.entregasExitosas}</td>
+                                        <td className="py-4 px-2 text-center text-red-600 font-medium">{cadete.entregasFallidas}</td>
+                                        <td className="py-4 px-2 text-right font-semibold text-gray-900">
+                                            ${cadete.totalRecaudado.toLocaleString('es-AR')}
+                                        </td>
+                                        <td className="py-4 px-2 text-right font-bold text-blue-600">
+                                            {cadete.porcentajeEfectividad.toFixed(1)}%
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="py-8 text-center text-gray-400">
+                                        No hay cadetes registrados en las zonas
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </Card>
@@ -408,20 +460,21 @@ const MetricCard = ({ title, value, sub, icon, color = "text-gray-900" }: any) =
     </Card>
 );
 
-// Componente Vista Detalle de Zona
-interface VistaDetalleProps {
-    zona: PedidosPorZonaDTO;
+// Componente Vista Detalle de Cadete
+interface VistaDetalleCadeteProps {
+    cadete: any;
+    zona: string;
     onVolver: () => void;
 }
 
-const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
-    const color = getColorByZonaId(zona.zonaId);
+const VistaDetalleCadete: React.FC<VistaDetalleCadeteProps> = ({ cadete, zona, onVolver }) => {
+    const color = getColorByZonaId(cadete.zonaId);
     
     // Datos para gráfico de efectividad
     const chartData = [
-        { nombre: 'Exitosas', valor: zona.entregasExitosas, fill: '#10b981' },
-        { nombre: 'Fallidas', valor: zona.entregasFallidas, fill: '#ef4444' },
-        { nombre: 'Pendientes', valor: zona.cantidadPedidos - zona.entregasExitosas - zona.entregasFallidas, fill: '#d1d5db' }
+        { nombre: 'Exitosas', valor: cadete.entregasExitosas, fill: '#10b981' },
+        { nombre: 'Fallidas', valor: cadete.entregasFallidas, fill: '#ef4444' },
+        { nombre: 'Pendientes', valor: cadete.totalPedidosAsignados - cadete.entregasExitosas - cadete.entregasFallidas, fill: '#d1d5db' }
     ];
 
     return (
@@ -436,8 +489,11 @@ const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
                     Volver a lista
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Detalle de Zona</h1>
-                    <p className={`text-lg font-semibold ${color.tailwind}`}>{zona.nombreZona}</p>
+                    <h1 className="text-2xl font-bold text-gray-800">Detalle de Cadete</h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className={`text-lg font-semibold ${color.tailwind}`}>{cadete.nombreCadete}</p>
+                        <span className="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded-full">{zona}</span>
+                    </div>
                 </div>
             </div>
 
@@ -445,35 +501,35 @@ const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                 <MetricCard
                     title="Pedidos Asignados"
-                    value={zona.cantidadPedidos.toString()}
+                    value={cadete.totalPedidosAsignados.toString()}
                     sub="En el período"
                     icon={<Package className={color.icon} />}
                     color={color.tailwind}
                 />
                 <MetricCard
                     title="Entregas Exitosas"
-                    value={zona.entregasExitosas.toString()}
-                    sub={`${((zona.entregasExitosas / zona.cantidadPedidos) * 100).toFixed(1)}% de éxito`}
+                    value={cadete.entregasExitosas.toString()}
+                    sub={`${((cadete.entregasExitosas / cadete.totalPedidosAsignados) * 100).toFixed(1)}% de éxito`}
                     icon={<CheckCircle2 className="text-green-500" />}
                     color="text-green-600"
                 />
                 <MetricCard
                     title="Entregas Fallidas"
-                    value={zona.entregasFallidas.toString()}
-                    sub={`${((zona.entregasFallidas / zona.cantidadPedidos) * 100).toFixed(1)}% de fallos`}
+                    value={cadete.entregasFallidas.toString()}
+                    sub={`${((cadete.entregasFallidas / cadete.totalPedidosAsignados) * 100).toFixed(1)}% de fallos`}
                     icon={<XCircle className="text-red-500" />}
                     color="text-red-600"
                 />
                 <MetricCard
                     title="Total Recaudado"
-                    value={`$${zona.totalRecaudado.toLocaleString('es-AR')}`}
-                    sub={`Promedio: $${(zona.totalRecaudado / zona.cantidadPedidos).toLocaleString('es-AR')}`}
+                    value={`$${cadete.totalRecaudado.toLocaleString('es-AR')}`}
+                    sub={`Promedio: $${(cadete.totalRecaudado / cadete.totalPedidosAsignados).toLocaleString('es-AR')}`}
                     icon={<DollarSign className="text-blue-500" />}
                     color="text-blue-600"
                 />
                 <MetricCard
                     title="Efectividad"
-                    value={`${zona.porcentajeEfectividad.toFixed(1)}%`}
+                    value={`${cadete.porcentajeEfectividad.toFixed(1)}%`}
                     sub="Tasa de entregas completadas"
                     icon={<TrendingUp className={color.icon} />}
                     color={color.tailwind}
@@ -503,22 +559,22 @@ const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
 
             {/* Resumen textual */}
             <Card className="p-6">
-                <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Resumen de la Zona</h3>
+                <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Resumen del Cadete</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="border-l-4 border-green-500 pl-4">
                         <p className="text-xs text-gray-500 font-medium uppercase mb-1">Operación Exitosa</p>
                         <p className="text-2xl font-bold text-green-600">
-                            {zona.entregasExitosas} de {zona.cantidadPedidos}
+                            {cadete.entregasExitosas} de {cadete.totalPedidosAsignados}
                         </p>
                         <p className="text-sm text-gray-600 mt-2">
-                            La zona completó {zona.entregasExitosas} entregas exitosas durante el período.
+                            El cadete completó {cadete.entregasExitosas} entregas exitosas en {zona} durante el período.
                         </p>
                     </div>
                     <div className="border-l-4 border-red-500 pl-4">
                         <p className="text-xs text-gray-500 font-medium uppercase mb-1">Entregas No Completadas</p>
-                        <p className="text-2xl font-bold text-red-600">{zona.entregasFallidas}</p>
+                        <p className="text-2xl font-bold text-red-600">{cadete.entregasFallidas}</p>
                         <p className="text-sm text-gray-600 mt-2">
-                            Se registraron {zona.entregasFallidas} intentos fallidos de entrega en esta zona.
+                            Se registraron {cadete.entregasFallidas} intentos fallidos de entrega para este cadete.
                         </p>
                     </div>
                 </div>
@@ -526,3 +582,5 @@ const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
         </div>
     );
 };
+
+// Componente Vista Detalle de Zona - ELIMINADO

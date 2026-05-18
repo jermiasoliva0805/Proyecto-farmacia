@@ -163,6 +163,16 @@ export interface DetalleTiempoProcesoDTO {
     esAlertaDespacho: boolean;
 }
 
+export interface CadeteZonaDTO {
+    idCadete: number;
+    nombreCadete: string;
+    totalPedidosAsignados: number;
+    entregasExitosas: number;
+    entregasFallidas: number;
+    totalRecaudado: number;
+    porcentajeEfectividad: number;
+}
+
 export interface PedidosPorZonaDTO {
     zonaId: number;
     nombreZona: string;
@@ -172,6 +182,7 @@ export interface PedidosPorZonaDTO {
     entregasExitosas: number;
     entregasFallidas: number;
     porcentajeEfectividad: number;
+    cadetes: CadeteZonaDTO[];
 }
 
 export interface DetalleFormaPagoDTO {

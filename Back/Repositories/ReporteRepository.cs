@@ -413,6 +413,7 @@ namespace Back.Repositories
  
             var pedidosConZona = await _context.Pedidos
                 .Include(p => p.Zona)
+                .Include(p => p.Usuario)
                 .Where(p => p.Fecha >= desde && p.Fecha <= hasta)
                 .ToListAsync();
  
@@ -440,7 +441,20 @@ namespace Back.Repositories
                     TotalRecaudado           = g.Sum(p => p.Total),
                     EntregasExitosas         = g.Count(p => p.IDEstadoDePedido == 7),
                     EntregasFallidas         = g.Count(p => p.IDEstadoDePedido == 9),
-                    PorcentajeEfectividad    = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0m / g.Count()) : 0m
+                    PorcentajeEfectividad    = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0m / g.Count()) : 0m,
+                    Cadetes                  = g.GroupBy(p => new { p.IDUsuario, p.Usuario!.Nombre })
+                        .Select(cg => new CadeteZonaDTO
+                        {
+                            IDCadete              = cg.Key.IDUsuario,
+                            NombreCadete          = cg.Key.Nombre,
+                            TotalPedidosAsignados = cg.Count(),
+                            EntregasExitosas      = cg.Count(p => p.IDEstadoDePedido == 7),
+                            EntregasFallidas      = cg.Count(p => p.IDEstadoDePedido == 9),
+                            TotalRecaudado        = cg.Sum(p => p.Total),
+                            PorcentajeEfectividad = cg.Count() > 0 ? (cg.Count(p => p.IDEstadoDePedido == 7) * 100.0m / cg.Count()) : 0m
+                        })
+                        .OrderByDescending(c => c.EntregasExitosas)
+                        .ToList()
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
                 .ToList();
