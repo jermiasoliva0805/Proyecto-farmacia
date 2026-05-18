@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@components/layout/DashboardLayout';
-import { ReporteEntregas } from './ReporteEntregas';
 import ReporteOperarios from './ReporteOperarios';
 import { RankingClientes } from './RankingClientes';
 import { ReporteFacturacion } from './ReporteFacturacion';
@@ -15,7 +14,7 @@ import { ReportePedidosFueraDeplazo } from './ReportePedidosFueraDeplazo';
 
 
 export const PanelReportes = () => {
-    const [tabActiva, setTabActiva] = useState('entregas');
+    const [tabActiva, setTabActiva] = useState('pedidosPorZona');
 
     return (
         <DashboardLayout>
@@ -24,15 +23,6 @@ export const PanelReportes = () => {
 
             {/* Selectores de Pestaña - Sin iconos ni emojis */}
             <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-2xl w-fit flex-wrap">
-                <button
-                    onClick={() => setTabActiva('entregas')}
-                    className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
-                        tabActiva === 'entregas' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'
-                    }`}
-                >
-                    Entregas por Cadete
-                </button>
-
                 <button
                     onClick={() => setTabActiva('fueraDeplazo')}
                     className={`px-6 py-2 rounded-xl font-bold text-sm transition-all ${
@@ -135,7 +125,6 @@ export const PanelReportes = () => {
 
             {/* Contenido Dinámico */}
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                    {tabActiva === 'entregas' && <ReporteEntregas />}
                     {tabActiva === 'fueraDeplazo' && <ReportePedidosFueraDeplazo />}
                     {tabActiva === 'operarios' && <ReporteOperarios />}
                     {tabActiva === 'ranking' && <RankingClientes />}
