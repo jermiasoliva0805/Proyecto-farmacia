@@ -574,7 +574,7 @@ const VistaDetalleCadete: React.FC<VistaDetalleCadeteProps> = ({ cadete, zona, o
                         <p className="text-xs text-gray-500 font-medium uppercase mb-1">Entregas No Completadas</p>
                         <p className="text-2xl font-bold text-red-600">{cadete.entregasFallidas}</p>
                         <p className="text-sm text-gray-600 mt-2">
-                            Se registraron {cadete.entregasFallidas} intentos fallidos de entrega para este cadete.
+                            Se registraron {cadete.entregasFallidas} entregas canceladas por intentos fallidos.
                         </p>
                     </div>
                 </div>
