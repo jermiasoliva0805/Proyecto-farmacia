@@ -7,5 +7,10 @@ namespace Back.DTOs
         public int CantidadPedidos { get; set; }
         public decimal Porcentaje { get; set; }
         public decimal TotalRecaudado { get; set; }
+        
+        // Nuevas propiedades para detalle
+        public int EntregasExitosas { get; set; }
+        public int EntregasFallidas { get; set; }
+        public decimal PorcentajeEfectividad { get; set; }
     }
 }

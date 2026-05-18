@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
-import { Calendar, MapPin, Package, TrendingUp, Download } from 'lucide-react';
+import { Calendar, MapPin, Package, TrendingUp, Download, ArrowLeft, CheckCircle2, XCircle, DollarSign } from 'lucide-react';
 import { Card } from '../../components/common/Card';
 import { getPedidosPorZona } from '../../service/reporteService';
 import { PedidosPorZonaDTO } from '../../types/pedido.types';
@@ -44,6 +44,7 @@ export const ReportePedidosPorZona = () => {
     const [fechaDesde, setFechaDesde] = useState<string>('');
     const [fechaHasta, setFechaHasta] = useState<string>('');
     const [idZona, setIdZona] = useState<number | null>(null);
+    const [zonaSeleccionada, setZonaSeleccionada] = useState<PedidosPorZonaDTO | null>(null);
 
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -189,6 +190,11 @@ export const ReportePedidosPorZona = () => {
 
     if (loading) return <p className="p-6 text-gray-500 font-medium">Cargando reporte de pedidos por zona...</p>;
 
+    // Si hay zona seleccionada, mostrar vista de detalle
+    if (zonaSeleccionada) {
+        return <VistaDetalle zona={zonaSeleccionada} onVolver={() => setZonaSeleccionada(null)} />;
+    }
+
     // Prepare data for charts
     const pieData = datos.map(z => ({
         name: z.nombreZona,
@@ -322,7 +328,11 @@ export const ReportePedidosPorZona = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {datos.map((zona, index) => (
-                                <tr key={index} className="hover:bg-gray-50 transition-all">
+                                <tr 
+                                    key={index} 
+                                    onClick={() => setZonaSeleccionada(zona)}
+                                    className="hover:bg-blue-50 transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-blue-500"
+                                >
                                     <td className="py-4 text-center font-bold text-gray-300">{index + 1}</td>
                                     <td className="py-4 px-4 font-semibold text-gray-700">{zona.nombreZona}</td>
                                     <td className="py-4 px-4 text-center font-medium text-gray-600">{zona.cantidadPedidos}</td>
@@ -397,3 +407,122 @@ const MetricCard = ({ title, value, sub, icon, color = "text-gray-900" }: any) =
         <div className="bg-gray-50 p-2 rounded-lg">{icon}</div>
     </Card>
 );
+
+// Componente Vista Detalle de Zona
+interface VistaDetalleProps {
+    zona: PedidosPorZonaDTO;
+    onVolver: () => void;
+}
+
+const VistaDetalle: React.FC<VistaDetalleProps> = ({ zona, onVolver }) => {
+    const color = getColorByZonaId(zona.zonaId);
+    
+    // Datos para gráfico de efectividad
+    const chartData = [
+        { nombre: 'Exitosas', valor: zona.entregasExitosas, fill: '#10b981' },
+        { nombre: 'Fallidas', valor: zona.entregasFallidas, fill: '#ef4444' },
+        { nombre: 'Pendientes', valor: zona.cantidadPedidos - zona.entregasExitosas - zona.entregasFallidas, fill: '#d1d5db' }
+    ];
+
+    return (
+        <div className="p-6 bg-[#f8f9fa] min-h-screen">
+            {/* Header con botón volver */}
+            <div className="flex items-center gap-4 mb-6">
+                <button
+                    onClick={onVolver}
+                    className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                >
+                    <ArrowLeft size={18} />
+                    Volver a lista
+                </button>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">Detalle de Zona</h1>
+                    <p className={`text-lg font-semibold ${color.tailwind}`}>{zona.nombreZona}</p>
+                </div>
+            </div>
+
+            {/* Métricas principales */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                <MetricCard
+                    title="Pedidos Asignados"
+                    value={zona.cantidadPedidos.toString()}
+                    sub="En el período"
+                    icon={<Package className={color.icon} />}
+                    color={color.tailwind}
+                />
+                <MetricCard
+                    title="Entregas Exitosas"
+                    value={zona.entregasExitosas.toString()}
+                    sub={`${((zona.entregasExitosas / zona.cantidadPedidos) * 100).toFixed(1)}% de éxito`}
+                    icon={<CheckCircle2 className="text-green-500" />}
+                    color="text-green-600"
+                />
+                <MetricCard
+                    title="Entregas Fallidas"
+                    value={zona.entregasFallidas.toString()}
+                    sub={`${((zona.entregasFallidas / zona.cantidadPedidos) * 100).toFixed(1)}% de fallos`}
+                    icon={<XCircle className="text-red-500" />}
+                    color="text-red-600"
+                />
+                <MetricCard
+                    title="Total Recaudado"
+                    value={`$${zona.totalRecaudado.toLocaleString('es-AR')}`}
+                    sub={`Promedio: $${(zona.totalRecaudado / zona.cantidadPedidos).toLocaleString('es-AR')}`}
+                    icon={<DollarSign className="text-blue-500" />}
+                    color="text-blue-600"
+                />
+                <MetricCard
+                    title="Efectividad"
+                    value={`${zona.porcentajeEfectividad.toFixed(1)}%`}
+                    sub="Tasa de entregas completadas"
+                    icon={<TrendingUp className={color.icon} />}
+                    color={color.tailwind}
+                />
+            </div>
+
+            {/* Gráfico de Efectividad */}
+            <Card className="p-6 mb-8">
+                <h3 className="text-sm font-bold text-gray-700 mb-6 uppercase tracking-wider">Distribución de Entregas</h3>
+                <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={chartData} margin={{ left: 20, right: 20, top: 20, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+                            formatter={(value: any) => value.toLocaleString('es-AR')}
+                        />
+                        <Bar dataKey="valor" name="Cantidad">
+                            {chartData.map((bar, index) => (
+                                <Cell key={`cell-${index}`} fill={bar.fill} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </Card>
+
+            {/* Resumen textual */}
+            <Card className="p-6">
+                <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Resumen de la Zona</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border-l-4 border-green-500 pl-4">
+                        <p className="text-xs text-gray-500 font-medium uppercase mb-1">Operación Exitosa</p>
+                        <p className="text-2xl font-bold text-green-600">
+                            {zona.entregasExitosas} de {zona.cantidadPedidos}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                            La zona completó {zona.entregasExitosas} entregas exitosas durante el período.
+                        </p>
+                    </div>
+                    <div className="border-l-4 border-red-500 pl-4">
+                        <p className="text-xs text-gray-500 font-medium uppercase mb-1">Entregas No Completadas</p>
+                        <p className="text-2xl font-bold text-red-600">{zona.entregasFallidas}</p>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Se registraron {zona.entregasFallidas} intentos fallidos de entrega en esta zona.
+                        </p>
+                    </div>
+                </div>
+            </Card>
+        </div>
+    );
+};

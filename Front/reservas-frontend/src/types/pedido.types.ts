@@ -169,6 +169,9 @@ export interface PedidosPorZonaDTO {
     cantidadPedidos: number;
     porcentaje: number;
     totalRecaudado: number;
+    entregasExitosas: number;
+    entregasFallidas: number;
+    porcentajeEfectividad: number;
 }
 
 export interface DetalleFormaPagoDTO {

@@ -433,11 +433,14 @@ namespace Back.Repositories
                 .GroupBy(p => new { ZonaId = p.ZonaId ?? 0, NombreZona = p.Zona != null ? p.Zona.Nombre : "SIN ZONA" })
                 .Select(g => new PedidosPorZonaDTO
                 {
-                    ZonaId          = g.Key.ZonaId,
-                    NombreZona      = g.Key.NombreZona,
-                    CantidadPedidos = g.Count(),
-                    Porcentaje      = (g.Count() * 100.0m / pedidosConZona.Count),
-                    TotalRecaudado  = g.Sum(p => p.Total)
+                    ZonaId                   = g.Key.ZonaId,
+                    NombreZona               = g.Key.NombreZona,
+                    CantidadPedidos          = g.Count(),
+                    Porcentaje               = (g.Count() * 100.0m / pedidosConZona.Count),
+                    TotalRecaudado           = g.Sum(p => p.Total),
+                    EntregasExitosas         = g.Count(p => p.IDEstadoDePedido == 7),
+                    EntregasFallidas         = g.Count(p => p.IDEstadoDePedido == 9),
+                    PorcentajeEfectividad    = g.Count() > 0 ? (g.Count(p => p.IDEstadoDePedido == 7) * 100.0m / g.Count()) : 0m
                 })
                 .OrderByDescending(r => r.CantidadPedidos)
                 .ToList();
